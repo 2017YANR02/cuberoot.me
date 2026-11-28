@@ -100,10 +100,10 @@ import { tr } from '@/i18n/tr';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import type { VerifiedVideoDraft } from '../../video-recon/VideoSolveAnalysis';
 
-const VideoReconWorkspace = dynamic(
-  () => import('../../video-recon/VideoReconClient').then(module => module.VideoReconWorkspace),
-  { ssr: false, loading: () => <LoadingIndicator>{tr({ zh: '正在打开自动复盘', en: 'Opening automatic reconstruction' })}</LoadingIndicator> },
-);
+const SubmitVideoReview = dynamic(() => import('./SubmitVideoReview'), {
+  ssr: false,
+  loading: () => <LoadingIndicator>{tr({ zh: '正在打开视频复盘', en: 'Opening video reconstruction' })}</LoadingIndicator>,
+});
 
 type SubmitVideo = { file: File; owner: string; source: 'local' | 'link' };
 type VideoReview = { video: SubmitVideo; draft: string; scramble: string };
@@ -299,13 +299,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   );
   const [videoUploadError, setVideoUploadError] = useState('');
   const [submitVideo, setSubmitVideo] = useState<SubmitVideo>();
+  const [attachment, setAttachment] = useState<{ source: SubmitVideo; video: SubmitVideo; draft: string; captionText?: string }>();
   const [videoLinkDraft, setVideoLinkDraft] = useState<string>();
   const videoLinkId = useId();
   const videoLinkButton = useRef<HTMLButtonElement>(null);
-  const [saveVideo, setSaveVideo] = useState<{ video: SubmitVideo; draft: string }>();
   const hostedVideo = useRef<{ video: SubmitVideo; url: string }>(undefined);
   const [videoReview, setVideoReview] = useState<VideoReview>();
-  const [appliedVideo, setAppliedVideo] = useState<{ review: VideoReview; scramble: string; solution: string; closeReview: boolean }>();
+  const [timedVideo, setTimedVideo] = useState<{ review: VideoReview; result: VerifiedVideoDraft }>();
+  const [appliedVideo, setAppliedVideo] = useState<{ review: VideoReview; scramble: string; solution: string; closeReview: boolean; video?: File }>();
   const [inferredOpening, setInferredOpening] = useState<{ draft: string; scramble: string }>();
   const syncedVideo = useRef<typeof appliedVideo>(undefined);
   const closingVideoReview = useRef<VideoReview>(undefined);
@@ -495,15 +496,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     ? submitVideo : undefined;
   const localVideo = selectedVideo?.source === 'local' ? selectedVideo : undefined;
   const currentVideo = canReviewVideo ? selectedVideo : undefined;
-  const videoForSubmit = isMember && localVideo && saveVideo?.video === localVideo && saveVideo.draft === draftIdentity
-    ? localVideo : undefined;
+  const captionText = (form.solution || form.recon || '').trim();
+  const videoForSubmit = isMember && attachment && attachment.source === selectedVideo && attachment.draft === draftIdentity
+    && (attachment.captionText === undefined || attachment.captionText === captionText) ? attachment.video : undefined;
+  function selectAttachment(video?: SubmitVideo, text?: string) {
+    setAttachment(video && selectedVideo ? { source: selectedVideo, video, draft: draftIdentity, captionText: text } : undefined);
+    setSubmitError(error => error?.field === 'videoUrl' ? null : error);
+  }
   const videoLinkOpen = canReviewVideo && !saving && videoLinkDraft === draftIdentity;
   const videoApplied = !!appliedVideo && appliedVideo.review.video === currentVideo && appliedVideo.review.draft === draftIdentity
     && appliedVideo.scramble === videoScramble && appliedVideo.solution.trim() === form.solution?.trim();
   // A blind review starts with an empty scramble and may itself fill the generic field.
   const ownInferredScramble = !!appliedVideo && appliedVideo.review === videoReview && !videoReview?.scramble
     && !form.wcaScramble?.trim() && !form.optimalScramble?.trim() && appliedVideo.scramble === videoScramble;
-  const activeVideoReview = currentVideo && videoReview?.video === currentVideo
+  const activeVideoReview = selectedVideo && videoReview?.video === selectedVideo
     && videoReview.draft === draftIdentity && (videoReview.scramble === videoScramble || ownInferredScramble)
     ? videoReview : undefined;
   useEffect(() => {
@@ -539,10 +545,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     const video = { file, owner: draftOwner, source };
     setVideoLinkDraft(undefined);
     hostedVideo.current = undefined;
-    setSaveVideo(undefined);
+    setAttachment(undefined);
     setAppliedVideo(undefined);
     setSubmitVideo(video);
-    if (canReviewVideo) setVideoReview({ video, draft: draftIdentity, scramble: videoScramble });
+    setTimedVideo(undefined);
+    if (canReviewVideo || captionText) setVideoReview({ video, draft: draftIdentity, scramble: videoScramble });
   };
 
   const requestVideoMembership = () => {
@@ -1670,7 +1677,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── Normalized cross toggle ──
   const [normalized, setNormalized] = useState(false);
-  const applyVideoSolution = useCallback((review: VideoReview, result: VerifiedVideoDraft, replace: boolean) => {
+  const applyVideoSolution = useCallback((review: VideoReview, result: VerifiedVideoDraft, replace: boolean, video?: File) => {
     const current = videoContext.current;
     if (current.activeVideoReview !== review || closingVideoReview.current === review ||
       current.readOnly || (!replace && current.hasSolution)) return;
@@ -1686,7 +1693,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           (inferred && (prev.wcaScramble?.trim() || prev.optimalScramble?.trim()))) return prev;
       return { ...prev, ...(inferred ? { scramble: inferred } : {}), solution, solutionHtml: escapeAlgText(solution) };
     });
-    setAppliedVideo({ review, scramble, solution, closeReview: replace });
+    setAppliedVideo({ review, scramble, solution, closeReview: replace, video });
   }, [draftOwner, videoScramble, inheritedGroup]);
   useLayoutEffect(() => {
     if (!videoApplied || !appliedVideo || syncedVideo.current === appliedVideo) return;
@@ -1698,11 +1705,25 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setInferredOpening({ draft: appliedVideo.review.draft, scramble: appliedVideo.scramble });
       setSubmitError(error => error?.field === 'scramble' ? null : error);
     }
+    if (appliedVideo.video && isMember) {
+      setAttachment({
+        source: appliedVideo.review.video,
+        video: { file: appliedVideo.video, owner: draftOwner, source: 'local' },
+        draft: appliedVideo.review.draft,
+        captionText: appliedVideo.solution.trim(),
+      });
+      setSubmitError(error => error?.field === 'videoUrl' ? null : error);
+    }
     if (appliedVideo.closeReview && appliedVideo.review === activeVideoReview) videoReviewDialogRef.current?.close();
-  }, [videoApplied, appliedVideo, activeVideoReview]);
-  const autoApplyVideoSolution = useCallback((result: VerifiedVideoDraft) => {
-    if (activeVideoReview) applyVideoSolution(activeVideoReview, result, false);
-  }, [activeVideoReview, applyVideoSolution]);
+  }, [videoApplied, appliedVideo, activeVideoReview, isMember, draftOwner]);
+  const autoApplyVideoSolution = useCallback((result?: VerifiedVideoDraft) => {
+    if (!activeVideoReview || closingVideoReview.current === activeVideoReview) return;
+    setTimedVideo(prev => {
+      if (!result?.cues?.length) return undefined;
+      return prev?.review === activeVideoReview && prev.result === result ? prev : { review: activeVideoReview, result };
+    });
+    if (authUser && result) applyVideoSolution(activeVideoReview, result, false);
+  }, [activeVideoReview, applyVideoSolution, authUser]);
   const canNormalize = useMemo(
     () => hasNormalizableCrossMove(form.solution || ''),
     [form.solution],
@@ -1900,8 +1921,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           data.videoUrl = appendReconVideo(data.videoUrl || '', url);
         } catch (error) {
           if (isCurrentSubmission()) setSubmitError({ field: 'videoUrl', message: tr({
-            zh: `无法保存视频（${(error as Error).message}）。可重试，或取消勾选后提交。`,
-            en: `Could not save the video (${(error as Error).message}). Retry or clear the checkbox to submit.`,
+            zh: `无法保存视频（${(error as Error).message}）。可重试，或取消选用视频后提交。`,
+            en: `Could not save the video (${(error as Error).message}). Retry or remove the video from this submission.`,
           }) });
           return;
         }
@@ -1988,8 +2009,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       <Link2 size={14} aria-hidden />
       {tr({ zh: '粘贴链接复盘', en: 'Reconstruct from a link' })}
     </button>}
-    {currentVideo && <button type="button" className="submit-reuse-btn"
-      onClick={() => setVideoReview({ video: currentVideo, draft: draftIdentity, scramble: videoScramble })}>
+    {selectedVideo && (canReviewVideo || captionText) && <button type="button" className="submit-reuse-btn" disabled={saving}
+      onClick={() => setVideoReview({ video: selectedVideo, draft: draftIdentity, scramble: videoScramble })}>
       {tr({ zh: '查看视频复盘', en: 'Review video reconstruction' })}
     </button>}
   </>;
@@ -1997,18 +2018,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     onCancel={() => { setVideoLinkDraft(undefined); videoLinkButton.current?.focus(); }}
     onVideo={file => selectVideo(file, 'link')} />;
   const videoError = videoUploadError && <span className="submit-hint submit-hint-warn" role="alert">{videoUploadError}</span>;
-  const videoReviewDialog = activeVideoReview && <SettingsDialog ref={videoReviewDialogRef} label={tr({ zh: '自动复盘', en: 'Automatic reconstruction' })} heading
+  const videoReviewDialog = activeVideoReview && <SettingsDialog ref={videoReviewDialogRef} label={tr({ zh: '视频复盘', en: 'Video reconstruction' })} heading
     panelClassName="submit-video-review" onCloseStart={() => { closingVideoReview.current = activeVideoReview; }}
     onClose={() => setVideoReview(prev => prev === activeVideoReview ? undefined : prev)}>
-    {videoApplied && <p className="submit-hint" role="status">
-      {tr({ zh: '已将解法填入表单。调整结果后，点击“使用”更新表单。', en: 'The solution is in the form. After adjusting the result, choose “Apply” to update the form.' })}
-    </p>}
-    <VideoReconWorkspace mode="detector" submission={{
-      file: activeVideoReview.video.file,
-      scramble: activeVideoReview.scramble,
-      onReady: authUser ? autoApplyVideoSolution : undefined,
-      onApply: authUser ? solution => applyVideoSolution(activeVideoReview, solution, true) : undefined,
-    }} />
+    <SubmitVideoReview file={activeVideoReview.video.file} event={form.event} solution={captionText}
+      scramble={activeVideoReview.scramble} captionScramble={videoScramble} canAnalyze={canReviewVideo}
+      recognition={timedVideo?.review.video === activeVideoReview.video && timedVideo.review.draft === draftIdentity &&
+        (timedVideo.review.scramble === videoScramble || timedVideo.result.inferredScramble === videoScramble)
+        ? timedVideo.result : undefined}
+      onReady={autoApplyVideoSolution}
+      onApply={authUser ? result => applyVideoSolution(activeVideoReview, result, true) : undefined}
+      onUse={isMember ? (file, draft) => {
+        if (draft) {
+          applyVideoSolution(activeVideoReview, draft, true, file);
+          return;
+        }
+        selectAttachment({ file, owner: draftOwner, source: 'local' }, captionText);
+        videoReviewDialogRef.current?.close();
+      } : undefined} />
   </SettingsDialog>;
 
   // ── Login gate ──
@@ -2790,34 +2817,22 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <label className="submit-label" htmlFor="recon-video-urls">
                     {tr({ zh: '视频', en: 'Videos' })}
                   </label>
-                    <div className="submit-video-upload">
-                      {videoSourceControls}
-                      {selectedVideo && <bdi className="submit-hint submit-video-filename">{selectedVideo.file.name}</bdi>}
-                      {!isMember && <button type="button" className="submit-reuse-btn" onClick={requestVideoMembership}>
-                        {tr({ zh: '开通会员保存视频', en: 'Join to save videos' })}
-                      </button>}
-                    </div>
+                  <div className="submit-video-upload">
+                    {videoSourceControls}
+                    {selectedVideo && <span className="submit-hint submit-video-filename" aria-live="polite">
+                      {videoForSubmit && tr({ zh: '将随复盘提交：', en: 'Video to submit: ' })}
+                      <bdi>{(videoForSubmit ?? selectedVideo).file.name}</bdi>
+                    </span>}
+                    {videoForSubmit ? <button type="button" className="submit-reuse-btn" onClick={() => selectAttachment()}>
+                      {tr({ zh: '取消选用', en: 'Remove from submission' })}
+                    </button> : isMember && localVideo && <button type="button" className="submit-reuse-btn" onClick={() => selectAttachment(localVideo)}>
+                      {tr({ zh: '作为本次复盘视频', en: 'Use for this submission' })}
+                    </button>}
+                    {!isMember && <button type="button" className="submit-reuse-btn" onClick={requestVideoMembership}>
+                      {tr({ zh: '开通会员保存视频', en: 'Join to save videos' })}
+                    </button>}
+                  </div>
                   {videoLinkEntry}
-                  {isMember && <div className="submit-video-upload">
-                    <label className="submit-video-save">
-                      {/* allow-checkbox: explicit consent to upload the selected file on form submission. */}
-                      <input
-                        type="checkbox"
-                        checked={!!videoForSubmit}
-                        disabled={!localVideo}
-                        aria-describedby="recon-video-save-hint"
-                        onChange={event => {
-                          setSaveVideo(event.currentTarget.checked && localVideo ? { video: localVideo, draft: draftIdentity } : undefined);
-                          setSubmitError(error => error?.field === 'videoUrl' ? null : error);
-                        }}
-                      />
-                      {tr({ zh: '保存视频到本站', en: 'Save video to CubeRoot' })}
-                    </label>
-                    <span id="recon-video-save-hint" className="submit-hint">
-                      {localVideo ? tr({ zh: '随复盘一起提交，最大 200 MB', en: 'Saved when you submit, up to 200 MB' })
-                        : tr({ zh: '请选择本地视频', en: 'Choose a local video' })}
-                    </span>
-                  </div>}
                   <span className="submit-hint">
                     {tr({ zh: '同一视频的不同平台链接放在一起，每行一个；不同视频请点击“添加视频”。', en: 'Keep links to the same video together, one per line. Use “Add video” for a different video.' })}
                   </span>

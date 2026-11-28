@@ -6,9 +6,9 @@ export function reviewIndex(rows:readonly {timestamp:number}[],timestamp:number)
  if(!lo)return 0;if(lo===rows.length)return lo-1;
  return timestamp-rows[lo-1].timestamp<=rows[lo].timestamp-timestamp?lo-1:lo;
 }
-export function steppedTimestamp(rows:readonly {timestamp:number}[],timestamp:number,direction:-1|1) {
+export function steppedTimestamp(rows:readonly {timestamp:number}[],timestamp:number,delta:number) {
  const index=reviewIndex(rows,timestamp);if(index<0)return;
- return rows[Math.max(0,Math.min(rows.length-1,index+direction))].timestamp;
+ return rows[Math.max(0,Math.min(rows.length-1,index+delta))].timestamp;
 }
 export function frameArrow(event:Pick<KeyboardEvent,"key"|"altKey"|"ctrlKey"|"metaKey"|"shiftKey">,target:Element|null) {
  if(event.altKey||event.ctrlKey||event.metaKey||event.shiftKey)return 0;

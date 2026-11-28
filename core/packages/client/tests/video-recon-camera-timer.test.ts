@@ -62,7 +62,7 @@ it('requests camera access on click before the preview loads and releases an aba
   let camera!: ReturnType<typeof useCameraTimerCapture>;
   function Harness() {
     camera = useCameraTimerCapture(() => {});
-    return createElement('button', { onClick: camera.connect }, 'Connect camera');
+    return createElement('button', { onClick: () => camera.connect() }, 'Connect camera');
   }
 
   const host = document.createElement('div');

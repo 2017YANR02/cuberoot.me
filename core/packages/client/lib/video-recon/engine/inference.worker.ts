@@ -1,5 +1,6 @@
 import { paddedPixels, posePixels, resizeLinear } from "./preprocess";
 import type * as Ort from "onnxruntime-web";
+import { loadModelBytes } from "./model-cache";
 import { wasmThreadCount } from "./runtime-config";
 let ort: typeof import("onnxruntime-web");
 import {
@@ -46,60 +47,13 @@ let frameWidth = 0,
 const tracker = new RoiTracker();
 const send = (message: WorkerResponse) => scope.postMessage(message);
 
-async function download(
-  url: string,
-  expectedBytes: number,
-  stage: string,
-): Promise<Uint8Array> {
-  const report = (receivedBytes: number) => {
-    send({ type: "progress", fraction: Math.min(1, receivedBytes / expectedBytes), receivedBytes, stage });
-  };
-  report(0);
-  const response = await fetch(url);
-  if (!response.ok)
-    throw new Error(
-      `Model download failed (${response.status}).`,
-    );
-  if (!response.body) {
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    report(bytes.length);
-    return bytes;
-  }
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let received = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    received += value.length;
-    report(received);
-  }
-  const result = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return result;
-}
-
 async function loadStage(
   baseUrl: string,
   variant: ModelVariant,
-  label: string,
+  reportBytes: (bytes: number) => void,
 ): Promise<Stage> {
-  const bytes = await download(
-    new URL(`models/${variant.file}`, baseUrl).href,
-    variant.bytes,
-    label,
-  );
-  const digest = await crypto.subtle.digest('SHA-256', bytes.buffer as ArrayBuffer);
-  const sha256 = [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
-  const revision = variant.file.match(/\.([0-9a-f]{16})\.onnx$/)?.[1];
-  if (bytes.length !== variant.bytes || (revision && !sha256.startsWith(revision))) {
-    throw new Error(`Model integrity check failed: ${variant.file}`);
-  }
+  const { bytes, sha256 } = await loadModelBytes(baseUrl, variant, reportBytes);
+  reportBytes(bytes.byteLength);
   const session = await ort.InferenceSession.create(bytes, {
     executionProviders: [backend],
     graphOptimizationLevel: "all",
@@ -268,14 +222,21 @@ scope.onmessage = async ({ data }) => {
       const variant = manifest.variants.find((item) => item.size === data.size);
       if (!variant)
         throw new Error("This pose input size has not been exported.");
-      ort.env.wasm.wasmPaths = new URL("runtime/", data.baseUrl).href;
+      const runtime = new URL("runtime/", data.baseUrl);
+      ort.env.wasm.wasmPaths = backend === 'wasm' ? {
+        mjs: new URL('ort-wasm-simd-threaded.512m.mjs', runtime).href,
+        wasm: new URL('ort-wasm-simd-threaded.wasm', runtime).href,
+      } : runtime.href;
       ort.env.wasm.numThreads = wasmThreadCount(
         backend,
         self.crossOriginIsolated,
         navigator.hardwareConcurrency,
       );
-      bbox = await loadStage(data.baseUrl, manifest.bbox, "Cube detector");
-      pose = await loadStage(data.baseUrl, variant, "Pose detector");
+      const bboxBytes = manifest.bbox.bytes;
+      const totalBytes = bboxBytes + variant.bytes;
+      const report = (receivedBytes: number) => send({ type: "progress", receivedBytes, totalBytes });
+      bbox = await loadStage(data.baseUrl, manifest.bbox, report);
+      pose = await loadStage(data.baseUrl, variant, received => report(bboxBytes + received));
       tracker.reset();
       send({
         type: "ready",

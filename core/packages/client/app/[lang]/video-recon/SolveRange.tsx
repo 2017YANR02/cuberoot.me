@@ -5,21 +5,18 @@ import { useT } from '@/hooks/useT';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 
-export function SolveRange({ view, workspace, onBegin, showScramble = true }: {
+export function SolveRange({ view, workspace, onBegin, showScramble = true, timerScramble }: {
   view: ReturnType<VideoWorkspace['getSnapshot']>;
   workspace: VideoWorkspace;
   onBegin: () => void;
   showScramble?: boolean;
+  timerScramble?: string;
 }) {
   const t = useT();
   const { solveStart, solveEnd, duration, thumbnails, position, sourceFps } = view;
   const start = t('开始', 'Start');
   const end = t('结束', 'End');
   return <section className="video-recon-setup">
-    <div className="video-recon-section-heading">
-      <h3>{t('选择还原区间', 'Select the solve range')}</h3>
-      <span className="video-recon-muted">{timecode(solveStart)} → {timecode(solveEnd)}</span>
-    </div>
     <VideoTrimTimeline total={duration} start={solveStart} end={solveEnd} position={position}
       timeLabel={timecode(position)} step={1 / (sourceFps || 30)}
       labels={{ start, end, seek: t('视频进度', 'Video position') }}
@@ -56,18 +53,18 @@ export function SolveRange({ view, workspace, onBegin, showScramble = true }: {
           onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
       </label>
     </div>
+    {timerScramble && <label className="video-recon-scramble-toggle">
+      <input type="checkbox" checked={view.initialScramble === timerScramble}
+        onChange={event => workspace.setScramble(event.currentTarget.checked ? timerScramble : '')} />
+      {t('使用计时器当前打乱', 'Use the current timer scramble')}
+    </label>}
     {showScramble && <label className="video-recon-field">{t('打乱（选填）', 'Scramble (optional)')}
       <input type="text" value={view.initialScramble} onChange={event => workspace.setScramble(event.currentTarget.value)}
         autoComplete="off" autoCapitalize="none" spellCheck={false} />
     </label>}
-    <div className="video-recon-section-heading">
-      {view.initialScramble.trim() && <p className="video-recon-muted">
-        {t('区间开头需包含第一步之前的清晰魔方画面。', 'Include a clear view of the cube before the first move.')}
-      </p>}
-      <button type="button" className="btn-primary" onClick={onBegin}
-        disabled={view.status !== 'ready' || view.cropLoading || !!view.cropPreview}>
-        {t('开始复盘', 'Reconstruct')}
-      </button>
-    </div>
+    <button type="button" className="btn-primary video-recon-start" onClick={onBegin}
+      disabled={view.status !== 'ready' || view.cropLoading || !!view.cropPreview}>
+      {t('开始复盘', 'Reconstruct')}
+    </button>
   </section>;
 }

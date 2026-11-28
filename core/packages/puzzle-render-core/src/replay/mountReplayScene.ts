@@ -18,7 +18,7 @@ export function mountReplayScene(host: HTMLElement, object: Object3D, {
   framingSize = SIZE * 3,
   sceneRotation = HOME_SCENE_ROT,
   wrapLights = false,
-}: ReplaySceneOptions = {}): { invalidate(): void; dispose(): void } {
+}: ReplaySceneOptions = {}): { invalidate(): void; capture(size: number): HTMLCanvasElement; dispose(): void } {
   const ownerWindow = host.ownerDocument.defaultView;
   if (!ownerWindow) throw new Error('The player needs a browser document');
   const view = ownerWindow;
@@ -118,7 +118,12 @@ export function mountReplayScene(host: HTMLElement, object: Object3D, {
         canvas.style.cursor = 'grab';
       }, listeners);
     }
-    return { invalidate, dispose };
+    return { invalidate, dispose, capture(size) {
+      // Offline encoding runs on media time and can draw many frames in one animation tick.
+      if (canvas.width !== size || canvas.height !== size) resize(size / renderer.getPixelRatio(), size / renderer.getPixelRatio());
+      renderer.render(scene, camera);
+      return canvas;
+    } };
   } catch (error) {
     dispose();
     throw error;

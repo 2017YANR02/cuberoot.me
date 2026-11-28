@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Check, Copy, ExternalLink } from '@app-foundation/icons/lucide';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ExternalLink } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import { ReconNotationBlock } from '@/components/ReconNotationBlock';
-import { Tooltip } from '@/components/Tooltip';
-import { useCopy } from '@/hooks/useCopy';
+import { ReconNotationToolbar, ReconSourceText, ReconStageSolver, type NotationView } from '@/components/recon/ReconNotationToolbar';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { buildCaptionHeader } from '@/lib/recon-stats';
@@ -14,16 +13,22 @@ import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { checkReconCompletion } from '@cuberoot/shared/recon-completion';
 import { orientedFaceColors } from '@cuberoot/shared/timer';
+import { formatReconLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { Quaternion } from '@/lib/video-recon/engine/cube-motion';
 import { openingGripView } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import {
-  analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline, type VideoSolveObservation,
+  analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationRanges, videoNotationTimeline, type VideoSolveObservation,
 } from '@/lib/video-recon/solve-analysis';
 
+import { measuredGestureTimes } from '@/lib/video-recon/gesture-times';
+import { findTokenPositions } from '@/lib/recon-alg-utils';
+import type { CaptionCue } from '@/lib/video-tools/recon-captions';
+
 export interface VerifiedVideoDraft {
+  cues?: CaptionCue[];
   solution: string;
   inferredScramble?: string;
 }
@@ -39,17 +44,20 @@ export interface VideoSolveAnalysisProps {
   position: number;
   onSeek: (timestamp: number) => void;
   onOpeningView: (view: Quaternion) => void;
+  onAnalysisResolved?: (verified: boolean) => void;
   inferredScramble?: boolean;
   draftTarget?: {
     scramble: string;
-    onReady?: (draft: VerifiedVideoDraft) => void;
+    onReady?: (draft?: VerifiedVideoDraft) => void;
     onApply?: (draft: VerifiedVideoDraft) => void;
   };
 }
 
 type Analysis = Awaited<ReturnType<typeof analyzeVideoSolve>>;
 
-export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView, draftTarget, inferredScramble }: VideoSolveAnalysisProps) {
+export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView, onAnalysisResolved, draftTarget, inferredScramble,
+  sourceAlgorithm, fallbackNotation,
+}: VideoSolveAnalysisProps & { sourceAlgorithm: string; fallbackNotation?: ReactNode }) {
   const t = useT();
   const language = useLang();
   const observation = useMemo(() => observeVideoSolve(scramble, steps, measured, fps, start, end, clockFps),
@@ -60,7 +68,10 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
     observation: VideoSolveObservation; grip?: string; language: typeof language; value?: Analysis;
     draftScramble?: string; draft?: VerifiedVideoDraft; inferred?: boolean; verifiedInferredScramble?: string;
   }>();
-  const { copiedKey, copy } = useCopy();
+  const imageRef = useRef<HTMLDivElement>(null);
+  const [selectedView, setSelectedView] = useState<{ observation: VideoSolveObservation; view: NotationView }>();
+  const [crossChoice, setCrossChoice] = useState<{ analysis: NonNullable<Analysis>; index: number }>();
+  const notationView = selectedView?.observation === observation ? selectedView.view : 'recon';
   const draftScramble = draftTarget?.scramble;
   const current = analysis?.observation === observation && analysis.grip === selection && analysis.language === language
     && analysis.draftScramble === draftScramble && analysis.inferred === inferredScramble
@@ -90,21 +101,67 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
           }
         }
       }
+      if (draft && value) {
+        const { result } = value;
+        const gestureTimes = measuredGestureTimes(steps, measured, start, clockFps ?? fps);
+        const ranges = new Map(videoNotationRanges(result, 0).map(range => [range.offset, range]));
+        let offset = 0;
+        const stages = result.text.split('\n').flatMap(text => {
+          const marks = findTokenPositions(text).map(token => {
+            const range = ranges.get(offset + token.end);
+            if (!range) return null;
+            const at = gestureTimes.get(range.startMs)?.start ?? start + range.startMs / 1000;
+            const until = gestureTimes.get(range.timestampMs)?.end ?? start + range.timestampMs / 1000;
+            return { start: at, end: until > at ? until : undefined, commit: until === at };
+          });
+          offset += text.length + 1;
+          if (/\/\/\s*(?:insp(?:ection)?|观察)\s*$/i.test(text)) return [];
+          const observed = marks.filter(m => m !== null);
+          if (!observed.length) return [];
+          return [{ text, marks, start: Math.min(...observed.map(m => m.start)),
+            end: Math.max(...observed.map(m => m.end ?? m.start)) }];
+        });
+        const ordered = stages.flatMap(stage => stage.marks).filter(mark => mark !== null);
+        for (let i = 0; i + 1 < ordered.length; i++) {
+          const mark = ordered[i], next = ordered[i + 1];
+          if (mark.end !== undefined && next.start > mark.start) mark.end = Math.min(mark.end, next.start);
+        }
+        // Include the last commit frame. Line-to-line cuts follow the next stage's first observed turn.
+        if (stages.length === result.lines.length) draft.cues = stages.map((stage, i) => ({
+          ...stage, end: Math.min(stages[i + 1]?.start ?? end, stage.end + 1 / fps),
+        }));
+      }
       if (active) setAnalysis({ observation, grip: selection, language, value, draftScramble, draft, inferred: inferredScramble, verifiedInferredScramble });
     }).catch(() => {
       if (active) setAnalysis({ observation, grip: selection, language, draftScramble, inferred: inferredScramble });
     });
     return () => { active = false; };
-  }, [observation, selection, language, draftScramble, inferredScramble]);
+  }, [observation, selection, language, draftScramble, inferredScramble, start, end, fps, steps, measured, clockFps]);
 
-  const verifiedDraft = current?.draft;
+  const value = current?.value;
+  const { crossNotation, method, solved, fallback } = value ?? {};
+  const crossIndex = crossChoice && crossChoice.analysis === value ? crossChoice.index : crossNotation?.preferred ?? 0;
+  const result = crossNotation?.variants[crossIndex] ?? value?.result;
+  const verifiedDraft = useMemo(() => {
+    const draft = current?.draft;
+    if (!draft || !result || draft.solution === result.text || !crossNotation) return draft;
+    // The selected spelling has identical turn boundaries and stage states.
+    return { ...draft, solution: result.text, cues: draft.cues?.map((cue, index) =>
+      index === crossNotation.lineIndex ? { ...cue, text: formatReconLine(result.lines[index]) } : cue) };
+  }, [current?.draft, result, crossNotation]);
+  const verified = !!current?.value?.solved && (draftScramble === undefined || !!verifiedDraft);
+  useEffect(() => {
+    if (current) onAnalysisResolved?.(verified);
+  }, [current, verified, onAnalysisResolved]);
   const onDraftReady = draftTarget?.onReady;
   const onDraftApply = draftTarget?.onApply;
+  const applyButton = onDraftApply && verifiedDraft && <button type="button" className="btn-primary" onClick={() => onDraftApply(verifiedDraft)}>
+    {t('使用', 'Apply')}
+  </button>;
   useEffect(() => {
-    if (verifiedDraft) onDraftReady?.(verifiedDraft);
+    onDraftReady?.(verifiedDraft);
   }, [verifiedDraft, onDraftReady]);
 
-  const { result, method, solved, fallback } = current?.value ?? {};
   const openingRotation = selection ?? result?.openingRotation;
   const openingPose = observation.opening?.pose.rotation;
   useEffect(() => {
@@ -118,8 +175,9 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   const displayScramble = current?.verifiedInferredScramble ?? result?.scramble ?? '';
   const captionHeader = useMemo(() => result ? buildCaptionHeader(result.text, result.seconds, '3x3') : '', [result]);
   const clipboard = result ? [captionHeader, displayScramble, result.text].filter(Boolean).join('\n') : '';
-  const copied = copiedKey === clipboard;
-  const copyLabel = t('复制分段复盘', 'Copy stage breakdown');
+  const sourceText = [scramble, sourceAlgorithm].filter(Boolean).join('\n');
+  const canSolve = Boolean(displayScramble.trim());
+  const view = notationView === 'solver' && !canSolve ? 'recon' : notationView;
   let editorHref: string | undefined;
   if (!draftTarget && result && displayScramble && displayMethod && solved && (!inferredScramble || current?.verifiedInferredScramble)) {
     const params = new URLSearchParams(buildReconSubmitQuery('3x3', inferredScramble ? '' : displayScramble, result.text, { method: displayMethod }));
@@ -129,19 +187,36 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   function applyOpeningGrip(rotation: string) {
     setOpeningSelection({ observation, rotation });
   }
+  const options = useMemo(() => videoGripOptions(observation.centers), [observation.centers]);
+  const initial = observation.estimatedGrip;
+  const choice = options.find(option => option.grip.rotation === (openingRotation ?? initial?.rotation));
+  const selected = choice?.grip ?? initial;
+  const openingOrientation = observation.opening && selected ? (colors?: string) => (
+    <span className="video-recon-grip-controls">
+      <CubeOrientationSelect value={choice?.value ?? ''} triggerColors={colors} variant="plain"
+        ariaLabel={t('起手朝向', 'Opening orientation')} layout="grid"
+        onChange={value => {
+          const grip = options.find(option => option.value === value)?.grip;
+          if (grip) applyOpeningGrip(grip.rotation);
+        }} />
+      <button type="button" className="recon-annotation-badge" aria-label={t('转体 90°（y）', 'Rotate 90° (y)')} onClick={() => {
+        const { U, F } = orientedFaceColors(`${selected.rotation} y`);
+        const next = playerGrip(U, F);
+        if (next) applyOpeningGrip(next.rotation);
+      }}>y</button>
+    </span>
+  ) : undefined;
   return <div className="video-recon-notation">
-    {observation.opening && observation.estimatedGrip ? (
-      <OpeningGrip key={`${scramble}/${start}/${end}/${observation.opening.frame}`}
-        initial={observation.estimatedGrip} rotation={openingRotation} centers={observation.centers}
-        onSelect={applyOpeningGrip} />
-    ) : <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
+    {!result?.text && openingOrientation?.()}
+    {!openingOrientation && <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
     {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}
     {current && !result && <span role="status" className="video-recon-muted">{t('无法生成局面一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
+    {current && !result && fallbackNotation}
     {draftTarget && solved && !verifiedDraft && <span role="status" className="video-recon-muted">
       {t('这份解法与打乱未通过还原校验。', 'The scramble and solution could not be verified together.')}
     </span>}
     {result && <>
-      {fallback && <span className="video-recon-muted">{t('转体换算未通过局面核对，以下使用固定朝向。',
+      {fallback && <span className="video-recon-muted">{t('转体改写未通过状态校验，以下使用固定朝向。',
         'The reoriented moves failed state verification. The steps below use a fixed orientation.')}</span>}
       {!fallback && observation.uncertain.length > 0 && <details className="video-recon-muted">
         <summary>{t('有些区间的转体待核对', 'Some intervals need rotation review')}</summary>
@@ -153,56 +228,36 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
           ))}
         </div>
       </details>}
-      <div className="detail-scramble-solution">
-        <ReconNotationBlock captionHeader={captionHeader} scramble={displayScramble} scrambleCubeOrder={3}
+      <ReconNotationToolbar view={view} canSolve={canSolve} onChange={view => setSelectedView({ observation, view })}
+        formattedText={clipboard} sourceText={sourceText} copyKey={view === 'source' ? sourceText : clipboard}
+        imageRef={imageRef} imageName="video-recon" />
+      {view === 'source' && <ReconSourceText text={sourceText} />}
+      {view === 'solver' && <ReconStageSolver scramble={displayScramble} lang={language} />}
+      <div className="detail-scramble-solution" ref={imageRef} hidden={view !== 'recon'}>
+        <ReconNotationBlock openingOrientation={openingOrientation} captionHeader={captionHeader} scramble={displayScramble} scrambleCubeOrder={3}
           displayScramble={displayScramble} solutionText={result.text} displayText={result.text} rawDisplayText={result.text}
           solve={{ event: '3x3' }} playback={{ offset: activeOffset, onSeek: offset => {
             const move = timeline.findLast(item => item.offset <= offset);
             onSeek(start + (move?.timestampMs ?? openingMs) / 1000);
           } }} />
       </div>
-      <div className="video-recon-actions">
-        {onDraftApply && verifiedDraft && <button type="button" className="btn-primary" onClick={() => onDraftApply(verifiedDraft)}>
-          {t('使用', 'Apply')}
-        </button>}
-        <Tooltip content={copied ? t('已复制', 'Copied') : copyLabel}>{tip =>
-          <button {...tip} type="button" className="playback-bar-btn" aria-label={copyLabel} onClick={() => copy(clipboard, clipboard)}>
-            {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
-          </button>
-        }</Tooltip>
+      {(applyButton || editorHref || (crossNotation && view === 'recon')) && <div className="video-recon-actions">
+        {applyButton}
+        {crossNotation && value && view === 'recon' && (
+          <select className="btn-secondary" value={crossIndex} aria-label={t('十字记法', 'Cross notation')}
+            onChange={event => setCrossChoice({ analysis: value, index: Number(event.currentTarget.value) })}>
+            <option value={0}>{t('原记法', 'Original notation')}</option>
+            {crossNotation.variants.slice(1).map((variant, index) => (
+              <option key={variant.text} value={index + 1}>{crossNotation.variants.length === 2
+                ? t('等价改写', 'Equivalent notation')
+                : variant.lines[crossNotation.lineIndex].moves.join(' ')}</option>
+            ))}
+          </select>
+        )}
         {editorHref && <AppLink className="btn-secondary" href={editorHref} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} aria-hidden />{t('在复盘中编辑', 'Edit in Reconstruction')}
         </AppLink>}
-        <span className="sr-only" role="status">{copied && t('已复制', 'Copied')}</span>
-      </div>
+      </div>}
     </>}
-  </div>;
-}
-
-function OpeningGrip({ initial, rotation, centers, onSelect }: {
-  initial: NonNullable<VideoSolveObservation['estimatedGrip']>;
-  rotation?: string;
-  centers: VideoSolveObservation['centers'];
-  onSelect: (rotation: string) => void;
-}) {
-  const t = useT();
-  const options = useMemo(() => videoGripOptions(centers), [centers]);
-  const choice = options.find(option => option.grip.rotation === (rotation ?? initial.rotation));
-  const selected = choice?.grip ?? initial;
-  const label = t('起手朝向', 'Opening orientation');
-  return <div className="video-recon-actions">
-    <div className="video-recon-inline-label">
-      <span>{label}</span>
-      <CubeOrientationSelect value={choice?.value ?? ''} ariaLabel={label} layout="grid" className="video-recon-grip-trigger"
-        onChange={next => {
-          const grip = options.find(option => option.value === next)?.grip;
-          if (grip) onSelect(grip.rotation);
-        }} />
-    </div>
-    <button type="button" className="btn-secondary" aria-label={t('转体 90°（y）', 'Rotate 90° (y)')} onClick={() => {
-      const { U, F } = orientedFaceColors(`${selected.rotation} y`);
-      const next = playerGrip(U, F);
-      if (next) onSelect(next.rotation);
-    }}>y</button>
   </div>;
 }

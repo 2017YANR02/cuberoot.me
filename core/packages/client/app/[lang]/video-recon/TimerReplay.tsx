@@ -8,7 +8,7 @@ import { buildCubeReplayTimelines, projectedCubeAtFrame } from '@/lib/video-reco
 import { poseIsFlagged, projectedWireframe } from '@/lib/video-recon/engine/reconstruction-view';
 import { timerReplayFrameId, type TimerReplay as ReplayClip } from '@/lib/video-recon/engine/timer-replay';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
-import { ProjectedCube } from './ProjectedCube';
+import { ProjectedCube, useVideoCubeEngine } from './ProjectedCube';
 import { ReviewControls } from './ReviewControls';
 
 export type ReplaySeek = { timestamp: number; revision: number };
@@ -24,6 +24,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
   sourceOnly?: boolean;
 }) {
   const t = useT();
+  const [cubeEngine, setCubeEngine] = useVideoCubeEngine();
   const canvas = useRef<HTMLCanvasElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const start = clip.frames[0]?.timestamp ?? clip.start;
@@ -181,7 +182,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
         <canvas ref={canvas} aria-label={t('回放相机画面', 'Replay camera frame')} />
         {drawError && <p role="status">{t('无法显示此帧的相机画面。', 'The camera image is unavailable for this frame.')}</p>}
       </div>}
-      {!sourceOnly && <ProjectedCube pose={pose} sourceTimestamp={current?.timestamp ?? position}
+      {!sourceOnly && <ProjectedCube engine={cubeEngine} onEngineChange={setCubeEngine} pose={pose} sourceTimestamp={current?.timestamp ?? position}
         solved={solved} steps={steps} timeline={timeline} sourceFrame={frame} sourceFps={sourceFps} clockFps={clip.clockFps} playbackSpeed={playing ? speed : 1}
         analysis={showAnalysis ? { scramble, steps, measured, fps:sourceFps, clockFps:clip.clockFps,
           start:solveStart, end:stop, position, onSeek:seek, inferredScramble: !!reconstruction.result?.inferred_scramble } : undefined} />}

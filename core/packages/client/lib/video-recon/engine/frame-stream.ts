@@ -110,7 +110,7 @@ export async function openVideoFile(file: File) {
       throw new Error(
         "This browser cannot decode this video. Try an H.264 MP4.",
       );
-    const duration = await track.computeDuration();
+    const [duration, width, height] = await Promise.all([track.computeDuration(), track.getDisplayWidth(), track.getDisplayHeight()]);
     const firstTimestamp = await track.getFirstTimestamp();
     const metrics = await track.computeFrameRateMetrics();
     const sink = new CanvasSink(track, { poolSize: 2 });
@@ -123,15 +123,18 @@ export async function openVideoFile(file: File) {
         : metrics.frameRateIsConstant
           ? metrics.averageFrameRate
           : 0;
-    let selector = new FrameSelector(samplingFps);
+    let selector: FrameSelector | undefined = new FrameSelector(samplingFps);
+    let minimumTimestamp = 0;
     let closed = false;
     const prefetch = new FramePrefetcher(async () => {
-      const activeIterator = iterator,
-        activeSelector = selector;
+      const activeIterator = iterator;
+      const activeSelector = selector;
+      const start = minimumTimestamp;
       while (!closed) {
         const { value, done } = await activeIterator.next();
         if (done || closed) return null;
-        if (value.timestamp < 0 || !activeSelector.accept(value.timestamp))
+        if (value.timestamp < start - 0.0000001 || value.timestamp < 0 ||
+          (activeSelector && !activeSelector.accept(value.timestamp)))
           continue;
         const bitmap = await createImageBitmap(value.canvas);
         return {
@@ -144,6 +147,7 @@ export async function openVideoFile(file: File) {
     });
     return {
       duration,
+      videoSize: { width, height },
       sourceFps: metrics.averageFrameRate,
       next: () => prefetch.next(),
       async preview(timestamp: number, thumbnail = false) {
@@ -167,11 +171,12 @@ export async function openVideoFile(file: File) {
         }
         return null;
       },
-      seek(timestamp: number) {
+      seek(timestamp: number, { fullRate = false } = {}) {
         prefetch.reset();
         void iterator.return().catch(() => {});
         iterator = sink.canvases(timestamp);
-        selector = new FrameSelector(samplingFps, 30, timestamp);
+        minimumTimestamp = timestamp;
+        selector = fullRate ? undefined : new FrameSelector(samplingFps, 30, timestamp);
       },
       close() {
         closed = true;

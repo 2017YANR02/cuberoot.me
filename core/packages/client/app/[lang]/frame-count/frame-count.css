@@ -202,10 +202,23 @@
   justify-content: center;
 }
 
+.fc-video-surface {
+  --fc-video-fit-width: min(100%, calc(100cqh * var(--fc-video-aspect, 100)));
+  --fc-video-fit-height: min(100%, calc(100cqw / var(--fc-video-aspect, 0.01)));
+  position: relative;
+  container-type: size;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fc-video-surface > .lesson-video-controls { z-index: 3; }
+.fc-video-surface .lesson-video-toolbar { height: auto; min-height: 40px; flex-wrap: wrap; }
+
 /* 视频包装器 — 填满 video-zone 剩余高度, 视频按 contain 居中, 只可能单轴有黑边 */
 .fc-video-wrapper {
   position: relative;
-  container-type: size;
   width: 100%;
   flex: 1;
   min-height: 0;
@@ -219,8 +232,8 @@
   position: absolute;
   inset: 0;
   margin: auto;
-  width: min(100%, calc(100cqh * var(--fc-video-aspect, 100)));
-  height: min(100%, calc(100cqw / var(--fc-video-aspect, 0.01)));
+  width: var(--fc-video-fit-width);
+  height: var(--fc-video-fit-height);
 }
 
 .fc-video-wrapper.fc-pannable { cursor: grab; }
@@ -431,6 +444,11 @@
 .fc-file-input { display: none; }
 
 /* ── 控制栏 ── */
+.fc-seek-filmstrip { padding: 4px 14px; }
+.fc-seek-filmstrip .video-timeline-trimmer { margin: 0; }
+.fc-seek-filmstrip .video-timeline-time { bottom: 2px; transform: none; font-size: .65rem; }
+.fc-seek-filmstrip[data-trailing=true] .video-timeline-time { transform: translateX(-100%); }
+.fc-seek-filmstrip .video-source-filmstrip { height: 100%; }
 .fc-controls-wrap {
   padding: 0.75rem 1rem;
   flex-shrink: 0;
@@ -533,57 +551,6 @@
   border-radius: 1px;
   z-index: 5;
 }
-
-/* Controls */
-.fc-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.fc-ctrl-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px; height: 32px;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.fc-ctrl-btn:hover { background: color-mix(in srgb, var(--foreground) 12%, transparent); color: var(--foreground); border-color: color-mix(in srgb, var(--foreground) 20%, transparent); }
-.fc-ctrl-btn:active { transform: scale(0.92); }
-.fc-ctrl-btn svg { width: 14px; height: 14px; }
-.fc-ctrl-btn.play-btn { width: 38px; height: 38px; border-radius: 50%; }
-.fc-ctrl-btn.play-btn svg { width: 16px; height: 16px; }
-
-.fc-ctrl-sep {
-  width: 1px; height: 20px;
-  background: color-mix(in srgb, var(--foreground) 10%, transparent);
-  margin: 0 6px;
-}
-
-.fc-rate-group {
-  display: flex;
-  gap: 2px;
-}
-
-.fc-rate-btn {
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 0.7rem;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.fc-rate-btn:hover { color: var(--muted-foreground); border-color: color-mix(in srgb, var(--foreground) 20%, transparent); }
-.fc-rate-btn.active { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 15%, transparent); border-color: color-mix(in srgb, var(--foreground) 30%, transparent); font-weight: 600; }
 
 .fc-ctrl-info {
   font-size: 0.8rem;
@@ -1513,28 +1480,6 @@
     font-size: 16px !important;
   }
 
-  /* 播放控制 + 倍速 合并为一行 (原本会 flex-wrap 成两行) */
-  .fc-controls {
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 2px;
-  }
-  .fc-controls .fc-ctrl-btn {
-    width: 28px;
-    height: 28px;
-  }
-  .fc-controls .fc-ctrl-btn.play-btn {
-    width: 34px;
-    height: 34px;
-  }
-  .fc-controls .fc-ctrl-sep {
-    margin: 0 3px;
-  }
-  .fc-controls .fc-rate-btn {
-    padding: 3px 5px;
-    font-size: 0.65rem;
-  }
-
   /* 手机窄屏: popover 改用视口定位, 避免被父容器 overflow 截断 / 右侧越界 */
   .fc-info-popover {
     min-width: 240px;
@@ -1575,9 +1520,5 @@
   .fc-drop-sub { display: none; }
   .fc-video-toolbar { flex-wrap: nowrap; overflow-x: auto; flex-shrink: 0; }
   .fc-video-label { max-width: 90px; }
-  .fc-controls { flex-wrap: wrap; gap: 2px; }
-  .fc-controls .fc-ctrl-btn,
-  .fc-controls .fc-ctrl-btn.play-btn { width: 44px; height: 44px; }
-  .fc-controls .fc-rate-group { flex-basis: 100%; justify-content: center; }
-  .fc-controls .fc-ctrl-sep { display: none; }
+
 }

@@ -12,9 +12,10 @@ const videoEnd = form.indexOf('<div className="submit-row">', videoStart);
 const videoRegion = form.slice(videoStart, videoEnd);
 
 describe('recon submit video upload', () => {
-  it('keeps the save checkbox member-only and retains the existing URL fields', () => {
+  it('offers the original video to members and retains the existing URL fields', () => {
     expect(form).toContain('const { isMember } = useMembership()');
-    expect(videoRegion).toMatch(/\{isMember && <div[\s\S]*?type="checkbox"[\s\S]*?保存视频到本站/);
+    expect(videoRegion).toContain('isMember && localVideo && <button');
+    expect(videoRegion).toContain('作为本次复盘视频');
     expect(videoRegion.indexOf('<textarea')).toBeGreaterThan(videoRegion.indexOf('splitReconVideoGroups'));
     expect(videoRegion).toContain("'recon-video-urls'");
   });

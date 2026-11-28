@@ -1,4 +1,5 @@
 import { mergeAdjacentMoves, toMoveStringStrict } from '@cuberoot/shared/alg-notation';
+import { findCrossLineIndex, outerTurnSequence } from '@cuberoot/shared/recon-ground-truth';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import { SLICE_PAIRS } from '@cuberoot/shared/recon-slice';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
@@ -13,6 +14,7 @@ import { centerColorsForScramble, type CubeColor } from './engine/cube-colors';
 import { CAMERA_ORIENTATION, CUBE_GRIP_ROTATIONS, initialGripMoves, relativeCubeGrip } from './engine/cube-orientation';
 import type { MoveStep } from './engine/move-search-types';
 import type { MeasuredCubeFrame } from './engine/projected-cube';
+import type { KPuzzle } from 'cubing/kpuzzle';
 
 export const VIDEO_FACES: readonly CubeFace[] = ['U', 'R', 'F', 'D', 'L', 'B'];
 const faceAtAxis = [['L', 'R'], ['F', 'B'], ['D', 'U']] as const;
@@ -145,11 +147,11 @@ export async function matchVideoOpeningScramble(recognized: string, compact: str
 
 /** Keep the renderer's text offsets paired with recorded frames. A compact
  * gesture can contain multiple notation tokens that share one video frame. */
-export function videoNotationTimeline(result: VideoReconText, openingMs: number) {
+export function videoNotationRanges(result: VideoReconText, openingMs: number) {
   const tokens = findTokenPositions(result.text);
   const inspectionLength = findTokenPositions(result.inspection).length;
   const timeline = tokens.slice(0, inspectionLength).map(token => ({
-    offset: token.end, timestampMs: result.inspectionEndMs ?? openingMs,
+    offset: token.end, startMs: 0, timestampMs: result.inspectionEndMs ?? openingMs,
   }));
   let index = inspectionLength;
   for (const line of result.lines) {
@@ -158,13 +160,17 @@ export function videoNotationTimeline(result: VideoReconText, openingMs: number)
       const range = line.moveRanges?.[moveIndex];
       if (range) {
         for (const token of tokens.slice(index, index + length)) {
-          timeline.push({ offset: token.end, timestampMs: range.endTs });
+          timeline.push({ offset: token.end, startMs: range.ts, timestampMs: range.endTs });
         }
       }
       index += length;
     }
   }
   return timeline;
+}
+
+export function videoNotationTimeline(result: VideoReconText, openingMs: number) {
+  return videoNotationRanges(result, openingMs).map(({ offset, timestampMs }) => ({ offset, timestampMs }));
 }
 
 const COMPOUND_SLICE_WINDOW_MS = 120;
@@ -322,16 +328,90 @@ function rewriteVideoNotation(result: ReconTextResult) {
   return { ...result, lines, rotations };
 }
 
+function frontBackTurns(moves: readonly string[]) {
+  return moves.filter(move => /^[fb]/i.test(move)).length;
+}
+
 function scoreOpeningGrip(result: ReconTextResult) {
   const movesFor = (line: ReconTextLine) => toMoveStringStrict(line.moves.join(' ')).split(' ').filter(Boolean);
-  const frontBack = (moves: readonly string[]) => moves.filter(move => /^[fb]/i.test(move)).length;
   const lastLayer = result.lines
     .filter(line => line.key !== 'tail' && (line.kind === 'oll' || line.kind === 'pll'))
     .map(movesFor);
   const lastFormula = lastLayer.findLast(moves => moves.some(move => !/^[Uxyz](?:2'?|')?$/.test(move)));
   if (!lastFormula) return;
-  return [frontBack(lastFormula), frontBack(lastLayer.flat()),
-    frontBack(result.lines.filter(line => line.kind === 'f2l').flatMap(movesFor))];
+  return [frontBackTurns(lastFormula), frontBackTurns(lastLayer.flat()),
+    frontBackTurns(result.lines.filter(line => line.kind === 'f2l').flatMap(movesFor))];
+}
+
+function withVideoLines(result: VideoReconText, lines: ReconTextLine[]): VideoReconText {
+  return { ...result, lines, text: [
+    ...(result.inspection ? [`${result.inspection} // insp`] : []),
+    ...lines.map(formatReconLine),
+  ].join('\n') };
+}
+
+/** Move the wide notation within one cross stage, retaining the recorded
+ * turn order and the full state, including orientation, at the stage cut. */
+function crossWideNotation(result: VideoReconText, observation: VideoSolveObservation, puzzle: KPuzzle) {
+  const lineIndex = result.lines.findIndex(line => findCrossLineIndex(formatReconLine(line)) >= 0);
+  const line = result.lines[lineIndex];
+  const ranges = line?.moveRanges;
+  if (!line || !ranges || ranges.length !== line.moves.length || line.libraryCorrection || line.algorithmGroups?.length) return;
+  const { moves } = line;
+  const wideAt = moves.findIndex(token => /^(?:[rl]|[RL]w)'?$/.test(token));
+  const ordinary = /^[UDFBLR](?:2'?|')?$/;
+  if (wideAt < Math.max(2, moves.length - 2) || moves.some((token, i) => i !== wideAt && !ordinary.test(token))) return;
+
+  const wide = moves[wideAt];
+  const { moves: [outer], rotation: [turn] } = outerTurnSequence([wide]);
+  const frame = facePermFor(turn);
+  const variants = [result];
+  const supported: number[] = [];
+  let originalSupported = false;
+  const tolerance = Math.min(80, 2 * observation.frameMs);
+  const physicalFrame = facePermFor(result.openingRotation);
+  for (let i = 0; i + 1 < wideAt; i++) {
+    if (moves[i] !== outer || line.wasteGroups?.slice(i, wideAt + 1).some(group => group != null)) continue;
+    const from = ranges[i].ts;
+    const through = ranges[wideAt].endTs;
+    const events = observation.core.events.filter(event => event.tMs >= from - tolerance && (event.startMs ?? event.tMs) <= through + tolerance);
+    if (events.some(event => event.regripOnly && event.tMs > ranges[i].endTs && event.tMs < ranges[wideAt].ts)) continue;
+
+    const middle = conjugateSequence(moves.slice(i + 1, wideAt).join(' '), frame);
+    if (!middle) continue;
+    const rewritten = [wide, ...middle.split(' '), outer];
+    let original = puzzle.identityTransformation();
+    let alternative = original;
+    const matches = rewritten.every((move, index) => {
+      original = original.applyMove(moves[i + index]);
+      alternative = alternative.applyMove(move);
+      return alternative.isIdentical(index === rewritten.length - 1 ? original : original.applyMove(turn));
+    });
+    if (!matches) continue;
+
+    const tokens = [...moves.slice(0, i), ...rewritten, ...moves.slice(wideAt + 1)];
+    const lines = [...result.lines];
+    lines[lineIndex] = { ...line, moves: tokens, moveRanges: ranges.map((range, j) => ({ ...range, token: tokens[j] })) };
+    const variantIndex = variants.push(withVideoLines(result, lines)) - 1;
+
+    // Use a clear layer-coupled turn to choose among competing spellings.
+    const event = events[0];
+    if (observation.opening && lineIndex === 0 && result.inspection === result.openingRotation && events.length === 1
+      && event.regripOnly === false && Math.abs(event.angleRad - Math.PI / 2) < 1e-3
+      && conjugateVideoMove(event.token, physicalFrame) === turn
+      && !observation.uncertain.some(gap => gap.startMs <= through && gap.endMs >= from)) {
+      const nearEarlyTurn = Math.abs(event.tMs - ranges[i].endTs) <= tolerance;
+      const nearLateTurn = Math.abs(event.tMs - through) <= tolerance;
+      if (nearEarlyTurn && !nearLateTurn) supported.push(variantIndex);
+      if (nearLateTurn && !nearEarlyTurn) originalSupported = true;
+    }
+  }
+  if (variants.length <= 1) return;
+  const simpler = variants.length === 2 && frontBackTurns(variants[1].lines[lineIndex].moves) < frontBackTurns(moves);
+  // A unique, simpler equivalent is the written solution. The original
+  // remains available when reviewing the recorded grip and layer motion.
+  const preferred = simpler ? 1 : !originalSupported && supported.length === 1 ? supported[0] : 0;
+  return { variants, preferred, lineIndex };
 }
 
 export async function analyzeVideoSolve(observation: VideoSolveObservation, grip: string | undefined, language: 'zh' | 'en') {
@@ -374,10 +454,7 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
       executionMs: null,
       stepMs: line.stepMs !== null && line.stepMs >= Math.floor(frameMs) ? line.stepMs : null,
     }));
-    return { ...result, lines, text: [
-      ...(result.inspection ? [`${result.inspection} // insp`] : []),
-      ...lines.map(formatReconLine),
-    ].join('\n') };
+    return withVideoLines(result, lines);
   };
   const result = await report(text);
   let best = agrees(result) ? result : undefined;
@@ -404,7 +481,10 @@ export async function analyzeVideoSolve(observation: VideoSolveObservation, grip
       }
     }
   }
-  if (best) return { result: best, method, solved, fallback: false };
+  if (best) {
+    const crossNotation = solved ? crossWideNotation(best, observation, puzzle) : undefined;
+    return { result: crossNotation?.variants[crossNotation.preferred] ?? best, method, solved, fallback: false, crossNotation };
+  }
   const fixed = await report({ ...text, core: { ...core, events: [] } });
   if (agrees(fixed)) return { result: fixed, method, solved, fallback: true };
   throw new Error('Reconstruction notation does not reproduce the recognized states');

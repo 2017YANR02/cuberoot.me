@@ -347,12 +347,6 @@
   display: none;
 }
 
-.submit-video-save {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .submit-video-filename {
   overflow-wrap: anywhere;
 }
@@ -1138,6 +1132,7 @@
 
 .settings-dialog .settings-popover-panel.settings-dialog-panel.submit-video-review {
   --video-review-gutter: clamp(12px, 3vw, 32px);
+  scrollbar-gutter: stable;
   height: 100%;
   max-height: none;
   padding: 0 max(var(--video-review-gutter), var(--sar)) max(16px, var(--sab)) max(var(--video-review-gutter), var(--sal));
@@ -1161,3 +1156,33 @@
   padding: 0;
   min-width: 0;
 }
+
+@font-face {
+  font-family: CaptionSilkscreen;
+  src: url('./fonts/silkscreen-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+.recon-caption-monitor { min-width: 0; }
+.recon-caption-viewport { container-type: size; display: grid; place-items: center; }
+.recon-caption-picture, .submit-video-review .video-recon-source-viewport { position: relative; }
+.recon-caption-picture video { max-height: none; }
+.video-recon-stage canvas:is(.recon-caption-layer, .recon-caption-cube-layer) { pointer-events: none; position: absolute; max-height: none; }
+.video-recon-stage canvas.recon-caption-layer { inset: 0; width: 100%; height: 100%; }
+:is(.recon-caption-cube-handle, .recon-caption-text-handle) {
+  position: absolute; padding: 0; border: 0; appearance: none; background: transparent;
+  cursor: grab; touch-action: none; user-select: none;
+}
+.recon-caption-text-handle { min-width: 24px; min-height: 24px; translate: -50% -50%; }
+:is(.recon-caption-cube-handle, .recon-caption-text-handle):active { cursor: grabbing; }
+:is(.recon-caption-cube-handle, .recon-caption-text-handle):focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+.recon-caption-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.recon-caption-fields section { display: grid; min-width: 0; gap: .6rem; padding: 1rem; margin-bottom: .8rem; }
+.recon-caption-fields h3 { font-size: 1rem; margin: 0; }
+.recon-caption-fields label { min-width: 0; }
+.recon-caption-fields textarea { display: block; width: 100%; margin-top: .35rem; box-sizing: border-box; resize: vertical; }
+.recon-caption-editor :is(input[type=number], textarea, select) { padding: .3rem .45rem; color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: .35rem; font: inherit; }
+.recon-caption-editor input[type=number] { width: 5.4em; max-width: 100%; }
+.recon-caption-editor select { max-width: 100%; }
+.recon-caption-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .6rem; }
+.recon-caption-monitor .recon-caption-actions { margin-top: .75rem; }

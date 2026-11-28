@@ -13,6 +13,7 @@ export class FramePresenter {
   private composite?: OffscreenCanvas;
   private reusable: OffscreenCanvas[] = [];
   previewCrop?: SourceCrop;
+  displayCropOverride?: SourceCrop | null;
 
   get snapshot() {
     return this.displayed;
@@ -77,13 +78,14 @@ export class FramePresenter {
     }
     // Only this final blit touches the visible frame. Resizing happens after
     // composition too, so a new source size cannot clear the old view early.
-    const crop = cropPixels(this.previewCrop, width, height);
+    const framing = this.displayCropOverride === undefined ? this.previewCrop : this.displayCropOverride ?? undefined;
+    const crop = cropPixels(framing, width, height);
     const targetWidth = crop?.width ?? width, targetHeight = crop?.height ?? height;
     if (target.width !== targetWidth) target.width = targetWidth;
     if (target.height !== targetHeight) target.height = targetHeight;
     const visible = target.getContext("2d")!;
     visible.globalCompositeOperation = "copy";
-    const sourceCrop = image === this.composite ? crop : cropPixels(this.previewCrop, image.width, image.height);
+    const sourceCrop = image === this.composite ? crop : cropPixels(framing, image.width, image.height);
     if (sourceCrop) {
       visible.drawImage(image, sourceCrop.x, sourceCrop.y, sourceCrop.width, sourceCrop.height,
         0, 0, targetWidth, targetHeight);
@@ -97,6 +99,7 @@ export class FramePresenter {
     this.composite = undefined;
     this.reusable = [];
     this.previewCrop = undefined;
+    this.displayCropOverride = undefined;
     target?.getContext("2d")?.clearRect(0, 0, target.width, target.height);
   }
 }

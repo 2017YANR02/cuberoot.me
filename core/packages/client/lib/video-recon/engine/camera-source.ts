@@ -20,11 +20,11 @@ type ProcessorConstructor = new (options: {
 export type CameraStopReason='ended'|'error';
 
 /** Request permission from the caller's click, before loading the detector. */
-export async function requestVideoCamera(): Promise<MediaStream> {
+export async function requestVideoCamera(deviceId?: string): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access requires HTTPS or localhost.");
   return navigator.mediaDevices.getUserMedia({
     video: {
-      facingMode: "environment",
+      ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" }),
       width: { ideal: 640 },
       height: { ideal: 480 },
       frameRate: { ideal: 30, max: 30 },

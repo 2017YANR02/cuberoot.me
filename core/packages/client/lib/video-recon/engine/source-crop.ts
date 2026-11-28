@@ -24,7 +24,7 @@ export function cropPixels(crop: SourceCrop | undefined, width: number, height: 
 
 /** Display crop for nearly black, opposing bars in a video frame. Require
  * matching widths and a clear transition to the image on both sides. */
-export function detectVideoBars(frame: ImageBitmap): SourceCrop | undefined {
+export function detectVideoBars(frame: ImageBitmap, maxBarFraction = 0.25): SourceCrop | undefined {
   const scale = Math.min(1, 640 / Math.max(frame.width, frame.height));
   const width = Math.max(1, Math.round(frame.width * scale));
   const height = Math.max(1, Math.round(frame.height * scale));
@@ -39,7 +39,7 @@ export function detectVideoBars(frame: ImageBitmap): SourceCrop | undefined {
     const across = horizontal ? height : width;
     // Skip the corners so letterboxing and pillarboxing can be detected independently.
     const start = Math.floor(across / 4), end = Math.ceil(across * 3 / 4);
-    const maxWidth = Math.floor(length / 4);
+    const maxWidth = Math.floor(length * maxBarFraction);
     function darkFraction(line: number) {
       let dark = 0;
       for (let offset = start; offset < end; offset++) {

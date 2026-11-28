@@ -25,6 +25,32 @@ const commit = (frame_index: number, ...state_moves: string[]): MoveStep => ({
 });
 
 describe('video solve reconstruction', () => {
+  it('defaults to the earlier wide turn for the Deqing xcross and preserves the frame ranges', async () => {
+    const scramble = "R2 U' B2 L F2 D F2 D F' D2 B L2 D2 B' U2 B U2 R";
+    const cross = "R U' L' R' F R' U R B Rw' D";
+    const beforeYaw = `${cross} L U' L' L' U' L U B U2' B' U`;
+    const afterYaw = "F' L' U' L F U R' U' R F R' U R U' R' F' L F R F' L' U";
+    const raw = [
+      conjugateSequence(beforeYaw, facePermFor("x'")),
+      conjugateSequence(afterYaw, facePermFor("y' x'")),
+    ].join(' ');
+    const steps = raw.split(' ').map((move, i) => commit(3 + 3 * i, move));
+    const observation = observeVideoSolve(scramble, steps, [], fps, 0, 4.7);
+
+    const analysis = (await analyzeVideoSolve(observation, 'x', 'en'))!;
+    expect(analysis).toMatchObject({ solved: true, fallback: false, crossNotation: { preferred: 1, lineIndex: 0 } });
+    const { result, crossNotation } = analysis;
+    const [original, alternate] = crossNotation!.variants;
+    expect(crossNotation?.variants).toHaveLength(2);
+    expect(result).toBe(alternate);
+    expect(original.lines[0].moves.join(' ')).toBe(cross);
+    expect(result.text).toContain("R U' r' R' D R' F R U L' D // Y xcross (RG)");
+    expect(result.lines.slice(1)).toEqual(original.lines.slice(1));
+    expect(videoNotationTimeline(result, 0).map(({ timestampMs }) => timestampMs))
+      .toEqual(videoNotationTimeline(original, 0).map(({ timestampMs }) => timestampMs));
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution: result.text })).toEqual({ status: 'solved' });
+  });
+
   it('chooses the yaw with fewer last-layer front and back turns and preserves manual orientation', async () => {
     const scramble = "R2 U' B2 L F2 D F2 D F' D2 B L2 D2 B' U2 B U2 R";
     const solve = [

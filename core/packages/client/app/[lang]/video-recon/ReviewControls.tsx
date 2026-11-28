@@ -1,9 +1,12 @@
+import type { ReactNode } from 'react';
 import PlaybackBar, { PlaybackSpeedSelect } from '@cuberoot/timer-ui/PlaybackBar';
+import { VideoFrameStepButtons, type VideoFrameStep } from '@/components/video/VideoFrameStepButtons';
+import { VideoPlaybackControls, type useVideoControlsVisibility } from '@/components/video/VideoPlaybackControls';
 import { useT } from '@/hooks/useT';
 import { PLAYBACK_SPEEDS, type PlaybackSpeed } from '@/lib/video-recon/engine/playback-timing';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 
-interface Props {
+export interface ReviewControlsProps {
   playing: boolean;
   speed: PlaybackSpeed;
   end: number;
@@ -22,7 +25,7 @@ interface Props {
 export function ReviewControls({
   playing, speed, end, position, index, length, origin = 0, label, disabled,
   onPlay, onSpeed, onSeekIndex, onStep,
-}: Props) {
+}: ReviewControlsProps) {
   const t = useT();
   const last = Math.max(0, length - 1);
   return <div className="video-recon-transport" role={label ? 'group' : undefined} aria-label={label}>
@@ -38,4 +41,29 @@ export function ReviewControls({
         skipEnd: t('跳到末尾', 'Skip to end'), scrub: t('拖动播放进度', 'Scrub playback'),
       }} />
   </div>;
+}
+
+export type ReviewPlayback = Omit<ReviewControlsProps, 'onStep'> & {
+  filmstrip?: ReactNode;
+  onStep: (delta: VideoFrameStep) => void;
+};
+
+export function ReviewPlaybackOverlay({ playback, visibility, keepVisible, settingsButton }: {
+  playback: ReviewPlayback;
+  visibility: ReturnType<typeof useVideoControlsVisibility>;
+  keepVisible: boolean;
+  settingsButton?: ReactNode;
+}) {
+  const t = useT();
+  const { playing, speed, index, length, position, end, origin = 0, onPlay, onSeekIndex, onStep, onSpeed } = playback;
+  const last = Math.max(0, length - 1);
+  return <VideoPlaybackControls filmstrip={playback.filmstrip} playing={playing} visibility={visibility} keepVisible={keepVisible}
+    position={index} total={last} step={1} time={`${timecode(position - origin)} / ${timecode(end - origin)}`}
+    onSeek={onSeekIndex} onPlay={onPlay} playDisabled={!last}
+    actions={<>
+      {settingsButton}
+      <VideoFrameStepButtons onStep={onStep} active={!!last && !playback.disabled}
+        atStart={index <= 0} atEnd={index >= last} />
+      <PlaybackSpeedSelect label={t('播放倍速', 'Playback speed')} options={PLAYBACK_SPEEDS} value={speed} onChange={onSpeed} disabled={!length} />
+    </>} />;
 }

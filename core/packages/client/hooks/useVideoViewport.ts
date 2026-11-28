@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type DOMAttributes, type RefObject } from 'react';
 
+import { bindTrackpadZoom } from '@/lib/cube-trackpad';
+
 type Point = { x: number; y: number };
 type View = { zoom: number; pan: Point };
 const DEFAULT_VIEW: View = { zoom: 1, pan: { x: 0, y: 0 } };
@@ -44,9 +46,9 @@ export function useVideoViewport(
 
   useEffect(() => {
     const target = element.current;
-    if (!target || !enabled) return;
+    if (!target || !enabled || cropping) return;
     function onWheel(event: WheelEvent) {
-      if (event.shiftKey || cropping || !target) return;
+      if (event.shiftKey || event.defaultPrevented || !target) return;
       if (wheelZoom === 'modified' && !event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
       event.stopPropagation();
@@ -54,6 +56,17 @@ export function useVideoViewport(
       if (!Number.isFinite(delta) || !delta) return;
       const factor = Math.exp(-Math.max(-100, Math.min(100, delta)) * 0.001);
       scaleFrom(latest.current, latest.current.zoom * factor, anchorAt(target.getBoundingClientRect(), { x: event.clientX, y: event.clientY }));
+    }
+    if (wheelZoom === 'modified') {
+      return bindTrackpadZoom(target, (factor, point) => {
+        if (pinch.current) return; // Touchscreen pinch uses the two touch points below.
+        const bounds = target.getBoundingClientRect();
+        const anchor = anchorAt(bounds, {
+          x: point.clientX ?? bounds.left + bounds.width / 2,
+          y: point.clientY ?? bounds.top + bounds.height / 2,
+        });
+        scaleFrom(latest.current, latest.current.zoom * factor, anchor);
+      }, onWheel);
     }
     target.addEventListener('wheel', onWheel, { passive: false });
     return () => target.removeEventListener('wheel', onWheel);

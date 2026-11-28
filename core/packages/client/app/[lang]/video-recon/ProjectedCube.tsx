@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useCopy } from '@/hooks/useCopy';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { Copy, RotateCcw } from '@app-foundation/icons/lucide';
 import { ContentSkeleton, SkeletonBlock } from '@/components/ContentSkeleton';
-import MoreToggle from '@/components/MoreToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { useT } from '@/hooks/useT';
 import { dragCubeView, nudgeCubeView, type CubeDragKind, type DragPoint } from '@/lib/video-recon/engine/cube-drag';
@@ -13,17 +13,27 @@ import {
 } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import { playbackTiming } from '@/lib/video-recon/engine/playback-timing';
-import type { ProjectedCubeFrame } from '@/lib/video-recon/engine/projected-cube';
-import { mountVideoCubingView, mountVideoThreeView, VIDEO_CUBE_ENGINES, type VideoCubeViewEngine } from './cube-view-engines';
+import { projectedCubeAtFrame, type ProjectedCubeFrame } from '@/lib/video-recon/engine/projected-cube';
+import { VIDEO_CUBE_ENGINES, type VideoCubeEngine } from '@/lib/video-recon/timed-cubing-cube';
+import { mountVideoCubingView, mountVideoThreeView, type VideoCubeViewEngine } from './cube-view-engines';
+import { LiveVideoNotation } from './LiveVideoNotation';
 import type { VideoSolveAnalysisProps } from './VideoSolveAnalysis';
 
 const VideoSolveAnalysis = dynamic(() => import('./VideoSolveAnalysis').then(module => module.VideoSolveAnalysis), {
   loading: () => <ContentSkeleton variant="text" />,
 });
 
+export function useVideoCubeEngine() {
+  return useQueryState('renderer', parseAsStringEnum([...VIDEO_CUBE_ENGINES]).withDefault('three'));
+}
+
 interface Props {
+  engine: VideoCubeEngine;
+  solidFoundation?: boolean;
+  onEngineChange: (engine: VideoCubeEngine) => void;
   pose?: CubePose;
   sourceTimestamp: number;
+  reviewPlayback?: { playing: boolean; readTime: (now: number) => number };
   solved: boolean;
   steps: readonly MoveStep[];
   timeline: readonly ProjectedCubeFrame[];
@@ -32,17 +42,21 @@ interface Props {
   clockFps?: number;
   playbackSpeed: number;
   live?: boolean;
+  liveScramble?: string;
+  solveStart?: number;
+  children?: ReactNode;
   analysis?: Omit<VideoSolveAnalysisProps, 'onOpeningView'>;
 }
 
 type Drag = { id: number; kind: CubeDragKind; start: DragPoint; view: Quaternion; x: number; y: number; radius: number };
 
-export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, sourceFrame, sourceFps, clockFps = sourceFps, playbackSpeed, live, analysis }: Props) {
+export function ProjectedCube({ engine, onEngineChange, solidFoundation = false, pose, sourceTimestamp, reviewPlayback, solved, steps, timeline, sourceFrame, sourceFps, clockFps = sourceFps, playbackSpeed, live, liveScramble = '', solveStart = 0, analysis, children }: Props) {
   const t = useT();
   const resetLabel = t('重置视角', 'Reset view');
+  const readPlaybackTime = reviewPlayback?.readTime;
+  const reviewPlaying = reviewPlayback?.playing ?? false;
   const engineHost = useRef<HTMLDivElement>(null);
   const renderer = useRef<VideoCubeViewEngine | null>(null);
-  const [engine, setEngine] = useQueryState('renderer', parseAsStringEnum([...VIDEO_CUBE_ENGINES]).withDefault('three'));
   const rendered = useRef<CubePose | undefined>(undefined);
   const previousTimestamp = useRef<number | undefined>(undefined);
   const drag = useRef<Drag | null>(null);
@@ -57,7 +71,6 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   const [retry, setRetry] = useState(0);
   const ready = engineState?.engine === engine && engineState.ready;
   const unavailable = engineState?.engine === engine && !engineState.ready;
-  const [copy, setCopy] = useState<{ algorithm: string; ok: boolean }>();
   const notationView = analysis ? CAMERA_ORIENTATION : orientation;
   const tokens = useMemo(() => displayMoveTokens(timeline.length
     ? reorientedMoveTimeline(timeline, steps, notationView, { fps: clockFps })
@@ -65,8 +78,8 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   [timeline, steps, notationView, clockFps]);
   const setup = useMemo(() => initialGripMoves(timeline, notationView), [timeline, notationView]);
   const algorithm = [...setup, ...tokens.map(token => token.move)].join(' ');
+  const { copy, feedback } = useCopy({ scope: algorithm, persist: 'all' });
   const activeFrame = tokens.findLast(token => token.frame <= sourceFrame)?.frame;
-  const liveMove = live ? steps.findLast(step => step.frame_index <= sourceFrame && step.state_moves.length) : undefined;
 
   function draw() {
     if (!renderer.current) return;
@@ -99,15 +112,35 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
   }, [engine, retry]);
 
   useEffect(() => {
+    if (ready) renderer.current?.setSolidFoundation?.(solidFoundation);
+  }, [ready, solidFoundation]);
+
+  useEffect(() => {
     view.current = orientation;
     draw();
   }, [orientation]);
 
   useEffect(() => {
+    if (!reviewPlaying || !readPlaybackTime || !timeline.length || !ready) return;
+    let lastTime: number | undefined;
+    let animation = requestAnimationFrame(function tick(now) {
+      const time = readPlaybackTime!(now);
+      if (time !== lastTime) {
+        lastTime = time;
+        rendered.current = projectedCubeAtFrame(timeline, time * clockFps);
+        draw();
+      }
+      animation = requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(animation);
+  }, [reviewPlaying, readPlaybackTime, timeline, clockFps, ready]);
+
+  useEffect(() => {
+    if (reviewPlaying && timeline.length) return;
     const previous = rendered.current;
     const adjacent = previousTimestamp.current !== undefined && Math.abs(sourceTimestamp - previousTimestamp.current) <= 0.15;
     previousTimestamp.current = sourceTimestamp;
-    if (live || !previous || !pose || !adjacent) {
+    if (readPlaybackTime || live || !previous || !pose || !adjacent) {
       rendered.current = pose;
       draw();
       return;
@@ -122,7 +155,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       if (progress < 1) animation = requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(animation);
-  }, [pose, sourceTimestamp, sourceFps, playbackSpeed, live]);
+  }, [pose, sourceTimestamp, sourceFps, playbackSpeed, live, reviewPlaying, readPlaybackTime, timeline.length]);
 
   function beginDrag(event: PointerEvent<HTMLDivElement>) {
     if (!pose || !ready || !event.isPrimary || event.button !== 0) return;
@@ -144,10 +177,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
     setOrientation(dragCubeView(current.view, current.start, point, current.kind));
   }
 
-  async function copyAlgorithm() {
-    try { await navigator.clipboard.writeText(algorithm); setCopy({ algorithm, ok: true }); }
-    catch { setCopy({ algorithm, ok: false }); }
-  }
+  const copyAlgorithm = () => copy(algorithm);
 
   const sourceNotation = (pose || steps.length > 0) && <div className="video-recon-notation">
     {!analysis && <strong>{solved ? t('完整复盘', 'Full reconstruction') : t('部分复盘', 'Partial reconstruction')}</strong>}
@@ -162,7 +192,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
       <button type="button" className="btn-secondary" onClick={() => void copyAlgorithm()}>
         <Copy size={15} aria-hidden />{t('复制复盘公式', 'Copy reconstruction')}
       </button>
-      <span role="status">{copy?.algorithm === algorithm ? (copy.ok ? t('已复制', 'Copied') : t('无法复制，请手动选择公式。', 'Clipboard unavailable. Select the moves to copy them.')) : ''}</span>
+      <span role="status">{feedback ? (feedback.copied ? t('已复制', 'Copied') : t('无法复制，请手动选择公式。', 'Clipboard unavailable. Select the moves to copy them.')) : ''}</span>
     </div>}
   </div>;
 
@@ -195,7 +225,7 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
           </>)}
       </div>
       <select className="video-recon-orbit-engine" aria-label={t('渲染引擎', 'Rendering engine')}
-        value={engine} onChange={event => void setEngine(event.currentTarget.value as typeof engine)}>
+        value={engine} onChange={event => onEngineChange(event.currentTarget.value as VideoCubeEngine)}>
         <option value="three">cuberoot.js</option>
         <option value="cubing">cubing.js</option>
       </select>
@@ -206,18 +236,12 @@ export function ProjectedCube({ pose, sourceTimestamp, solved, steps, timeline, 
         </button>
       }</Tooltip>}
     </div>
-    {(live || analysis || sourceNotation) && <section className="video-recon-result-notation" aria-label={t('复盘结果', 'Reconstruction')}>
-      {live ? <div className="video-recon-section-heading">
-        {liveMove && <code className="video-recon-live-move" aria-label={t('最近识别的动作', 'Latest detected moves')}>
-          {liveMove.state_moves.join(' ')}
-        </code>}
-      </div> : analysis ? <>
-        <VideoSolveAnalysis {...analysis} onOpeningView={applyOpeningView} />
-        {sourceNotation && <details>
-          <MoreToggle as="summary">{t('查看相机视角动作', 'View camera-relative moves')}</MoreToggle>
-          {sourceNotation}
-        </details>}
-      </> : sourceNotation}
+    {(live || analysis || sourceNotation || children) && <section className="video-recon-result-notation" aria-label={t('复盘结果', 'Reconstruction')}>
+      {live ? <LiveVideoNotation key={JSON.stringify([liveScramble, solveStart])}
+        scramble={liveScramble} steps={steps} frame={sourceFrame} fps={clockFps} start={solveStart} /> : analysis ?
+        <VideoSolveAnalysis {...analysis} onOpeningView={applyOpeningView}
+          sourceAlgorithm={algorithm} fallbackNotation={sourceNotation} /> : sourceNotation}
+      {children}
     </section>}
   </div>;
 }

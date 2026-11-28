@@ -70,6 +70,42 @@ it('uses the saved lesson cover as the native video poster', async () => {
   }
 });
 
+it('shares paused playback bar dismissal and the tooltip-free play button', async () => {
+  vi.useFakeTimers();
+  const host = document.createElement('div');
+  document.body.append(host);
+  const root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      src: '/signed-video', onError: vi.fn(), onLoadedMetadata: vi.fn(),
+    })));
+    const player = host.querySelector('.lesson-video-player')!;
+    const controls = player.querySelector<HTMLElement>('.lesson-video-controls')!;
+    const play = controls.querySelector<HTMLButtonElement>('button[aria-label="播放"]')!;
+    expect(controls.dataset.visible).toBe('true');
+    act(() => vi.advanceTimersByTime(2700));
+    expect(controls.dataset.visible).toBe('false');
+    act(() => {
+      player.dispatchEvent(new Event('pointermove', { bubbles: true }));
+      player.dispatchEvent(new MouseEvent('pointerout', { bubbles: true, relatedTarget: play }));
+      play.focus();
+    });
+    act(() => vi.advanceTimersByTime(2700));
+    expect(controls.dataset.visible).toBe('true');
+    expect(play.hasAttribute('aria-describedby')).toBe(false);
+    act(() => {
+      play.blur();
+      play.dispatchEvent(new MouseEvent('pointerout', { bubbles: true, relatedTarget: player }));
+    });
+    act(() => vi.advanceTimersByTime(2700));
+    expect(controls.dataset.visible).toBe('false');
+  } finally {
+    act(() => root.unmount());
+    host.remove();
+    vi.useRealTimers();
+  }
+});
+
 it('keeps the poster visible instead of seeking to the first video frame on open', async () => {
   const host = document.createElement('div'), root = createRoot(host);
   try {

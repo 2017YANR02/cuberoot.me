@@ -4,6 +4,7 @@ import { DetectionRecording } from "./engine/detection-recording";
 import type { RecordingContext } from "./engine/detection-recording";
 import type {
   FrameResult,
+  InferenceBackend,
   ModelManifest,
   Settings,
   WorkerRequest,
@@ -27,7 +28,7 @@ import { projectedWireframe, poseIsFlagged } from "./engine/reconstruction-view"
 import { buildColorTimeline } from "./engine/cube-colors";
 import { buildCubeReplayTimelines, measuredCubeFrame, projectedCubeAtFrame } from "./engine/projected-cube";
 import { reviewIndex, steppedTimestamp, frameArrow } from "./engine/frame-review";
-import { PLAYBACK_SPEEDS, playbackTiming } from "./engine/playback-timing";
+import { PLAYBACK_SPEEDS, ReviewPlaybackClock, playbackTiming } from "./engine/playback-timing";
 import type { PlaybackSpeed } from "./engine/playback-timing";
 import {createSearchConfig,ADMISSION_CAPACITY,poseWorkerCount,POLICY_VERSION,MEDIA_CLOCK_HZ} from "./pose-fitter/runtime/reconstruction-policy.mjs";
 import { TimerReconstruction } from './engine/timer-reconstruction';
@@ -74,6 +75,7 @@ function memoizeLast<Args extends unknown[], Result>(calculate: (...args: Args) 
 export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: WorkspaceTab) {
   const listeners = new Set<() => void>();
   let publishPending = false;
+  let fileReviewSequence = 0;
   const state = new Proxy({
     activeTab: initialTab,
     timerBusy: false,
@@ -81,7 +83,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     cameraClockOriginMs: undefined as number | undefined,
     cameraConnecting: false,
     cameraRecording: undefined as {
-      id: string; scramble: string; phase: 'recording' | 'finalizing' | 'error'; file?: File; error?: string; retried?: boolean; recovered?: boolean;
+      id: string; scramble: string; phase: 'recording' | 'finalizing' | 'error'; fileOnly?: boolean; file?: File; error?: string; reviews?: number; recovered?: boolean;
     } | undefined,
     cameraRecordingError: '',
     recordingReview: undefined as 'opening' | 'ready' | 'range' | 'running' | undefined,
@@ -120,11 +122,13 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     fitBufferedFrames: 0,
     presentedTimestamp: 0,
     videoInputComplete: false,
+    fileReviewId: undefined as number | undefined,
     trimming: false,
     solveStart: 0,
     solveEnd: 0,
     uploadedFile: undefined as File | undefined,
     sourceCrop: undefined as SourceCrop | undefined,
+    videoSize: undefined as {width: number; height: number} | undefined,
     cropLocked: false,
     cropLoading: false,
     cropPreview: undefined as {url: string; width: number; height: number; kind: 'image' | 'video'} | undefined,
@@ -299,6 +303,18 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (!attempt || attempt.phase !== 'recording' || !recorder) return;
     clearTimeout(recordingDeadline);
     state.cameraRecording = { ...attempt, phase: 'finalizing' };
+    if (attempt.fileOnly) {
+      void recorder.stop().then(file => {
+        if (disposed || state.cameraRecording?.id !== attempt.id) return;
+        state.cameraRecording = { ...attempt, file, phase: 'error' };
+        reviewCameraRecording();
+      }, cause => {
+        if (!disposed && state.cameraRecording?.id === attempt.id) {
+          state.cameraRecording = { ...attempt, phase: 'error', error: String(cause) };
+        }
+      }).finally(() => { if (cameraRecorder === recorder) cameraRecorder = undefined; });
+      return;
+    }
     stopTimerSolve(attempt.id, performance.timeOrigin + performance.now());
     recordingDrainDeadline = setTimeout(() => {
       if (attempt.id !== state.cameraRecording?.id || state.timerCapturePhase !== 'capturing') return;
@@ -340,7 +356,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     clearTimeout(recordingDrainDeadline);
     clearTimeout(recordingFinishDeadline);
     timerReplayStore.remove(attempt.id);
-    state.cameraRecording = { ...attempt, retried: true };
+    state.cameraRecording = { ...attempt, reviews: (attempt.reviews ?? 0) + 1, recovered: undefined };
     state.initialScramble = attempt.scramble;
     const opening = openFile(attempt.file);
     const token = generation;
@@ -392,13 +408,17 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         state.timerReconstructions = { ...state.timerReconstructions, [attempt.id]: { ...live,
           result: { ...live.result, inference_failure: reason } } };
       }
-      state.cameraRecording = { ...attempt, phase: 'error', error: error || 'The full recording could not be reconstructed.' };
+      state.cameraRecording = { ...attempt, phase: 'error', recovered: false, error: error || 'The full recording could not be reconstructed.' };
     }
     stopSource();
     readReview('none', '', 0, 0, videoResults.revision);
   }
+  // A browser may support camera recording but not transferable camera frames.
+  // Keep the original recording and pass it to the same file review pipeline.
+  const canRecordFileOnly = () => state.activeTab === 'record' && state.sourceKind === 'camera' &&
+    !!state.stream?.active && typeof MediaRecorder !== 'undefined' && (!capture || state.status === 'error');
   function recordCamera() {
-    if (state.activeTab !== 'record' || !state.stream || !cameraReady() || recordingBusy()) return;
+    if (state.activeTab !== 'record' || !state.stream || (!cameraReady() && !canRecordFileOnly()) || recordingBusy()) return;
     let recorder: ReturnType<typeof startCameraRecording>;
     try {
       recorder = startCameraRecording(state.stream);
@@ -410,8 +430,9 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     cameraRecorder = recorder;
     try {
       const id = crypto.randomUUID();
-      state.cameraRecording = { id, scramble: state.initialScramble.trim(), phase: 'recording' };
-      startTimerSolve(id, state.initialScramble.trim(), performance.timeOrigin + performance.now());
+      const fileOnly = canRecordFileOnly();
+      state.cameraRecording = { id, scramble: state.initialScramble.trim(), phase: 'recording', fileOnly };
+      if (!fileOnly) startTimerSolve(id, state.initialScramble.trim(), performance.timeOrigin + performance.now());
       const ended = () => { if (cameraRecorder === recorder) finishCameraRecording(); };
       void recorder.result.then(ended, ended);
       recordingDeadline = setTimeout(finishCameraRecording, RECORDING_LIMIT_MS);
@@ -443,7 +464,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
 
   const size = 256;
-  const backend = "webgpu";
+  let backend: InferenceBackend = "webgpu";
   let detectorIdentity:Extract<WorkerResponse,{type:'ready'}>['models'],detectorPreprocessing='gpu';
   let activeRunId:string|undefined;
 
@@ -499,6 +520,9 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
 
   let fileEnded = false;
+  let reviewFrame: SourceFrame | undefined;
+  let reviewEof = false;
+  const reviewClock = new ReviewPlaybackClock();
   let decodedRange: { key: string; timestamps: number[]; complete: boolean } | undefined;
   type CameraEnd={timerEnd:true;id:string;timestamp:number;close():void};
   type CameraFrame=SourceFrame&{close():void;timerReset?:boolean;timerPose?:PoseFittingOptions};
@@ -760,6 +784,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   async function beginReconstruction() {
     if (!fileSource || !state.trimming || state.status !== "ready" || state.cropPreview || state.cropLoading) return;
+    state.fileReviewId = ++fileReviewSequence;
+    releaseReviewFrame();
     state.cropLocked = true;
     if (state.recordingReview) {
       if (state.recordingReview === 'range') armRecordingReviewTimeout();
@@ -791,7 +817,9 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   async function editSolveRange() {
     if (!derived.reconstructionComplete) return;
+    state.fileReviewId = undefined;
     state.running = false; cancelScheduled(); await waitForPipelineIdle();
+    releaseReviewFrame();
     moveSearch?.dispose(); moveSearch = undefined; state.searchResult = undefined; state.searchError = "";
     state.previewSearch = undefined;
     state.trimming = true; state.cropLocked = false; state.videoInputComplete = false; await previewTrim(state.solveStart);
@@ -908,7 +936,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     scheduledAt = 0;
   }
 
-  async function loadModel() {
+  async function loadModel(forceWasm = false) {
     const request = ++modelGeneration;
     state.status = "loading";
     cancelScheduled();
@@ -925,26 +953,11 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     resetPose = true;
     worker?.terminate();
     worker = undefined;
-    if (backend === "webgpu" && !window.isSecureContext) {
-      state.error =
-        "Open this app over HTTPS or localhost to use WebGPU and the camera.";
-      state.status = "error";
-      return;
-    }
-    if (backend === "webgpu" && !("gpu" in navigator)) {
-      state.error =
-        "WebGPU is required. Open this app in a browser that supports WebGPU.";
-      state.status = "error";
-      return;
-    }
     state.modelDownload = undefined;
     try {
-      if (backend === "webgpu") {
-        const available = await hasWebGpuAdapter(navigator.gpu);
-        if (disposed || request !== modelGeneration) return;
-        if (!available) throw new Error("WebGPU is unavailable on this device or browser.");
-      }
+      const gpuAvailable = !forceWasm && window.isSecureContext && await hasWebGpuAdapter(navigator.gpu);
       if (disposed || request !== modelGeneration) return;
+      backend = gpuAvailable ? 'webgpu' : 'wasm';
       if (!state.manifest) {
         const response = await fetch(new URL("models/detector.json", baseUrl));
         if (
@@ -975,18 +988,17 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       if (disposed || request !== modelGeneration) return;
       const currentWorker = createVideoWorker("inference");
       worker = currentWorker;
+      const retryGpuInitializationOnCpu = () => {
+        if (state.status !== 'loading' || backend !== 'webgpu') return false;
+        currentWorker.terminate();
+        worker = undefined;
+        void loadModel(true);
+        return true;
+      };
       currentWorker.onmessage = async ({ data }: MessageEvent<WorkerResponse>) => {
         if (currentWorker !== worker) return;
         if (data.type === "progress") {
-          const bboxBytes = state.manifest?.bbox.bytes ?? 0;
-          const poseBytes = state.manifest?.variants.find(variant => variant.size === size)?.bytes ?? 0;
-          const bboxStage = data.stage === 'Cube detector';
-          const stageBytes = bboxStage ? bboxBytes : poseBytes;
-          const received = data.receivedBytes ?? Math.round(stageBytes * data.fraction);
-          state.modelDownload = {
-            receivedBytes: (bboxStage ? 0 : bboxBytes) + Math.min(received, stageBytes),
-            totalBytes: bboxBytes + poseBytes,
-          };
+          state.modelDownload = { receivedBytes: data.receivedBytes, totalBytes: data.totalBytes };
         }
         if (data.type === "ready") {
           detectorIdentity=data.models;detectorPreprocessing=data.preprocessing;
@@ -997,6 +1009,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           else if (presenter.snapshot) void inferFrame();
         }
         if (data.type === "error") {
+          if (retryGpuInitializationOnCpu()) return;
           state.status = "error";
           state.error = data.message;
           capture?.pause();
@@ -1038,6 +1051,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
       };
       currentWorker.onerror = () => {
+        if (currentWorker !== worker || retryGpuInitializationOnCpu()) return;
         state.status = "error";
         state.error = "The detector worker could not start. Reload the detector.";
         capture?.pause();
@@ -1061,6 +1075,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
 
   function stopSource() {
+    state.fileReviewId = undefined;
     clearTimeout(recordingReviewDeadline);
     state.recordingReview = undefined;
     if (recordingBusy()) clearCameraRecording();
@@ -1088,6 +1103,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     capture?.stop();
     capture = undefined;
     releaseCameraInput();
+    releaseReviewFrame();
     fileSource?.close();
     fileSource = undefined;
     videoResults.clear();
@@ -1104,6 +1120,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     still = undefined;
     presenter.clear(stage);
     checkedVideoBars = false;
+    state.videoSize = undefined;
     state.sourceKind = "none";
     state.sourceName = "";
     state.result = undefined;
@@ -1198,6 +1215,11 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     } catch (cause) {
       if (token !== generation) return;
       capture?.stop();
+      if (state.activeTab === 'record' && state.stream?.active && typeof MediaRecorder !== 'undefined') {
+        state.sourceKind = 'camera';
+        state.sourceName = 'Camera';
+        return;
+      }
       releaseCameraInput();
       state.mediaError =
         cause instanceof Error ? cause.message : "Unable to open the camera.";
@@ -1238,6 +1260,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
         }
         fileSource = decoded;
         state.duration = decoded.duration;
+        state.videoSize = decoded.videoSize;
         state.sourceFps = decoded.sourceFps;
         state.sourceKind = "video";
         state.sourceName = file.name;
@@ -1436,6 +1459,91 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
   }
 
+  function releaseReviewFrame() {
+    reviewFrame?.bitmap.close();
+    reviewFrame = undefined;
+    reviewEof = false;
+  }
+
+  function presentReviewFrame(frame: SourceFrame) {
+    try {
+      // The full-rate video has frames that were never sent to the detector.
+      // Use a nearby cached result for the wireframe and keep the video timestamp.
+      const saved = findSavedResult(frame.timestamp, 1 / 30 + 0.001);
+      const snapshot = presenter.captureFrame(frame.bitmap, inputCrop(frame.bitmap));
+      presenter.presentFrame(stage, snapshot, saved && (state.showRoi || displayPose())
+        ? (ctx, width, height) => drawOverlay(ctx, width, height, saved.result) : undefined);
+      state.result = saved?.result;
+      state.position = state.presentedTimestamp = frame.timestamp;
+    } finally {
+      frame.bitmap.close();
+    }
+  }
+
+  function readReviewPlaybackTime(now = performance.now()) {
+    if (!state.running || seeking) return state.presentedTimestamp;
+    // Keep animations aligned even if decoding falls behind the wall clock.
+    const readyThrough = reviewFrame?.timestamp ?? (reviewEof ? state.solveEnd
+      : state.presentedTimestamp + 1 / (state.sourceFps || 30));
+    return Math.max(state.presentedTimestamp, Math.min(reviewClock.time(now), readyThrough, state.solveEnd));
+  }
+
+  async function loadNextReviewFrame() {
+    const source = fileSource;
+    if (!source) return;
+    busy = true;
+    const token = generation;
+    const request = seekVersion;
+    try {
+      const frame = await source.next();
+      if (token !== generation || request !== seekVersion || disposed) {
+        frame?.bitmap.close();
+        return;
+      }
+      if (frame && frame.timestamp < state.solveEnd) reviewFrame = frame;
+      else {
+        frame?.bitmap.close();
+        reviewEof = true;
+      }
+    } catch (cause) {
+      if (token !== generation || request !== seekVersion || disposed) return;
+      state.running = false;
+      state.mediaError = cause instanceof Error ? cause.message : String(cause);
+    } finally {
+      if (token === generation && !disposed) {
+        markIdle();
+        scheduleNext();
+      }
+    }
+  }
+
+  function scheduleReview() {
+    if (seeking) return;
+    if (!reviewFrame && !reviewEof) {
+      void loadNextReviewFrame();
+      return;
+    }
+    const delay = reviewClock.delayUntil(reviewFrame?.timestamp ?? state.solveEnd, performance.now());
+    if (delay > 0) {
+      timer = window.setTimeout(() => { timer = 0; scheduleNext(); }, Math.ceil(delay));
+      return;
+    }
+    if (!reviewFrame) {
+      fileEnded = true;
+      state.running = false;
+      return;
+    }
+    const frame = reviewFrame;
+    reviewFrame = undefined;
+    try {
+      presentReviewFrame(frame);
+      void loadNextReviewFrame();
+    } catch (cause) {
+      state.running = false;
+      state.mediaError = cause instanceof Error ? cause.message : String(cause);
+    }
+  }
+
   function scheduleNext() {
     if (
       timer ||
@@ -1454,9 +1562,13 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       if (state.captureStopped) { state.running = false; void finishMoveSearch(); }
       return;
     }
+    if (state.sourceKind === "video" && derived.reconstructionComplete) {
+      scheduleReview();
+      return;
+    }
     // Camera timestamps already pace frame admission. Drain its FIFO as fast as
     // inference/backpressure permit, so short UI stalls can be caught up.
-    const interval = state.sourceKind==='camera'?0:playbackTiming(state.sourceFps,state.sourceKind==="video"&&derived.reconstructionComplete?state.playbackSpeed:1).frameIntervalMs;
+    const interval = state.sourceKind === "camera" ? 0 : playbackTiming(state.sourceFps).frameIntervalMs;
     scheduledAt = performance.now();
     const remaining = interval - (scheduledAt - lastStarted);
     if (remaining <= 0) {
@@ -1558,9 +1670,9 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     const row = derived.reviewRows[index];
     if (row) void requestReview(row.timestamp);
   }
-  function stepReview(direction:-1|1) {
+  function stepReview(delta: number) {
     if(state.sourceKind!=="video"||!derived.reconstructionComplete||state.trimming)return;
-    const timestamp=steppedTimestamp(derived.reviewRows,requestedReviewTimestamp??state.presentedTimestamp,direction);
+    const timestamp=steppedTimestamp(derived.reviewRows,requestedReviewTimestamp??state.presentedTimestamp,delta);
     if(timestamp!=null)void requestReview(timestamp);
   }
   function reviewKeydown(event:KeyboardEvent) {
@@ -1582,44 +1694,37 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     await waitForPipelineIdle();
     if (token !== generation || request !== seekVersion || !fileSource) return;
     refreshPending = false;
-    const saved = findSavedResult(timestamp, 0.5 / Math.min(30, state.sourceFps || 30) + 0.001);
-    fileSource.seek(saved?.timestamp ?? timestamp);
-    state.position = saved?.timestamp ?? timestamp;
+    releaseReviewFrame();
+    fileSource.seek(timestamp, { fullRate: true });
     state.processedFrames = 0;
     lastResultTime = 0;
     lastStarted = -Infinity;
     previousFrameStart = 0;
     state.fps = 0;
     fileEnded = false;
-    resetTracking = true;
-    resetPose = true;
-    if (saved) {
-      busy = true;
-      try {
-        const frame = await fileSource.next();
-        if (token !== generation || request !== seekVersion || !fileSource) { frame?.bitmap.close(); return; }
-        if (frame && Math.abs(frame.timestamp - saved.timestamp) < 0.00001) {
-          submitCachedFrame(saved);
-          presentSavedFrame(frame.bitmap, saved);
-        }
-        else {
-          frame?.bitmap.close();
-          fileSource.seek(timestamp);
-          throw new Error("The saved frame could not be decoded at its original timestamp.");
-        }
-      } catch (cause) {
-        if (token === generation && request === seekVersion) state.mediaError = cause instanceof Error ? cause.message : String(cause);
-      } finally { if (token === generation) markIdle(); }
-      if (token !== generation || request !== seekVersion) return;
-      state.running = seekResume; seeking = false; scheduleNext();
-      return;
+    busy = true;
+    try {
+      const frame = await fileSource.next();
+      if (token !== generation || request !== seekVersion || disposed) {
+        frame?.bitmap.close();
+        return;
+      }
+      if (frame && frame.timestamp < state.solveEnd) presentReviewFrame(frame);
+      else {
+        frame?.bitmap.close();
+        fileEnded = true;
+      }
+    } catch (cause) {
+      if (token === generation && request === seekVersion)
+        state.mediaError = cause instanceof Error ? cause.message : String(cause);
+    } finally {
+      if (token === generation) markIdle();
     }
-    // Display/process the first selected frame at the seek point even when paused.
-    state.running = true;
-    await processNext();
-    if (request !== seekVersion) return;
-    state.running = seekResume;
+    if (token !== generation || request !== seekVersion || disposed) return;
     seeking = false;
+    state.running = seekResume && !fileEnded;
+    if (state.running) reviewClock.start(state.presentedTimestamp, state.playbackSpeed, performance.now());
+    scheduleNext();
   }
   async function togglePlayback() {
     if (state.sourceKind === "video" && !derived.reconstructionComplete) return;
@@ -1634,9 +1739,11 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       await camera();
       return;
     }
-    if (state.sourceKind === "video" &&
-      (fileEnded || state.presentedTimestamp === derived.reviewRows.at(-1)?.timestamp)) {
-      await seekFile(state.solveStart);
+    if (state.sourceKind === "video") {
+      if (seeking) return;
+      if (fileEnded) await seekFile(state.solveStart);
+      if (disposed || state.sourceKind !== "video" || seeking || fileEnded) return;
+      reviewClock.start(state.presentedTimestamp, state.playbackSpeed, performance.now());
     }
     state.running = true;
     lastResultTime = 0;
@@ -1645,8 +1752,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
   }
   function changePlaybackSpeed(speed: number) {
     if(!PLAYBACK_SPEEDS.includes(speed as PlaybackSpeed))return;
-    state.playbackSpeed=speed as PlaybackSpeed;
-    cancelScheduled();scheduleNext();
+    const now = performance.now();
+    const time = readReviewPlaybackTime(now);
+    state.playbackSpeed = speed as PlaybackSpeed;
+    reviewClock.start(time, state.playbackSpeed, now);
+    cancelScheduled();
+    scheduleNext();
   }
   function cleanup() {
     if (disposed) return;
@@ -1664,6 +1775,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     previewVersion++; state.thumbnails.forEach(url => URL.revokeObjectURL(url));
     capture?.stop();
     cameraQueue.clear();
+    releaseReviewFrame();
     fileSource?.close();
     worker?.terminate();
     poseFitter?.dispose();
@@ -1714,7 +1826,8 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (state.sourceKind !== 'video' || state.trimming || derived.reconstructionComplete || !moveSearch) return;
     const { fps, scramble, turning_start_frame } = moveSearch.config;
     const search = state.previewSearch ?? state.searchResult;
-    const { steps, colors } = previewMetadata(search, scramble);
+    const openingScramble = search?.inferred_scramble ?? scramble;
+    const { steps, colors } = previewMetadata(search, openingScramble);
     const current = state.result;
     const currentFrame = current?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * fps);
     const step = search?.steps.findLast(candidate => candidate.frame_index <= currentFrame);
@@ -1725,7 +1838,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     const timestamp = saved?.timestamp ?? (earlier ? step.frame_index / fps : state.presentedTimestamp);
     const result = earlier ? saved?.result : current;
     const cube = result && colors ? previewFrame(timestamp, result, colors, fps, turning_start_frame, step) : undefined;
-    return { steps, timestamp, cube };
+    return { steps, timestamp, cube, scramble: openingScramble };
   }
 
   const derived = {
@@ -1758,8 +1871,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     },
     get projectedTimeline() { return derived.cubeReplayTimelines?.projected ?? []; },
     get coloredProjection() {
-      return projectedCubeAtFrame(derived.projectedTimeline,
-        state.result?.fittedPose?.sourceFrame ?? Math.round(state.presentedTimestamp * clockFps()));
+      return projectedCubeAtFrame(derived.projectedTimeline, Math.round(state.presentedTimestamp * clockFps()));
     },
     get showCameraPreview() {
       return state.sourceKind === 'camera' && state.timerCamera && !state.captureStopped &&
@@ -1783,11 +1895,15 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       error: state.error,
       mediaError: state.mediaError,
       sourceName: state.sourceName,
-      timerReady: cameraReady(),
+      sourceFile: state.uploadedFile,
+      timerReady: cameraReady() || canRecordFileOnly(),
+      cameraRecordFileOnly: canRecordFileOnly(),
+      cameraSwitchLocked: state.timerCapturePhase !== 'idle' || recordingBusy() || !!state.recordingReview,
       cameraConnecting: state.cameraConnecting,
       cameraRecordingPhase: recordingPhase(),
+      cameraRecordingAttempt: recording && `${recording.id}:${recording.reviews ?? 0}`,
       cameraRecordingFile: recording?.file,
-      cameraRecordingRetried: recording?.retried,
+      cameraRecordingRetried: !!recording?.reviews,
       cameraRecordingRecovered: recording?.recovered,
       recordingReview: state.recordingReview,
       cameraRecordingError: recording?.error || state.cameraRecordingError || (recordingResult?.status === 'failed' ? recordingResult.message : undefined),
@@ -1814,10 +1930,12 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       cropLoading: state.cropLoading,
       cropPreview: state.cropPreview,
       sourceCrop: state.sourceCrop,
+      videoSize: state.videoSize,
       thumbnails: state.thumbnails,
       showCameraPreview: derived.showCameraPreview,
       stream: state.stream,
       reconstructionComplete: derived.reconstructionComplete,
+      fileReviewId: state.fileReviewId,
       videoInputComplete: state.videoInputComplete,
       liveReconstruction: liveReconstruction(),
       cubeSolved: derived.cubeSolved,
@@ -1855,8 +1973,14 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
 
   return {
     selectTab, camera, startTimerSolve, stopTimerSolve, deleteTimerSolve, clearTimerSession, openFile, stopSource, editCrop, applyCrop, closeCrop, changeTrim, previewSelection, stepPreview, beginReconstruction, editSolveRange, togglePlayback, changePlaybackSpeed, requestReview, seekReviewIndex, stepReview, downloadTimerDiagnostics, loadModel, cleanup, reviewKeydown,
+    setPreviewFraming(crop: SourceCrop | null | undefined) {
+      if (disposed) return;
+      presenter.displayCropOverride = crop;
+      presenter.redraw(stage, state.result && (state.showRoi || displayPose()) ? drawOverlay : undefined);
+    },
     getTimerFrameProgress: (id: string) => timerReconstruction.frameProgress(id),
     isCapturingTimerTail: (id: string) => timerCaptureGate.capturingTail(id),
+    readReviewPlaybackTime,
     getSnapshot: () => view,
     subscribe(listener: () => void) {
       listeners.add(listener);

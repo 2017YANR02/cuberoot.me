@@ -1,8 +1,7 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import { useT } from '@/hooks/useT';
-import { formatTimer } from '@/lib/video-recon/engine/cube-timer';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
-import { committedTurnSpan, gaussianTpsAt, tpsCurve, tpsSummary, turnEvents, type TurnEvent } from '@/lib/video-recon/engine/tps';
+import { gaussianTpsAt, tpsCurve, turnEvents, type TurnEvent } from '@/lib/video-recon/engine/tps';
 
 interface Props {
   steps?: readonly MoveStep[];
@@ -11,7 +10,6 @@ interface Props {
   fps: number;
   start: number;
   end: number;
-  solveSeconds?: number;
   cursor?: number;
   complete: boolean;
   compact?: boolean;
@@ -23,19 +21,19 @@ const HEIGHT = 142;
 const LEFT = 30;
 const BASE = 118;
 
-export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solveSeconds, cursor, complete, compact, onSeek }: Props) {
+export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, cursor, complete, compact, onSeek }: Props) {
   const t = useT();
   const [hover, setHover] = useState<number>();
   const width = compact ? 400 : 640;
   const right = width - 16;
+  const duration = Math.max(0, end - start);
   const points = useMemo(() => {
     const events = complete ? turns ?? turnEvents(steps, fps) : [];
     const curve = tpsCurve(events, start, end);
     const ceiling = Math.max(5, Math.ceil(curve.reduce((max, row) => Math.max(max, row.tps), 0) / 5) * 5);
     const count = events.length || turnEvents([{ frame_index: 0, state_moves: [...(moves ?? [])] }], 1).length;
-    return { events, curve, ceiling, summary: tpsSummary(events, solveSeconds ?? committedTurnSpan(steps, fps), count) };
-  }, [complete, turns, steps, fps, start, end, moves, solveSeconds]);
-  const duration = Math.max(0, end - start);
+    return { events, curve, ceiling, count };
+  }, [complete, turns, steps, fps, start, end, moves]);
   const x = (time: number) => LEFT + (time - start) / Math.max(0.001, duration) * (right - LEFT);
   const y = (rate: number) => BASE - rate / points.ceiling * (BASE - 10);
   const line = points.curve.map((point, index) => `${index ? 'L' : 'M'}${x(point.timestamp)},${y(point.tps)}`).join(' ');
@@ -54,8 +52,7 @@ export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solv
       <h2>{t('TPS曲线', 'Turns per second')}</h2>
       {complete && points.events.length > 0 && <span>{rate.toFixed(1)} TPS</span>}
     </div>
-    {complete ? <>
-      {points.events.length > 0 ? <svg viewBox={`0 0 ${width} ${HEIGHT}`} role={onSeek ? 'slider' : 'img'} tabIndex={onSeek ? 0 : undefined}
+    {complete ? (points.events.length > 0 ? <svg viewBox={`0 0 ${width} ${HEIGHT}`} role={onSeek ? 'slider' : 'img'} tabIndex={onSeek ? 0 : undefined}
         aria-label={onSeek ? t('按TPS曲线跳转', 'Seek on TPS graph') : t('TPS曲线', 'Turns per second')}
         aria-valuemin={onSeek ? 0 : undefined} aria-valuemax={onSeek ? duration : undefined} aria-valuenow={onSeek ? time - start : undefined}
         onPointerLeave={() => setHover(undefined)}
@@ -80,13 +77,6 @@ export function TpsGraph({ steps = NO_STEPS, turns, moves, fps, start, end, solv
         <path className="video-recon-graph-line" d={line} />
         <line className="video-recon-graph-grid" x1={x(time)} x2={x(time)} y1={10} y2={BASE} />
         <circle cx={x(time)} cy={y(rate)} r="3" />
-      </svg> : <p className="video-recon-muted">{points.summary.moves ? t('暂无动作时间戳。', 'Turn timestamps are unavailable.') : t('暂无已识别动作。', 'No reconstructed turns yet.')}</p>}
-      <dl className="video-recon-stats">
-        <div><dt>{t('还原用时', 'Solve time')}</dt>
-          <dd>{formatTimer(points.summary.seconds === undefined ? undefined : points.summary.seconds * 1000)}</dd></div>
-        <div><dt>{t('步数', 'Moves')}</dt><dd>{points.summary.moves}</dd></div>
-        <div><dt>{t('平均 TPS', 'Average TPS')}</dt><dd>{points.summary.averageTps?.toFixed(2) ?? '—'}</dd></div>
-      </dl>
-    </> : <p className="video-recon-muted">{t('完整复盘后显示转速。', 'TPS is available after a full reconstruction.')}</p>}
+      </svg> : <p className="video-recon-muted">{points.count ? t('暂无动作时间戳。', 'Turn timestamps are unavailable.') : t('暂无已识别动作。', 'No reconstructed turns yet.')}</p>) : <p className="video-recon-muted">{t('完整复盘后显示转速。', 'TPS is available after a full reconstruction.')}</p>}
   </section>;
 }

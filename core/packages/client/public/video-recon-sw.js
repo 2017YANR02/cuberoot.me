@@ -18,7 +18,8 @@ self.addEventListener('activate', event => event.waitUntil((async () => {
 })()));
 
 function isAsset(url) {
-  return url.origin === scope.origin && assetPath.test(url.pathname);
+  // The inference worker verifies and caches model bytes for every entry point.
+  return url.origin === scope.origin && assetPath.test(url.pathname) && !url.pathname.endsWith('.onnx');
 }
 
 function cacheKey(url, shell = false) {
@@ -45,11 +46,6 @@ self.addEventListener('fetch', event => {
     const cache = await caches.open(cacheName).catch(() => undefined);
     if (!cache) return fetch(request);
     const key = cacheKey(url, shell);
-    // Model URLs carry their content hash. Failures still fall through to the network.
-    if (url.pathname.endsWith('.onnx')) {
-      const saved = await cache.match(key);
-      if (saved) return saved;
-    }
     try {
       const response = await fetch(request);
       // The shell is only cached through the anonymous warm-up below.

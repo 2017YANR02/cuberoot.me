@@ -1,8 +1,53 @@
+import { useEffect, useState } from 'react';
+import { requestVideoCamera } from '@/lib/video-recon/engine/camera-source';
 import { Camera, CircleX, Download, Square, Video } from '@app-foundation/icons/lucide';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useT } from '@/hooks/useT';
 import { downloadBlob } from '@/lib/scramble-dist/download';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
+
+export function CameraSelector({ stream, workspace, disabled }: {
+  stream: MediaStream;
+  workspace: VideoWorkspace;
+  disabled: boolean;
+}) {
+  const t = useT();
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  useEffect(() => {
+    const devices = navigator.mediaDevices;
+    if (!devices?.enumerateDevices) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const inputs = await devices.enumerateDevices();
+        if (active) setCameras(inputs.filter(input => input.kind === 'videoinput' && input.deviceId));
+      } catch { if (active) setCameras([]); }
+    };
+    void refresh();
+    devices.addEventListener?.('devicechange', refresh);
+    return () => {
+      active = false;
+      devices.removeEventListener?.('devicechange', refresh);
+    };
+  }, [stream]);
+  if (cameras.length < 2) return null;
+  const current = stream.getVideoTracks()[0];
+  const id = current?.getSettings().deviceId ?? cameras.find(camera => camera.label === current?.label)?.deviceId;
+  return <label className="video-recon-camera-select">
+    {t('摄像头', 'Camera')}
+    <select value={id ?? ''} disabled={disabled} onChange={event => {
+      const deviceId = event.currentTarget.value;
+      // Some phones can only open one camera at a time.
+      workspace.stopSource();
+      void workspace.camera(requestVideoCamera(deviceId));
+    }}>
+      {!id && <option value="">{t('当前摄像头', 'Current camera')}</option>}
+      {cameras.map((camera, index) => <option key={camera.deviceId} value={camera.deviceId}>
+        {camera.label || t(`摄像头 ${index + 1}`, `Camera ${index + 1}`)}
+      </option>)}
+    </select>
+  </label>;
+}
 
 export function CameraDisconnectButton({ disabled, onDisconnect, textOnly = false }: {
   disabled: boolean;
@@ -52,8 +97,9 @@ type CameraRecordingPhase = 'idle' | 'recording' | 'finalizing' | 'complete' | '
 
 interface CameraRecordingControlsProps {
   phase: CameraRecordingPhase;
+  fileOnly?: boolean;
   scramble: string;
-  onScrambleChange: (value: string) => void;
+  onScrambleChange?: (value: string) => void;
   recordedFile?: File;
   searchError?: string;
   inferenceFailure?: 'no_solved_end' | 'no_supported_opening';
@@ -64,25 +110,25 @@ interface CameraRecordingControlsProps {
 }
 
 export function CameraRecordingControls({
-  phase, scramble, onScrambleChange, recordedFile, searchError, inferenceFailure,
+  phase, fileOnly, scramble, onScrambleChange, recordedFile, searchError, inferenceFailure,
   recognizedMoves, trackedFrames, review, onReview,
 }: CameraRecordingControlsProps) {
   const t = useT();
   const recording = phase === 'recording';
   const finalizing = phase === 'finalizing';
   const busy = recording || finalizing || !!review;
-  const latestStatus = recording ? scramble.trim()
+  const latestStatus = recording && fileOnly ? t('正在录制，停录后复盘', 'Recording for review after you stop') : recording ? scramble.trim()
     ? t('正在录制并识别动作', 'Recording and recognizing moves')
     : t('正在录制并跟踪魔方', 'Recording and tracking the cube')
     : phase === 'complete' ? t('复盘已完成', 'Reconstruction complete')
     : undefined;
 
   return <section className="video-recon-panel video-recon-timer-panel" data-site-surface="panel">
-    <label className="video-recon-inline-label">
+    {onScrambleChange && <label className="video-recon-inline-label">
       {t('打乱（选填）', 'Scramble (optional)')}
       <input type="text" autoComplete="off" autoCapitalize="off" spellCheck={false} disabled={busy}
         value={scramble} onChange={event => onScrambleChange(event.currentTarget.value)} />
-    </label>
+    </label>}
     {!busy && <p className="video-recon-muted">
       {t('开录后先拍清打乱局面，停录前保留清晰的还原画面。', 'Show the scrambled cube after starting, and the solved cube before stopping.')}
     </p>}

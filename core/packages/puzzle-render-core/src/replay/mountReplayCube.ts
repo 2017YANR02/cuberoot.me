@@ -40,7 +40,7 @@ export function mountReplayCube(host: HTMLElement, {
   order = 3,
   shape = false,
   interactive = true,
-}: { order?: number; shape?: boolean | 'sphere'; interactive?: boolean } = {}): ReplayCube {
+}: { order?: number; shape?: boolean | 'sphere'; interactive?: boolean } = {}): ReplayCube & { capture(size: number): HTMLCanvasElement } {
   const cube = new Cube(order, shape, { useStackKernel: order >= 16 });
   try {
     const scene = mountReplayScene(host, cube, { interactive, framingSize: SIZE * order });
@@ -87,6 +87,7 @@ export function mountReplayCube(host: HTMLElement, {
         active = undefined;
         scene.invalidate();
       },
+      capture: scene.capture,
       getFacelets: () => cube.serialize(),
       dispose() {
         if (disposed) return;

@@ -5,17 +5,20 @@
  * 数帧工具 — ReconViewer 风格，支持多 Solve 和 Split Mark。
  * 加载本地视频，逐帧控制，标记帧，计算精确时间差。
  */
+import { copyClipboardText } from '@/lib/clipboard';
 import {
   ChevronDown, Keyboard as IconKeyboard, Upload as IconUpload,
-  Play as IconPlay, Pause as IconPause, Rewind as IconSkipBack,
-  FastForward as IconSkipForward, ChevronLeft as IconFrameBack,
-  ChevronRight as IconFrameForward, Download as IconExport,
+  Download as IconExport,
   ArrowRight, CirclePlus, X,
 } from '@app-foundation/icons/lucide';
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react';
 import { VideoCropSelection } from '@/components/VideoCropSelection';
 import { INITIAL_VIDEO_TRANSFORM, VideoImageTools, videoImageTransformCss } from '@/components/VideoImageTools';
+import { VideoSourceFilmstrip } from '@/components/video/VideoSourceFilmstrip';
 import { VideoTrimTimeline } from '@/components/VideoTrimTimeline';
+import { VideoPlaybackControls, useVideoControlsVisibility } from '@/components/video/VideoPlaybackControls';
+import { VideoFrameStepButtons } from '@/components/video/VideoFrameStepButtons';
+import { PlaybackSpeedSelect } from '@cuberoot/timer-ui/PlaybackBar';
 import { useVideoViewport } from '@/hooks/useVideoViewport';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useTranslation } from 'react-i18next';
@@ -284,6 +287,7 @@ export default function FrameCountPage({ active, onReconstruct }: {
   const [videoName, setVideoName] = useState('');
   const [videoAspect, setVideoAspect] = useState<number>();
   const [isPlaying, setIsPlaying] = useState(false);
+  const playbackVisibility = useVideoControlsVisibility(active && videoSrc ? isPlaying : undefined);
   const [dragging, setDragging] = useState(false);
   const [totalFrames, setTotalFrames] = useState(0);
 
@@ -346,7 +350,6 @@ export default function FrameCountPage({ active, onReconstruct }: {
   const viewport = useVideoViewport(wrapperRef, !!videoSrc && active, cropMode);
 
   // Timeline trimmer
-  const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [trimStart, setTrimStart] = useState(0);
   const [trimEnd, setTrimEnd] = useState(0);
   const trimTrackRef = useRef<HTMLDivElement>(null);
@@ -525,7 +528,7 @@ export default function FrameCountPage({ active, onReconstruct }: {
   }, []);
 
   const copyToClipboard = useCallback((text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => showToast(t('frameCount.toast.copied', { label })));
+    void copyClipboardText(text).then(ok => { if (ok) showToast(t('frameCount.toast.copied', { label })); });
   }, [showToast, t]);
 
   // ── 视频控制 ──
@@ -809,14 +812,6 @@ export default function FrameCountPage({ active, onReconstruct }: {
     setPlaybackRate(rate);
   }, []);
 
-  // 长按重复: pointerdown 立即触发一次, 400ms 后每 intervalMs 重复, 离开/抬起停止
-  const longPressTimerRef = useRef<number | null>(null);
-  const longPressIntervalRef = useRef<number | null>(null);
-  const longPressClear = useCallback(() => {
-    if (longPressTimerRef.current !== null) { clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null; }
-    if (longPressIntervalRef.current !== null) { clearInterval(longPressIntervalRef.current); longPressIntervalRef.current = null; }
-  }, []);
-  useEffect(() => longPressClear, [longPressClear]);
   useLayoutEffect(() => {
     if (active) return;
     holdPlayingRef.current = false;
@@ -824,26 +819,11 @@ export default function FrameCountPage({ active, onReconstruct }: {
     isDraggingRef.current = false;
     dragPrefetchCenterRef.current = null;
     pendingDragPlayback.current?.abort();
-    longPressClear();
     videoRef.current?.pause();
     setCropMode(false);
     setShowShortcuts(false);
     setShowExportMenu(false);
-  }, [active, longPressClear]);
-  const longPressProps = useCallback((fn: () => void, intervalMs = 100) => ({
-    onPointerDown: (e: React.PointerEvent) => {
-      e.preventDefault();
-      fn();
-      longPressClear();
-      longPressTimerRef.current = window.setTimeout(() => {
-        longPressIntervalRef.current = window.setInterval(fn, intervalMs);
-      }, 400);
-    },
-    onPointerUp: longPressClear,
-    onPointerLeave: longPressClear,
-    onPointerCancel: longPressClear,
-  }), [longPressClear]);
-
+  }, [active]);
   // ── Solve 管理 ──
 
   const renumberSolves = (list: Solve[]) => list.map((s, i) => ({ ...s, name: `Solve ${i + 1}` }));
@@ -1433,49 +1413,6 @@ export default function FrameCountPage({ active, onReconstruct }: {
     return () => window.removeEventListener('wheel', onWheel);
   }, [active, stepFrames, videoSrc]);
 
-  // ── 生成缩略图 (WebCodecs 不可用 或 mp4box 解析 0 samples 时 fallback 到 <video>+seek) ──
-  useEffect(() => {
-    if (!videoSrc || totalFrames <= 0 || videoFps <= 0) return;
-    // WebCodecs 路径正常时 (mp4box 拿到 samples) 走 useFrameBuffer.keyFrameThumbs, 跳过
-    if (typeof VideoDecoder !== 'undefined' && !parseFailed) return;
-    const video = document.createElement('video');
-    video.muted = true;
-    video.preload = 'auto';
-    video.src = videoSrc;
-    const canvas = document.createElement('canvas');
-    const ctx2 = canvas.getContext('2d')!;
-    const thumbArr: string[] = [];
-    let cancelled = false;
-
-    video.addEventListener('loadedmetadata', () => {
-      const dur = video.duration;
-      if (!dur || dur <= 0) return;
-      canvas.width = 120;
-      canvas.height = Math.round(120 * (video.videoHeight / video.videoWidth) || 68);
-      let idx = 0;
-      const times = Array.from({ length: timelineThumbCount }, (_, i) => (i / Math.max(1, timelineThumbCount - 1)) * dur);
-
-      const grabNext = () => {
-        if (cancelled || idx >= times.length) {
-          if (!cancelled) setThumbnails([...thumbArr]);
-          video.src = '';
-          return;
-        }
-        video.currentTime = times[idx];
-      };
-
-      video.addEventListener('seeked', () => {
-        ctx2.drawImage(video, 0, 0, canvas.width, canvas.height);
-        thumbArr.push(canvas.toDataURL('image/jpeg', 0.5));
-        idx++;
-        grabNext();
-      });
-      grabNext();
-    });
-
-    return () => { cancelled = true; };
-  }, [videoSrc, totalFrames, videoFps, parseFailed, timelineThumbCount]);
-
   // ── Timeline trim 拖拽 ──
   useEffect(() => {
     if (!active) return;
@@ -1602,11 +1539,11 @@ export default function FrameCountPage({ active, onReconstruct }: {
       pendingSide = null;
       scrubModeActive = false;
     };
-    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointermove', onMove, true);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
     return () => {
-      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointermove', onMove, true);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
       if (rafId) cancelAnimationFrame(rafId);
@@ -1867,6 +1804,7 @@ export default function FrameCountPage({ active, onReconstruct }: {
   const totalMarkTime = videoFps > 0 ? totalMarkFrames / videoFps : 0;
 
   const endFrame = trimEnd || totalFrames;
+  const transportTime = videoFps > 0 ? `${formatTime(currentFrame / videoFps)} / ${formatTime(totalFrames / videoFps)}` : '';
   const canReconstruct = videoFile && readyFile === videoFile && videoFps > 0 && endFrame > trimStart;
   function reconstruct() {
     if (!canReconstruct || !videoFile) return;
@@ -1886,6 +1824,87 @@ export default function FrameCountPage({ active, onReconstruct }: {
       transform: imageTransform,
     });
   }
+
+  const filmstrip = <div className="fc-seek-filmstrip" data-trailing={currentFrame > totalFrames / 2}>
+    {/* Mark 三角标,贴在时间轴上方,单击跳到对应帧 */}
+    {totalFrames > 0 && activeSolve.marks.length > 0 && (
+      <div className="fc-mark-tri-row">
+        {activeSolve.marks.map((m, i) => {
+          const pct = (m.frame / totalFrames) * 100;
+          return (
+            <button
+              key={i}
+              type="button"
+              className={`fc-mark-tri ${selectedMarkIdx === i ? 'selected' : ''}`}
+              style={{ left: `${pct}%` }}
+              onClick={() => { setSelectedMarkIdx(i); seekToFrame(m.frame); }}
+              title={t('frameCount.marks.triTip', { i, frame: m.frame })}
+            >▼</button>
+          );
+        })}
+      </div>
+    )}
+
+    <VideoTrimTimeline total={totalFrames} start={trimStart} end={trimEnd || totalFrames}
+      position={currentFrame} timeLabel={videoFps > 0 ? `${formatTime(currentFrame / videoFps)} (${currentFrame})` : ''}
+      trackRef={trimTrackRef} playheadRef={playheadRef} tooltipRef={playheadTooltipRef}
+      labels={{
+        start: tr({ zh: '裁剪起点', en: 'Trim start' }),
+        end: tr({ zh: '裁剪终点', en: 'Trim end' }),
+        seek: tr({ zh: '视频进度', en: 'Video position' }),
+      }}
+      onSeek={seekToFrame} onDragStart={drag => { trimDragRef.current = drag; }}
+      onTrim={(side, frame) => {
+        const next = side === 'left' ? Math.min(frame, (trimEnd || totalFrames) - 1) : Math.max(frame, trimStart + 1);
+        if (side === 'left') setTrimStart(next);
+        else setTrimEnd(next);
+        seekToFrame(next);
+      }}
+      thumbnails={timelineThumbs.length > 0
+        ? timelineThumbs.map(({ bitmap }, i) => <ThumbnailCanvas key={i} bitmap={bitmap} />)
+        : videoSrc && <VideoSourceFilmstrip source={videoSrc} count={timelineThumbCount} />}>
+      {/* Mark indicators */}
+      {activeSolve.marks.map((m, i) => {
+        if (totalFrames <= 0) return null;
+        const pct = (m.frame / totalFrames) * 100;
+        return (
+          <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${pct}%` }} title={t('frameCount.marks.markerTip', { i, frame: m.frame })} />
+        );
+      })}
+
+      {/* Solve bands: 每个 solve 在其首尾 mark 之间画一条带,点击切换;
+          active solve 显示各 mark 的序号,其他 solve 显示名字 */}
+      {totalFrames > 0 && solves.map((s, si) => {
+        if (s.marks.length < 1) return null;
+        const firstFrame = s.marks[0].frame;
+        const lastFrame = s.marks[s.marks.length - 1].frame;
+        const span = Math.max(1, lastFrame - firstFrame);
+        const leftPct = (firstFrame / totalFrames) * 100;
+        const widthPct = Math.max(0.4, (span / totalFrames) * 100);
+        const isActive = si === activeSolveIdx;
+        return (
+          <div
+            key={si}
+            className={`fc-solve-band ${isActive ? 'active' : ''}`}
+            style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+            onPointerDown={(e) => { e.stopPropagation(); if (!isActive) { setActiveSolveIdx(si); setSelectedMarkIdx(null); } }}
+            title={t('frameCount.solves.bandTip', { name: s.name, count: s.marks.length })}
+          >
+            {isActive ? (
+              s.marks.map((m, mi) => {
+                const rel = span > 0 ? ((m.frame - firstFrame) / span) * 100 : 0;
+                return (
+                  <span key={mi} className="fc-solve-band-mark" style={{ left: `${rel}%` }}>{mi}</span>
+                );
+              })
+            ) : (
+              <span className="fc-solve-band-label">{s.name}</span>
+            )}
+          </div>
+        );
+      })}
+    </VideoTrimTimeline>
+  </div>;
 
   return (
     <div
@@ -1986,7 +2005,9 @@ export default function FrameCountPage({ active, onReconstruct }: {
               </div>
             </div>
             {videoSrc ? (
-              <>
+              <div className="fc-video-surface"
+                style={videoAspect ? { '--fc-video-aspect': videoAspect } as React.CSSProperties : undefined}
+                {...playbackVisibility.surfaceEvents}>
                 {/* 视频 wrapper — 紧贴视频尺寸，crop overlay / zoom / pan 都在这里 */}
                 <div
                   ref={wrapperRef}
@@ -1994,8 +2015,7 @@ export default function FrameCountPage({ active, onReconstruct }: {
                   style={viewport.style}
                   {...viewport.interaction}
                 >
-                  <div className="fc-video-media"
-                    style={videoAspect ? { '--fc-video-aspect': videoAspect } as React.CSSProperties : undefined}>
+                  <div className="fc-video-media">
                     <video
                       ref={videoRef}
                       src={videoSrc}
@@ -2036,7 +2056,20 @@ export default function FrameCountPage({ active, onReconstruct }: {
                     }} />}
                   </div>
                 </div>
-              </>
+                {!cropMode && !decoderDead && <VideoPlaybackControls key={videoSrc} filmstrip={filmstrip}
+                  visibility={playbackVisibility} playing={isPlaying}
+                  position={currentFrame} total={Math.max(0, totalFrames - 1)} step={1} time={transportTime}
+                  onPlay={togglePlay} onSeek={frame => {
+                    videoRef.current?.pause();
+                    setIsPlaying(false);
+                    seekToFrame(frame);
+                  }}
+                  actions={<>
+                    <VideoFrameStepButtons onStep={stepFrames} active={active} showShortcuts />
+                    <PlaybackSpeedSelect label={tr({ zh: '播放倍速', en: 'Playback speed' })}
+                      value={playbackRate} options={PLAYBACK_RATES} onChange={changeRate} />
+                  </>} />}
+              </div>
             ) : (
               <div className={`fc-drop-hint ${dragging ? 'dragging' : ''}`}>
                 <button type="button" className="fc-drop-upload-btn" onClick={() => fileInputRef.current?.click()} aria-label={t('frameCount.video.uploadAria')}>
@@ -2047,108 +2080,11 @@ export default function FrameCountPage({ active, onReconstruct }: {
             <input ref={fileInputRef} type="file" accept="video/*" className="fc-file-input fc-page-input" onChange={handleFileSelect} />
           </div>
 
-          {/* ── 控制栏 ── 总是渲染; 无视频时交互按钮 disabled */}
-          <div data-site-surface="panel" className="fc-panel fc-controls-wrap">
-              {/* Mark 三角标,贴在时间轴上方,单击跳到对应帧 */}
-              {totalFrames > 0 && activeSolve.marks.length > 0 && (
-                <div className="fc-mark-tri-row">
-                  {activeSolve.marks.map((m, i) => {
-                    const pct = (m.frame / totalFrames) * 100;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`fc-mark-tri ${selectedMarkIdx === i ? 'selected' : ''}`}
-                        style={{ left: `${pct}%` }}
-                        onClick={() => { setSelectedMarkIdx(i); seekToFrame(m.frame); }}
-                        title={t('frameCount.marks.triTip', { i, frame: m.frame })}
-                      >▼</button>
-                    );
-                  })}
-                </div>
-              )}
-
-              <VideoTrimTimeline total={totalFrames} start={trimStart} end={trimEnd || totalFrames}
-                position={currentFrame} timeLabel={videoFps > 0 ? `${formatTime(currentFrame / videoFps)} (${currentFrame})` : ''}
-                trackRef={trimTrackRef} playheadRef={playheadRef} tooltipRef={playheadTooltipRef}
-                labels={{
-                  start: tr({ zh: '裁剪起点', en: 'Trim start' }),
-                  end: tr({ zh: '裁剪终点', en: 'Trim end' }),
-                  seek: tr({ zh: '视频进度', en: 'Video position' }),
-                }}
-                onSeek={seekToFrame} onDragStart={drag => { trimDragRef.current = drag; }}
-                onTrim={(side, frame) => {
-                  const next = side === 'left' ? Math.min(frame, (trimEnd || totalFrames) - 1) : Math.max(frame, trimStart + 1);
-                  if (side === 'left') setTrimStart(next);
-                  else setTrimEnd(next);
-                  seekToFrame(next);
-                }}
-                thumbnails={timelineThumbs.length > 0
-                  ? timelineThumbs.map(({ bitmap }, i) => <ThumbnailCanvas key={i} bitmap={bitmap} />)
-                  : thumbnails.map((src, i) => <img key={i} src={src} className="video-timeline-thumb" alt="" draggable={false} />)}>
-                {/* Mark indicators */}
-                {activeSolve.marks.map((m, i) => {
-                  if (totalFrames <= 0) return null;
-                  const pct = (m.frame / totalFrames) * 100;
-                  return (
-                    <div key={i} className="fc-marker fc-marker-mark" style={{ left: `${pct}%` }} title={t('frameCount.marks.markerTip', { i, frame: m.frame })} />
-                  );
-                })}
-
-                {/* Solve bands: 每个 solve 在其首尾 mark 之间画一条带,点击切换;
-                    active solve 显示各 mark 的序号,其他 solve 显示名字 */}
-                {totalFrames > 0 && solves.map((s, si) => {
-                  if (s.marks.length < 1) return null;
-                  const firstFrame = s.marks[0].frame;
-                  const lastFrame = s.marks[s.marks.length - 1].frame;
-                  const span = Math.max(1, lastFrame - firstFrame);
-                  const leftPct = (firstFrame / totalFrames) * 100;
-                  const widthPct = Math.max(0.4, (span / totalFrames) * 100);
-                  const isActive = si === activeSolveIdx;
-                  return (
-                    <div
-                      key={si}
-                      className={`fc-solve-band ${isActive ? 'active' : ''}`}
-                      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                      onPointerDown={(e) => { e.stopPropagation(); if (!isActive) { setActiveSolveIdx(si); setSelectedMarkIdx(null); } }}
-                      title={t('frameCount.solves.bandTip', { name: s.name, count: s.marks.length })}
-                    >
-                      {isActive ? (
-                        s.marks.map((m, mi) => {
-                          const rel = span > 0 ? ((m.frame - firstFrame) / span) * 100 : 0;
-                          return (
-                            <span key={mi} className="fc-solve-band-mark" style={{ left: `${rel}%` }}>{mi}</span>
-                          );
-                        })
-                      ) : (
-                        <span className="fc-solve-band-label">{s.name}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </VideoTrimTimeline>
-
-              <div className="fc-controls">
-                <div className="fc-rate-group">
-                  {PLAYBACK_RATES.map((r) => (
-                    <button key={r} className={`fc-rate-btn ${playbackRate === r ? 'active' : ''}`} disabled={!videoSrc} onClick={() => changeRate(r)}>{r === 1 ? '1x' : r}</button>
-                  ))}
-                </div>
-
-                <div className="fc-ctrl-sep" />
-
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.back10')} aria-label={t('frameCount.controls.back10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-10), 150)}><IconSkipBack /></button>
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.back1')} aria-label={t('frameCount.controls.back1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(-1), 80)}><IconFrameBack /></button>
-                <button className="fc-ctrl-btn play-btn" title={t('frameCount.controls.play')} aria-label={t('frameCount.controls.play')} disabled={!videoSrc} onClick={togglePlay}>
-                  {isPlaying ? <IconPause /> : <IconPlay />}
-                </button>
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward1')} aria-label={t('frameCount.controls.forward1')} disabled={!videoSrc} {...longPressProps(() => stepFrames(1), 80)}><IconFrameForward /></button>
-                <button className="fc-ctrl-btn" title={t('frameCount.controls.forward10')} aria-label={t('frameCount.controls.forward10')} disabled={!videoSrc} {...longPressProps(() => stepFrames(10), 150)}><IconSkipForward /></button>
-                {canReconstruct && <button type="button" className="btn-secondary fc-reconstruct-btn" onClick={reconstruct}>
-                  {tr({ zh: '复盘此区间', en: 'Reconstruct this range' })}<ArrowRight size={16} aria-hidden />
-                </button>}
-              </div>
-            </div>
+          {canReconstruct && <div data-site-surface="panel" className="fc-panel fc-controls-wrap">
+            <button type="button" className="btn-secondary fc-reconstruct-btn" onClick={reconstruct}>
+              {tr({ zh: '复盘此区间', en: 'Reconstruct this range' })}<ArrowRight size={16} aria-hidden />
+            </button>
+          </div>}
         </div>
 
         {/* 右侧：Solve 面板 — 总是显示 (空视频时也展示指引与布局) */}

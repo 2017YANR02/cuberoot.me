@@ -1,15 +1,17 @@
 'use client';
 
 import { Tooltip } from '@/components/Tooltip';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
-import { Bug, Check, ChevronLeft, ChevronRight, CircleHelp, FlipHorizontal2, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Volume1, Volume2, VolumeX } from '@app-foundation/icons/lucide';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
+import { Bug, Check, ChevronLeft, ChevronRight, CircleHelp, FlipHorizontal2, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, SlidersHorizontal, Volume1, Volume2, VolumeX } from '@app-foundation/icons/lucide';
 import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { persistItem } from '@/lib/safe-storage';
 import { useT } from '@/hooks/useT';
-import './lesson-video-player.css';
+import { VideoContextMenu } from './VideoContextMenu';
+import { VideoSourceFilmstrip } from '@/components/video/VideoSourceFilmstrip';
+import { VideoPlaybackControls, VideoSettingsButton, useVideoControlsVisibility } from './VideoPlaybackControls';
 
 interface Props {
   src: string;
@@ -45,9 +47,9 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const video = useRef<HTMLVideoElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
-  const idle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [visible, setVisible] = useState(true);
+  const visibility = useVideoControlsVisibility(playing);
+  const { reveal, surfaceEvents } = visibility;
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
@@ -66,7 +68,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const [shortcuts, setShortcuts] = useState(false);
   const shortcutDialog = useRef<HTMLDialogElement>(null);
   const frameDuration = useRef(1 / 30);
-  const contextPanel = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [loop, setLoop] = useState(false);
   const [details, setDetails] = useState<'stats' | 'help' | null>(null);
@@ -89,7 +90,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   }, [onVideoElement]);
   useEffect(() => cancelLongPress, []);
   usePanelClamp(menu !== null, panel);
-  usePanelClamp(contextMenu !== null, contextPanel);
 
   useEffect(() => {
     if (!shortcuts) return;
@@ -161,39 +161,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       element.currentTime = Math.min(startTime, element.duration);
     }
   }, [startTime]);
-  useLayoutEffect(() => {
-    if (!contextMenu) return;
-    const fit = () => {
-      const container = root.current?.getBoundingClientRect();
-      const popup = contextPanel.current;
-      if (!container || !popup) return;
-      const left = Math.max(8, -container.left + 8);
-      const top = Math.max(8, -container.top + 8);
-      const right = Math.min(container.width, window.innerWidth - container.left) - 8;
-      const bottom = Math.min(container.height, window.innerHeight - container.top) - 8;
-      popup.style.maxHeight = `${Math.max(0, bottom - top)}px`;
-      popup.style.left = `${Math.max(left, Math.min(contextMenu.x, right - popup.offsetWidth))}px`;
-      popup.style.top = `${Math.max(top, Math.min(contextMenu.y, bottom - popup.offsetHeight))}px`;
-    };
-    fit();
-    const observer = new ResizeObserver(fit);
-    if (root.current) observer.observe(root.current);
-    window.addEventListener('resize', fit);
-    window.addEventListener('scroll', fit, true);
-    return () => { observer.disconnect(); window.removeEventListener('resize', fit); window.removeEventListener('scroll', fit, true); };
-  }, [contextMenu]);
-  useEffect(() => {
-    if (!contextMenu) return;
-    const outside = (event: PointerEvent) => { if (!contextPanel.current?.contains(event.target as Node)) setContextMenu(null); };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') { event.preventDefault(); setContextMenu(null); root.current?.focus(); }
-    };
-    contextPanel.current?.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
-    document.addEventListener('pointerdown', outside);
-    document.addEventListener('keydown', escape);
-    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
-  }, [contextMenu]);
-
   const shareUrl = (withTime = false) => {
     // Share the authorized lesson page, never its expiring signed media URL or unrelated query values.
     const url = new URL(window.location.pathname, window.location.origin);
@@ -212,12 +179,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   };
   const showDetails = (value: 'stats' | 'help') => { setDetails(value); setContextMenu(null); };
 
-  const reveal = () => {
-    setVisible(true);
-    if (idle.current) clearTimeout(idle.current);
-    idle.current = setTimeout(() => setVisible(false), 2600);
-  };
-  useEffect(() => () => { if (idle.current) clearTimeout(idle.current); }, []);
   useEffect(() => {
     setCanPip(Boolean(document.pictureInPictureEnabled));
     const element = video.current;
@@ -262,7 +223,6 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
     if (!element) return;
     if (!element.paused) element.pause();
     else try { await element.play(); } catch { setNotice(t('无法开始播放，请重试', 'Could not start playback. Try again.')); }
-    reveal();
   };
   const seek = (time: number) => {
     // Unknown/live duration and non-finite input cannot be seeked safely.
@@ -386,10 +346,9 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   const quality = resolution ? `${resolution}p` : t('原画', 'Original');
   const speed = rate === 1 ? t('正常', 'Normal') : `${rate}×`;
   const sleep = sleepMinutes ? t(`${sleepMinutes} 分钟`, `${sleepMinutes} minutes`) : t('关闭', 'Off');
-  const controlsVisible = visible || !playing || menu !== null || contextMenu !== null;
   // allow-static-onclick: root captures synthetic touch clicks; playback actions are real buttons.
-  return <div ref={root} className={`lesson-video-player${controlsVisible ? ' controls-visible' : ''}${theater ? ' is-theater' : ''}`} tabIndex={0}
-    aria-label={t('视频播放器', 'Video player')} onPointerMove={reveal} onPointerDown={() => { suppressTap.current = false; reveal(); }} onFocus={reveal}
+  return <div ref={root} className={`lesson-video-player${theater ? ' is-theater' : ''}`} tabIndex={0}
+    {...surfaceEvents} aria-label={t('视频播放器', 'Video player')} onPointerDown={() => { suppressTap.current = false; reveal(); }}
     onClickCapture={event => {
       // Touch release can retarget its synthesized click to a newly opened menu item.
       if (suppressTap.current) { suppressTap.current = false; event.preventDefault(); event.stopPropagation(); }
@@ -422,7 +381,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       onProgress={event => { const element = event.currentTarget; if (element.buffered.length) setBuffered(element.buffered.end(element.buffered.length - 1)); }}
       onVolumeChange={event => { const player = event.currentTarget; setVolume(player.volume); setMuted(player.muted); persistItem(PLAYBACK_PREFERENCES, JSON.stringify({ rate: player.defaultPlaybackRate, volume: player.volume, muted: player.muted })); }}
       onRateChange={event => { const player = event.currentTarget; setRate(player.playbackRate); if (player.defaultPlaybackRate !== player.playbackRate) player.defaultPlaybackRate = player.playbackRate; persistItem(PLAYBACK_PREFERENCES, JSON.stringify({ rate: player.playbackRate, volume: player.volume, muted: player.muted })); }}
-      onPlay={() => { setPlaying(true); reveal(); }} onPause={() => setPlaying(false)}
+      onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
       onEnded={() => { setPlaying(false); if (!loop && autoContinue && sleepMinutes === 0) onNext?.(); }} />
     {transitionFrame && <img aria-hidden="true" alt="" src={transitionFrame} style={{
       position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none',
@@ -443,34 +402,27 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       onPointerUp={cancelLongPress} onPointerCancel={cancelLongPress} onPointerLeave={cancelLongPress}
       onClick={() => void togglePlay()} onDoubleClick={() => void toggleFullscreen()} />
     {notice && <div className="lesson-video-notice" role="status">{notice}</div>}
-    <div className="lesson-video-controls" onPointerMove={event => { event.stopPropagation(); setVisible(true); if (idle.current) clearTimeout(idle.current); }} onPointerLeave={reveal}>
-      <div className="lesson-video-progress" style={{ '--played': `${duration ? current / duration * 100 : 0}%`, '--buffered': `${duration ? Math.min(100, buffered / duration * 100) : 0}%` } as CSSProperties}>
-        <input className="lesson-video-range" type="range" aria-label={t('播放进度', 'Playback position')} aria-valuetext={`${timeLabel(current)} / ${timeLabel(duration)}`}
-          min={0} max={duration || 1} step={0.1} value={Math.min(current, duration || 1)} disabled={!duration} onChange={event => seek(Number(event.target.value))} />
-      </div>
-      <div className="lesson-video-toolbar">
-        <div className="lesson-video-left">
-          <Tooltip content={playing ? t('暂停 (k)', 'Pause (k)') : t('播放 (k)', 'Play (k)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon"  aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')} onClick={() => void togglePlay()}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>}</Tooltip>
-          <div className="lesson-video-volume">
-            <Tooltip content={muted ? t('取消静音 (m)', 'Unmute (m)') : t('静音 (m)', 'Mute (m)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon"  aria-label={muted ? t('取消静音', 'Unmute') : t('静音', 'Mute')} onClick={toggleMute}>{muted || volume === 0 ? <VolumeX /> : volume < 0.5 ? <Volume1 /> : <Volume2 />}</button>}</Tooltip>
-            <input className="lesson-video-range" type="range" aria-label={t('音量', 'Volume')} min={0} max={1} step={0.05} value={muted ? 0 : volume}
-              style={{ '--volume': `${(muted ? 0 : volume) * 100}%` } as CSSProperties}
-              onChange={event => { if (video.current) { video.current.volume = Number(event.target.value); video.current.muted = false; } }} />
-          </div>
-          <span className="lesson-video-time">{timeLabel(current)} / {timeLabel(duration)}</span>
+    <VideoPlaybackControls key={src} filmstrip={<VideoSourceFilmstrip source={src} />} playing={playing} visibility={visibility} keepVisible={!!menu || !!contextMenu}
+      position={current} total={duration} buffered={buffered} step={0.1} time={`${timeLabel(current)} / ${timeLabel(duration)}`}
+      onSeek={seek} onPlay={() => void togglePlay()}
+      afterPlay={
+        <div className="lesson-video-volume">
+          <Tooltip content={muted ? t('取消静音 (m)', 'Unmute (m)') : t('静音 (m)', 'Mute (m)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon"  aria-label={muted ? t('取消静音', 'Unmute') : t('静音', 'Mute')} onClick={toggleMute}>{muted || volume === 0 ? <VolumeX /> : volume < 0.5 ? <Volume1 /> : <Volume2 />}</button>}</Tooltip>
+          <input className="lesson-video-range" type="range" aria-label={t('音量', 'Volume')} min={0} max={1} step={0.05} value={muted ? 0 : volume}
+            style={{ '--volume': `${(muted ? 0 : volume) * 100}%` } as CSSProperties}
+            onChange={event => { if (video.current) { video.current.volume = Number(event.target.value); video.current.muted = false; } }} />
         </div>
-        <div className="lesson-video-right">
-          <Tooltip content={t('截图', 'Screenshot')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-capture" aria-label={t('截图', 'Screenshot')} onClick={screenshot} disabled={!resolution}>{t('截图', 'Screenshot')}</button>}</Tooltip>
-          {onAutoContinueChange && <Tooltip content={autoContinue ? t('自动播放模式已开启', 'Autoplay is on') : t('自动播放模式已关闭', 'Autoplay is off')}>{(tip) => <span {...tip} className="lesson-video-autoplay" >
-            <BoolToggle value={autoContinue} onChange={onAutoContinueChange} ariaLabel={t('自动播放下一课', 'Autoplay next lesson')} label={autoContinue ? <Play size={10} fill="currentColor" /> : <Pause size={10} fill="currentColor" />} />
-          </span>}</Tooltip>}
-          <Tooltip content={t('设置', 'Settings')}>{(tip) => <button {...tip} ref={settingsButton} type="button" className={`lesson-video-button lesson-video-icon lesson-video-settings${menu ? ' is-open' : ''}`} aria-label={t('设置', 'Settings')} aria-expanded={menu !== null} aria-haspopup="dialog"  onClick={() => setMenu(menu ? null : 'main')}><Settings /></button>}</Tooltip>
-          {canPip && <Tooltip content={t('画中画', 'Picture-in-picture')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-pip" aria-label={t('画中画', 'Picture-in-picture')} aria-pressed={pip}  onClick={() => void togglePip()}><PictureInPicture2 /></button>}</Tooltip>}
-          <Tooltip content={t('影院模式 (t)', 'Theater mode (t)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-theater" aria-label={t('影院模式', 'Theater mode')} aria-pressed={theater}  onClick={() => setTheater(!theater)}><RectangleHorizontal /></button>}</Tooltip>
-          <Tooltip content={fullscreen ? t('退出全屏 (f)', 'Exit fullscreen (f)') : t('全屏 (f)', 'Fullscreen (f)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon" aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏', 'Fullscreen')}  onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize /> : <Maximize />}</button>}</Tooltip>
-        </div>
-      </div>
-    </div>
+      }
+      actions={<>
+        <Tooltip content={t('截图', 'Screenshot')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-capture" aria-label={t('截图', 'Screenshot')} onClick={screenshot} disabled={!resolution}>{t('截图', 'Screenshot')}</button>}</Tooltip>
+        {onAutoContinueChange && <Tooltip content={autoContinue ? t('自动播放模式已开启', 'Autoplay is on') : t('自动播放模式已关闭', 'Autoplay is off')}>{(tip) => <span {...tip} className="lesson-video-autoplay" >
+          <BoolToggle value={autoContinue} onChange={onAutoContinueChange} ariaLabel={t('自动播放下一课', 'Autoplay next lesson')} label={autoContinue ? <Play size={10} fill="currentColor" /> : <Pause size={10} fill="currentColor" />} />
+        </span>}</Tooltip>}
+        <Tooltip content={t('设置', 'Settings')}>{(tip) => <VideoSettingsButton {...tip} ref={settingsButton} open={menu !== null} onClick={() => setMenu(menu ? null : 'main')} />}</Tooltip>
+        {canPip && <Tooltip content={t('画中画', 'Picture-in-picture')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-pip" aria-label={t('画中画', 'Picture-in-picture')} aria-pressed={pip}  onClick={() => void togglePip()}><PictureInPicture2 /></button>}</Tooltip>}
+        <Tooltip content={t('影院模式 (t)', 'Theater mode (t)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-theater" aria-label={t('影院模式', 'Theater mode')} aria-pressed={theater}  onClick={() => setTheater(!theater)}><RectangleHorizontal /></button>}</Tooltip>
+        <Tooltip content={fullscreen ? t('退出全屏 (f)', 'Exit fullscreen (f)') : t('全屏 (f)', 'Fullscreen (f)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon" aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏', 'Fullscreen')}  onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize /> : <Maximize />}</button>}</Tooltip>
+      </>} />
     {menu && <div ref={panel} className="lesson-video-menu" role="dialog" aria-label={t('播放设置', 'Playback settings')}>
       {menu === 'main' ? <>
         <button type="button" className="lesson-video-button lesson-video-menu-row" aria-pressed={mirrored} onClick={() => setMirrored(value => !value)}>
@@ -487,16 +439,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
         {menu === 'quality' && <><button type="button" className="lesson-video-button lesson-video-option" aria-pressed="true" onClick={() => setMenu('main')}><Check />{t('原画', 'Original')} {resolution ? `${resolution}p` : ''}</button><p className="lesson-video-menu-note">{t('当前视频仅提供原始画质', 'Only the original quality is available for this video')}</p></>}
       </>}
     </div>}
-    {contextMenu && <div ref={contextPanel} className="lesson-video-context" role="menu" aria-label={t('视频菜单', 'Video menu')}
-      onKeyDown={event => {
-        const buttons = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
-        const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
-        if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
-          event.preventDefault();
-          buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
-        }
-        if (event.key === 'Tab') setContextMenu(null);
-      }}>
+    {contextMenu && <VideoContextMenu player={root} position={contextMenu} onClose={setContextMenu} className="lesson-video-context">
       <button className="lesson-video-button" type="button" role="menuitemcheckbox" aria-checked={loop} onClick={() => { setLoop(!loop); setContextMenu(null); }}><Repeat2 /><span>{t('循环播放', 'Loop')}</span>{loop && <Check className="lesson-video-context-check" />}</button>
       <button className="lesson-video-button" type="button" role="menuitem" disabled={!canPip} onClick={() => { setContextMenu(null); void togglePip(); }}><PictureInPicture2 /><span>{t('迷你播放器', 'Miniplayer')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => void copy(shareUrl())}><Link /><span>{t('复制视频网址', 'Copy video URL')}</span></button>
@@ -504,7 +447,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => void copy(JSON.stringify(readStats(), null, 2))}><Bug /><span>{t('复制调试信息', 'Copy debug info')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => showDetails('help')}><CircleHelp /><span>{t('排查播放问题', 'Troubleshoot playback issue')}</span></button>
       <button className="lesson-video-button" type="button" role="menuitem" onClick={() => showDetails('stats')}><Info /><span>{t('详细统计信息', 'Stats for nerds')}</span></button>
-    </div>}
+    </VideoContextMenu>}
     {details && stats && <div className="lesson-video-details" role="dialog" aria-label={details === 'stats' ? t('详细统计信息', 'Stats for nerds') : t('排查播放问题', 'Troubleshoot playback issue')}>
       <ClearButton variant="standalone" className="lesson-video-details-close" ariaLabel={t('关闭统计与诊断', 'Close statistics and diagnostics')} onClick={() => setDetails(null)} />
       {details === 'stats' ? <dl>
