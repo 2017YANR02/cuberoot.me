@@ -225,9 +225,9 @@ function useShortcutScrollColor(enabled: boolean) {
       });
     };
     const schedule = () => { frame ??= window.requestAnimationFrame(update); };
-    const resize = new ResizeObserver(schedule);
-    resize.observe(grid);
-    resize.observe(document.body);
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
+    resize?.observe(grid);
+    resize?.observe(document.body);
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
     motion.addEventListener('change', schedule);
@@ -237,7 +237,7 @@ function useShortcutScrollColor(enabled: boolean) {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
       motion.removeEventListener('change', schedule);
-      resize.disconnect();
+      resize?.disconnect();
       rows.forEach(property => grid.style.removeProperty(property));
     };
   }, [enabled]);
