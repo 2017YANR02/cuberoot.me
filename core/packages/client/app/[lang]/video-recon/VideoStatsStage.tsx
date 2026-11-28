@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ComponentPropsWithoutRef, type PointerEvent as ReactPointerEvent, type ReactNode, type Ref } from 'react';
+import { useEffect, useRef, useState, type ComponentPropsWithoutRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode, type Ref } from 'react';
 import { Info } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import { VideoContextMenu } from '@/components/video/VideoContextMenu';
@@ -9,10 +9,12 @@ import { VideoSettingsButton, useVideoControlsVisibility } from '@/components/vi
 import { ReviewPlaybackOverlay, type ReviewPlayback } from './ReviewControls';
 import { useT } from '@/hooks/useT';
 
-export function VideoStatsStage({ fileName, stats, playback, settingsAvailable = true, settingsItems, settingsSlotRef, frameDecoration, children, ...props }: ComponentPropsWithoutRef<'div'> & {
+export function VideoStatsStage({ fileName, stats, playback, settingsAvailable = true, settingsItems, settingsSlotRef, frameDecoration, frameAspect, quarterTurn, children, ...props }: ComponentPropsWithoutRef<'div'> & {
   fileName?: string;
   stats?: ReactNode;
   frameDecoration?: ReactNode;
+  frameAspect?: number;
+  quarterTurn?: boolean;
   settingsAvailable?: boolean;
   settingsItems?: ReactNode;
   settingsSlotRef?: Ref<HTMLDivElement>;
@@ -175,5 +177,9 @@ export function VideoStatsStage({ fileName, stats, playback, settingsAvailable =
       {stats}
     </section>}
   </div>;
-  return <div className="video-recon-player-frame">{player}{frameDecoration}</div>;
+  return <div className="video-recon-player-frame" hidden={props.hidden} data-media-sized={frameAspect ? '' : undefined}
+    data-quarter-turn={frameAspect && quarterTurn || undefined}
+    style={frameAspect ? { '--video-frame-aspect': frameAspect } as CSSProperties : undefined}>
+    {player}{frameDecoration}
+  </div>;
 }

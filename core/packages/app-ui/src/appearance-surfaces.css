@@ -17,6 +17,16 @@ body[data-site-scenery] [data-site-surface='popover']:not(:where(.af-glass-surfa
   box-shadow: var(--glass-shadow);
 }
 
+/* One optical layer for both hosts. Use the denser menu tint behind review controls. */
+.timer-video-glass.af-glass-surface {
+  --af-glass-inset: 0px;
+  --af-glass-fill: var(--popover);
+  --af-glass-tint: var(--glass-popover-bg);
+}
+.timer-video-glass:is(.is-workspace, :has(.timer-video-review[data-source])) {
+  --af-glass-tint: var(--glass-menu-bg);
+}
+
 /* Legacy roles paint directly for compatibility with their existing layout. */
 body[data-site-scenery] :is([data-site-surface='panel'], [data-site-surface='popover']):not(:where(.af-glass-surface)) {
   --af-glass-border-image: var(--af-studio-rim, none), var(--af-glass-border-gradient, none);
@@ -32,4 +42,64 @@ body[data-site-scenery] :is([data-site-surface='panel'], [data-site-surface='pop
 }
 body[data-site-scenery] .timer-modal.settings-modal {
   background: var(--glass-dialog-bg);
+}
+
+/* Camera chrome uses the same contrast against live footage in both themes. */
+:is(.timer-video-glass, .timer-video-embedded) {
+  --camera-black: black;
+  --camera-ink: white;
+  --camera-record: #ff383d;
+  --camera-mode: #ffda00;
+  --camera-control: color-mix(in srgb, var(--camera-ink) 13%, var(--camera-black) 78%);
+}
+.settings-dialog-backdrop:has(.timer-video-dialog [data-viewfinder]),
+:root[data-host-viewport] .timer-room-overlay:has(> .installed-video-review.is-viewfinder),
+.timer-room-overlay:has(> .installed-video-review.is-viewfinder) {
+  padding: 0;
+}
+.settings-dialog:has(.timer-video-dialog [data-viewfinder]),
+.settings-dialog .settings-dialog-panel.timer-video-dialog:has([data-viewfinder]),
+.timer-room-dialog.installed-video-review.is-viewfinder {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+}
+.timer-video-glass:is(.is-viewfinder, :has([data-viewfinder])) {
+  background: var(--camera-black);
+  color: var(--camera-ink);
+}
+.timer-video-glass:is(.is-viewfinder, :has([data-viewfinder]))::before,
+.timer-video-glass:is(.is-viewfinder, :has([data-viewfinder]))::after { display: none; }
+.timer-room-dialog.installed-video-review.is-viewfinder > iframe { flex: 1 1 100%; }
+.timer-video-glass:is(.is-viewfinder, :has([data-viewfinder])) > :is(.timer-room-dialog-head, .settings-dialog-heading) {
+  position: absolute;
+  z-index: 6;
+  inset: max(12px, env(safe-area-inset-top)) auto auto max(12px, env(safe-area-inset-left));
+  width: auto;
+  margin: 0;
+}
+.timer-video-glass:is(.is-viewfinder, :has([data-viewfinder])) > header h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.timer-video-glass:is(.is-viewfinder, :has([data-viewfinder])) > header button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--camera-control);
+  color: var(--camera-ink);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }

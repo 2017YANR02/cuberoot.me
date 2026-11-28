@@ -1,0 +1,96 @@
+/* Let iOS select San Francisco and its native Chinese fallback for camera chrome. */
+.video-recon-page[data-viewfinder], .camera-format-sheet, .camera-format-trigger, .camera-zooms {
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  letter-spacing: normal;
+  -webkit-font-smoothing: antialiased;
+}
+.camera-format-trigger, .camera-zooms { display: flex; align-items: center; justify-content: center; }
+.camera-format-trigger button, .camera-format-sheet button, .camera-zooms button {
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0 5px;
+}
+.camera-format-trigger button { display: grid; align-content: center; justify-items: center; min-width: 44px; line-height: 1.1; }
+.camera-format-trigger small { font-size: .72em; font-variant-numeric: tabular-nums; }
+.camera-format-trigger button[aria-pressed=true], .camera-zooms button[aria-pressed=true], .camera-format-row button[aria-pressed=true] { color: var(--camera-mode, var(--signal-warning)); }
+.camera-zooms button { min-width: 44px; border-radius: 50%; }
+.camera-zooms button[aria-pressed=true] { background: var(--camera-control, var(--muted)); }
+[data-viewfinder] .camera-format-trigger, [data-viewfinder] .camera-zooms {
+  position: absolute;
+  z-index: 3;
+  color: var(--camera-ink);
+  left: 50%;
+}
+[data-viewfinder] .camera-format-trigger {
+  top: max(16px, env(safe-area-inset-top));
+  transform: translateX(-50%);
+}
+[data-viewfinder] .camera-format-trigger:has(button[aria-pressed]) { margin-left: -22px; }
+[data-viewfinder] .camera-zooms {
+  bottom: max(54px, calc((100cqh - 100cqw / var(--camera-aspect)) / 2 + 10px));
+  transform: translateX(-50%);
+  text-shadow: 0 1px 3px var(--camera-black);
+}
+[data-viewfinder]:has(.camera-clock) .camera-format-trigger { visibility: hidden; }
+.camera-format-sheet {
+  position: fixed;
+  z-index: 6;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: min(28rem, calc(100% - 20px));
+  max-height: 70dvh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 6px clamp(8px, 2vw, 18px) max(34px, env(safe-area-inset-bottom));
+  border: 1px solid color-mix(in srgb, var(--camera-ink, white) 22%, transparent);
+  border-radius: clamp(26px, 9vw, 56px);
+  background-color: color-mix(in srgb, var(--camera-ink, white) 12.2%, var(--camera-black, black) 59%);
+  color: var(--camera-ink, white);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow: inset 0 1px 1px color-mix(in srgb, currentColor 17%, transparent);
+  font-size: 14px;
+  animation: camera-sheet-in 180ms ease-out;
+}
+.camera-format-sheet header { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; text-align: center; margin-bottom: 10px; }
+.camera-format-sheet header button { display: grid; place-items: center; }
+.camera-format-row {
+  display: grid;
+  width: min(100%, 308px);
+  margin-inline: auto;
+  grid-template-columns: minmax(54px, 1.65fr) repeat(4, minmax(0, 1fr));
+  align-items: center;
+  text-align: center;
+}
+@media (min-width: 420px) { .camera-format-row { translate: -13px 0; } }
+.camera-format-row > span { font-size: 10.4px; font-weight: 400; }
+.camera-format-row button { position: relative; font-size: 14px; font-weight: 600; }
+.camera-format-row button[aria-pressed=true]::before { content: '•'; margin-inline-end: 3px; }
+.camera-format-sheet button[data-external], .camera-format-sheet button:disabled { opacity: .36; cursor: default; }
+.camera-format-sheet .camera-system-format { display: block; margin: 0 auto; min-height: 36px; font-size: .8em; }
+.camera-format-error { position: absolute; left: 50%; transform: translateX(-50%); bottom: 15rem; z-index: 6; color: var(--camera-ink, var(--foreground)); background: var(--camera-control, var(--popover)); }
+@container (orientation: landscape) {
+  [data-viewfinder] .camera-format-trigger { left: max(28px,env(safe-area-inset-left)); top: 50%; transform: translateY(-50%); flex-direction: column-reverse; }
+  [data-viewfinder] .camera-format-trigger:has(button[aria-pressed]) { margin-left: 0; margin-top: 22px; }
+  [data-viewfinder] .camera-zooms { bottom: 50%; left: auto; right: max(12px,calc((100cqw - 100cqh * var(--camera-aspect)) / 2 + 8px)); transform: translateY(50%); flex-direction: column-reverse; }
+}
+@keyframes camera-sheet-in { from { opacity: 0; translate: 0 12px; } }
+@media (prefers-reduced-motion: reduce) { .camera-format-sheet { animation: none; } }
+
+.camera-format-sheet .camera-format-message { margin: 2px auto; text-align: center; font-size: 13px; }
+
+.timer-video-dialog:has(.camera-format-sheet) > .settings-dialog-heading { visibility: hidden; }
+
+.camera-format-trigger button span { font-size: 15px; font-weight: 500; }
+.camera-format-trigger button small { font-size: 10px; font-weight: 500; }
+.camera-zooms button { font-size: 14px; font-weight: 500; }
+
+.camera-format-sheet header span { font-size: 14.25px; translate: -.5px -1px; }
+
+.camera-format-rate { display: inline-block; translate: -1.5px 0; scale: .92 1.05; }

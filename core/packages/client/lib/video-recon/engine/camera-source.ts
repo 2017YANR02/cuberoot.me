@@ -2,6 +2,7 @@ import { createVideoWorker } from "./worker-assets";
 import type { SourceFrame } from "./frame-stream";
 import type {CameraCaptureMetrics} from './camera-metrics';
 import type { SimulatedVideoCamera } from './simulated-camera';
+import { createCameraOrientation } from './camera-orientation';
 
 export type VideoCameraInput = MediaStream | SimulatedVideoCamera;
 export function closeVideoCamera(input: VideoCameraInput) {
@@ -19,15 +20,38 @@ type ProcessorConstructor = new (options: {
 }) => Processor;
 export type CameraStopReason='ended'|'error';
 
+const qualityKey = 'video-recon-recording-height';
+
+export const recordingRates = [24, 30, 60, 120] as const;
+
+export function rememberRecordingFormat(height: number, fps: number) {
+  try {
+    if (height === 1080 || height === 2160) localStorage.setItem(qualityKey, String(height));
+    localStorage.setItem(qualityKey + '-fps', String(fps));
+  } catch { /* Storage is optional. */ }
+}
+
+function preferredRecordingHeight() {
+  try { return localStorage.getItem(qualityKey) === '2160' ? 2160 : 1080; } catch { return 1080; }
+}
+
+function preferredRecordingRate() {
+  try {
+    const saved = Number(localStorage.getItem(qualityKey + '-fps'));
+    return recordingRates.find(rate => rate === saved) ?? 30;
+  } catch { return 30; }
+}
+
 /** Request permission from the caller's click, before loading the detector. */
-export async function requestVideoCamera(deviceId?: string): Promise<MediaStream> {
+export async function requestVideoCamera(deviceId?: string, recording = false): Promise<MediaStream> {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access requires HTTPS or localhost.");
+  const height = recording ? preferredRecordingHeight() : 480;
   return navigator.mediaDevices.getUserMedia({
     video: {
       ...(deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "environment" }),
-      width: { ideal: 640 },
-      height: { ideal: 480 },
-      frameRate: { ideal: 30, max: 30 },
+      width: { ideal: recording ? height * 16 / 9 : 640 },
+      height: { ideal: height },
+      frameRate: recording ? { ideal: preferredRecordingRate() } : { ideal: 30, max: 30 },
     },
     audio: false,
   });
@@ -38,9 +62,11 @@ export async function startCameraCapture(
   onFrame: (frame: SourceFrame & { clockOriginMs: number }) => void,
   onStopped: (message: string,reason:CameraStopReason) => void,
   onMetrics?: (metrics:CameraCaptureMetrics)=>void,
+  analysisMaxEdge?: number,
 ) {
   const worker = createVideoWorker("capture");
   const track = original.clone();
+  const orientation = createCameraOrientation(original);
   let monitor: ReturnType<typeof setInterval> | undefined;
   let ended = false;
   let browserSkippedFrames=0;
@@ -54,6 +80,7 @@ export async function startCameraCapture(
     clearInterval(monitor);
     worker.terminate();
     track.stop();
+    orientation?.close();
   };
   const ready = new Promise<void>((resolve, reject) => {
     let started = false;
@@ -68,7 +95,7 @@ export async function startCameraCapture(
         resolve();
       }
       if (data.type === "frame")
-        onFrame({ bitmap: data.bitmap, timestamp: data.timestamp, clockOriginMs: data.clockOriginMs,captureMetrics:updateMetrics({...data.metrics,
+        onFrame({ bitmap: orientation?.orient(data.bitmap) ?? data.bitmap, timestamp: data.timestamp, clockOriginMs: data.clockOriginMs,captureMetrics:updateMetrics({...data.metrics,
           deliveryMs:Math.max(0,performance.timeOrigin+performance.now()-data.sentAtEpochMs)}) });
       if(data.type==='stats')updateMetrics(data.metrics);
       if (data.type === "stopped") {
@@ -100,7 +127,7 @@ export async function startCameraCapture(
     if (Constructor) {
       const processor = new Constructor({ track, maxBufferSize: 8 });
       const readable = processor.readable;
-      worker.postMessage({ type: "start", readable, sourceFps }, [readable]);
+      worker.postMessage({ type: "start", readable, sourceFps, analysisMaxEdge }, [readable]);
       monitor = setInterval(() => {
         if ((processor.discardedFrames??0)>browserSkippedFrames) {
           browserSkippedFrames=processor.discardedFrames!;
@@ -108,7 +135,7 @@ export async function startCameraCapture(
         }
       }, 50);
     } else
-      worker.postMessage({ type: "start", track, sourceFps }, [
+      worker.postMessage({ type: "start", track, sourceFps, analysisMaxEdge }, [
         track as unknown as Transferable,
       ]);
     await ready;

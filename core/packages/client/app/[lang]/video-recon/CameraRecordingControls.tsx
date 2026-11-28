@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { requestVideoCamera } from '@/lib/video-recon/engine/camera-source';
-import { Camera, CircleX, Download, Square, Video } from '@app-foundation/icons/lucide';
+import { Camera, CircleX, Download, RefreshCw, Square, Video } from '@app-foundation/icons/lucide';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
 import { useT } from '@/hooks/useT';
 import { downloadBlob } from '@/lib/scramble-dist/download';
 import type { VideoWorkspace } from '@/lib/video-recon/workspace';
 
-export function CameraSelector({ stream, workspace, disabled }: {
+export function CameraSelector({ stream, workspace, disabled, viewfinder = false }: {
   stream: MediaStream;
+  viewfinder?: boolean;
   workspace: VideoWorkspace;
   disabled: boolean;
 }) {
@@ -33,14 +34,22 @@ export function CameraSelector({ stream, workspace, disabled }: {
   if (cameras.length < 2) return null;
   const current = stream.getVideoTracks()[0];
   const id = current?.getSettings().deviceId ?? cameras.find(camera => camera.label === current?.label)?.deviceId;
-  return <label className="video-recon-camera-select">
-    {t('摄像头', 'Camera')}
-    <select className="video-recon-camera-choice" value={id ?? ''} disabled={disabled} onChange={event => {
-      const deviceId = event.currentTarget.value;
-      // Some phones can only open one camera at a time.
-      workspace.stopSource();
-      void workspace.camera(requestVideoCamera(deviceId));
-    }}>
+  function selectCamera(deviceId: string) {
+    // Some phones can only open one camera at a time.
+    workspace.stopSource();
+    void workspace.camera(requestVideoCamera(deviceId, workspace.getSnapshot?.()?.activeTab === 'record'));
+  }
+  const label = t('切换摄像头', 'Switch camera');
+  if (viewfinder && cameras.length === 2 && id) {
+    return <button type="button" className="camera-flip" aria-label={label} title={label} disabled={disabled}
+      onClick={() => selectCamera(cameras.find(camera => camera.deviceId !== id)!.deviceId)}>
+      <RefreshCw size={22} aria-hidden />
+    </button>;
+  }
+  return <label className={viewfinder ? 'camera-flip' : 'video-recon-camera-select'}>
+    {viewfinder ? <RefreshCw size={22} aria-hidden /> : t('摄像头', 'Camera')}
+    <select className="video-recon-camera-choice" aria-label={viewfinder ? label : undefined} value={id ?? ''}
+      disabled={disabled} onChange={event => selectCamera(event.currentTarget.value)}>
       {!id && <option value="">{t('当前摄像头', 'Current camera')}</option>}
       {cameras.map((camera, index) => <option key={camera.deviceId} value={camera.deviceId}>
         {camera.label || t(`摄像头 ${index + 1}`, `Camera ${index + 1}`)}
@@ -62,8 +71,11 @@ export function CameraDisconnectButton({ disabled, onDisconnect, textOnly = fals
   </button>;
 }
 
-export function CameraRecordingAction({ connected, view, workspace }: {
+export function CameraRecordingAction({ connected, view, workspace, viewfinder = false, changingQuality = false, onRecord }: {
+  onRecord?: () => void;
+  changingQuality?: boolean;
   connected: boolean;
+  viewfinder?: boolean;
   view: ReturnType<VideoWorkspace['getSnapshot']> | null;
   workspace?: VideoWorkspace;
 }) {
@@ -76,21 +88,35 @@ export function CameraRecordingAction({ connected, view, workspace }: {
           {t('取消补读', 'Cancel reread')}
         </button>
       : phase === 'recording'
-      ? <button type="button" className="btn-primary" onClick={workspace?.finishCameraRecording}>
+      ? <button type="button" className="btn-primary" data-shutter="stop" title={t('停止录制', 'Stop recording')} onClick={workspace?.finishCameraRecording}>
           <Square size={16} aria-hidden />{t('停止录制', 'Stop recording')}
         </button>
+      : phase === 'finalizing' && viewfinder
+      ? <button type="button" className="btn-primary" data-shutter="saving" disabled aria-busy="true"
+          aria-label={t('正在保存录像', 'Saving recording')}>{t('正在保存录像', 'Saving recording')}</button>
       : phase === 'finalizing'
       ? <LoadingIndicator>{t('生成复盘...', 'Generating reconstruction...')}</LoadingIndicator>
       : connected
-      ? <button type="button" className="btn-primary" disabled={!view?.timerReady || working} onClick={workspace?.recordCamera}>
+      ? <button type="button" className="btn-primary" data-shutter="start" title={t('开始录制', 'Start recording')} disabled={(!onRecord && !view?.timerReady) || working || changingQuality} onClick={onRecord ?? workspace?.recordCamera}>
           <Video size={16} aria-hidden />{t('开始录制', 'Start recording')}
         </button>
       : <button type="button" className="btn-primary" disabled={!workspace || view?.cameraConnecting || working}
           onClick={() => void workspace?.camera()}>
           <Camera size={16} aria-hidden />{view?.cameraConnecting ? t('正在连接…', 'Connecting…') : t('连接摄像头', 'Connect camera')}
         </button>}
-    {connected && workspace && <CameraDisconnectButton disabled={working} onDisconnect={workspace.stopSource} />}
+    {!viewfinder && connected && workspace && <CameraDisconnectButton disabled={working} onDisconnect={workspace.stopSource} />}
   </div>;
+}
+
+export function CameraRecordingClock() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    const timer = window.setInterval(() => setSeconds(Math.floor((performance.now() - start) / 1000)), 250);
+    return () => window.clearInterval(timer);
+  }, []);
+  const parts = [Math.floor(seconds / 3600), Math.floor(seconds / 60) % 60, seconds % 60];
+  return <time className="camera-clock" dateTime={`PT${seconds}S`}>{parts.map(value => String(value).padStart(2, '0')).join(':')}</time>;
 }
 
 type CameraRecordingPhase = 'idle' | 'recording' | 'finalizing' | 'complete' | 'error';
@@ -123,14 +149,15 @@ export function CameraRecordingControls({
     : phase === 'complete' ? t('复盘已完成', 'Reconstruction complete')
     : undefined;
 
-  return <section className="video-recon-panel video-recon-timer-panel" data-site-surface="panel">
+  return <section className={onScrambleChange ? 'video-recon-panel video-recon-timer-panel' : 'video-recon-timer-panel'}
+    data-site-surface={onScrambleChange ? 'panel' : undefined}>
     {onScrambleChange && <label className="video-recon-inline-label">
       {t('打乱（选填）', 'Scramble (optional)')}
       <input type="text" autoComplete="off" autoCapitalize="off" spellCheck={false} disabled={busy}
         value={scramble} onChange={event => onScrambleChange(event.currentTarget.value)} />
     </label>}
-    {!busy && <p className="video-recon-muted">
-      {t('开录后先拍清打乱局面，停录前保留清晰的还原画面。', 'Show the scrambled cube after starting, and the solved cube before stopping.')}
+    {!busy && !recordedFile && <p className="video-recon-muted">
+      {t('开录后拍清打乱状态，停录前拍清还原状态。', 'Show the scrambled cube after starting, and the solved cube before stopping.')}
     </p>}
     {recordedFile && <div className="video-recon-actions">
       {!busy && phase === 'error' && <button type="button" className="btn-secondary" onClick={onReview}>
@@ -151,7 +178,7 @@ export function CameraRecordingControls({
       <p>{inferenceFailure === 'no_solved_end'
         ? t('录制结尾需要清晰的还原画面。', 'The recording needs a clear view of the solved cube at the end.')
         : inferenceFailure === 'no_supported_opening'
-          ? t('无法从画面确认起始局面和完整动作。', 'The opening state and full move sequence could not be verified from the video.')
+          ? t('无法从画面确认起始状态和完整动作。', 'The opening state and full move sequence could not be verified from the video.')
           : t('实时复盘未完成。', 'Live reconstruction did not finish.')}</p>
       {searchError && <details><summary>{t('技术详情', 'Technical details')}</summary>{searchError}</details>}
     </div>}

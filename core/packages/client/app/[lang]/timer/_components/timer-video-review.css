@@ -9,6 +9,11 @@
   width: 100%;
   min-width: 0;
 }
+/* This region receives focus when a source is chosen. Individual controls
+   provide the visible keyboard focus indicator. */
+.timer-video-review[tabindex="-1"]:focus {
+  outline: none;
+}
 .timer-video-source-actions {
   display: flex;
   flex-wrap: wrap;
@@ -16,12 +21,30 @@
 }
 .timer-video-source-actions > .timer-video-source-action {
   display: inline-flex;
-  flex: 1 1 10rem;
+  flex: 1 1 7rem;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 44px;
   padding: 6px 12px;
+}
+.timer-video-review > .timer-video-source-actions > button {
+  background: transparent;
+  color: inherit;
+  border: 0;
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .timer-video-review > .timer-video-source-actions > button:enabled:hover {
+    background: var(--accent-soft);
+  }
+}
+.timer-video-review > .timer-video-source-actions > button:enabled:active {
+  background: var(--muted);
+}
+.timer-video-review > .timer-video-source-actions > button:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 .timer-video-review .video-recon-page {
   width: 100%;
@@ -43,5 +66,243 @@
   padding: var(--review-top) max(12px, env(safe-area-inset-right)) var(--review-bottom) max(12px, env(safe-area-inset-left));
 }
 .settings-dialog .settings-dialog-panel.timer-video-dialog {
+  background: transparent;
+  color: var(--foreground);
+  border: 0;
+  box-shadow: none;
   max-height: calc(100dvh - var(--review-top) - var(--review-bottom));
 }
+.timer-video-review[data-source] .video-recon-actions .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  flex: 0 1 auto;
+  padding-inline: 8px;
+  background: transparent;
+  color: var(--foreground);
+  border: 0;
+  box-shadow: none;
+}
+.timer-video-review[data-source] .video-recon-actions .btn-secondary:enabled:active {
+  background: var(--muted);
+}
+.timer-video-review[data-source] .video-recon-actions .btn-secondary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.timer-video-review .video-recon-stage {
+  border: 0;
+}
+.timer-video-review :is(.video-recon-stage, .video-recon-orbit) {
+  background: transparent;
+}
+.timer-video-review .video-frame-progress-ring {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.timer-video-review .video-analysis-runner { offset-path: inset(1px round 9px); }
+@media (pointer: coarse) {
+  .timer-video-review .video-recon-page .btn-primary { min-height: 44px; }
+}
+.timer-video-review .video-recon-camera-layout,
+.timer-video-review .video-recon-timer-panel {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+.timer-video-review .video-recon-camera-layout :is(.video-recon-actions, .video-recon-timer-panel) {
+  justify-content: center;
+}
+
+@media (orientation: landscape) and (max-height: 30rem) {
+  @container (min-width: 32rem) {
+    .timer-video-dialog .video-recon-camera-layout > .video-recon-source-panel:not([data-timer-trimming]):has(> .video-recon-player-frame:not([hidden])) {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      align-items: center;
+    }
+    .timer-video-dialog .video-recon-camera-layout .video-recon-source-panel > .video-recon-error {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+/* Keep the frame and trim controls visible together on wide or short displays. */
+@container (min-width: 46rem) {
+  .timer-video-review [data-timer-trimming] {
+    grid-template-columns: minmax(0, 3fr) minmax(15rem, 2fr);
+    align-items: start;
+    align-content: start;
+  }
+  .timer-video-review [data-timer-trimming] > .video-recon-player-frame {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+  .timer-video-review [data-timer-trimming] > :is(.video-recon-actions, .video-recon-setup, .video-recon-error) {
+    grid-column: 2;
+  }
+}
+
+/* The inner document in the App has its own viewport, enlarged by the host
+   when the camera connects. Measure that viewport instead of the cover screen. */
+.timer-video-review:has([data-viewfinder]),
+.timer-video-embedded:has([data-viewfinder]) { height: 100dvh; }
+.timer-video-review .video-recon-page[data-viewfinder] {
+  container-type: size;
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--camera-black);
+  color: var(--camera-ink);
+}
+[data-viewfinder] .video-recon-camera-layout > .video-recon-source-panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  padding: 0;
+}
+.timer-video-review [data-viewfinder] .video-recon-player-frame[data-media-sized] {
+  grid-area: 1 / 1;
+  align-self: center;
+  width: min(100cqw, calc(100cqh * var(--video-frame-aspect)));
+}
+.timer-video-review [data-viewfinder] .video-recon-player-frame > .video-recon-stage { border-radius: 0; }
+[data-viewfinder] .video-recon-source-panel > .video-recon-actions,
+[data-viewfinder] .video-recon-source-panel > .video-recon-actions > .video-recon-actions { display: contents; }
+.timer-video-review[data-source] [data-viewfinder] .video-recon-actions :is(.camera-flip, .timer-video-source-action, .camera-timed-capture) {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  gap: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--camera-control);
+  color: var(--camera-ink);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  cursor: pointer;
+}
+[data-viewfinder] .camera-flip select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+[data-viewfinder] .camera-flip:focus-within { outline: 2px solid var(--camera-ink); }
+[data-viewfinder] .timer-video-source-action span { position: absolute; clip-path: inset(50%); }
+[data-viewfinder] .camera-timed-capture { font-size: 0; }
+.timer-video-review [data-viewfinder] button[data-shutter] {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: clamp(max(74px, env(safe-area-inset-bottom) + 72px), calc((100cqh - 100cqw / var(--camera-aspect)) / 4), 16cqh);
+  transform: translate(-50%, 50%);
+  width: clamp(58px, 12cqmin, 80px);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  gap: 0;
+  border: 2px solid var(--camera-ink);
+  border-radius: 50%;
+  background: var(--camera-control);
+  font-size: 0;
+  line-height: 0;
+  box-shadow: none;
+}
+[data-viewfinder] button[data-shutter] svg { display: none; }
+[data-viewfinder] button[data-shutter]::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: var(--camera-record);
+  border-radius: 50%;
+}
+[data-viewfinder] button[data-shutter='stop']::before { inset: 27%; border-radius: 16%; }
+[data-viewfinder] .timer-video-source-action { left: max(16px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom)); }
+[data-viewfinder] .camera-flip { right: max(16px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); }
+[data-viewfinder] .camera-timed-capture { top: max(12px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); }
+[data-viewfinder] .camera-mode {
+  position: absolute;
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  color: var(--camera-mode);
+  background: var(--camera-control);
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 20px;
+}
+.timer-video-confirm-exit:has(~ .timer-video-review [data-viewfinder]) {
+  position: absolute;
+  z-index: 7;
+  inset: 0;
+  align-content: center;
+  padding: 24px;
+  background: var(--popover);
+  color: var(--foreground);
+}
+@container (orientation: landscape) {
+  .timer-video-review [data-viewfinder] button[data-shutter] {
+    left: auto;
+    right: clamp(max(78px, env(safe-area-inset-right) + 74px), calc((100cqw - 100cqh * var(--camera-aspect)) / 4), 16cqw);
+    bottom: 50%;
+    transform: translate(50%, 50%);
+  }
+  [data-viewfinder] .camera-flip { top: max(12px, env(safe-area-inset-top)); bottom: auto; }
+  [data-viewfinder] .timer-video-source-action { left: auto; right: max(16px, env(safe-area-inset-right)); }
+  [data-viewfinder] .camera-timed-capture { top: auto; right: auto; bottom: max(12px, env(safe-area-inset-bottom)); left: max(16px, env(safe-area-inset-left)); }
+  [data-viewfinder] .camera-mode { left: auto; right: max(6px, env(safe-area-inset-right)); bottom: 50%; writing-mode: vertical-rl; transform: translateY(50%); padding: 12px 3px; }
+}
+[data-viewfinder] .camera-clock {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 8px;
+  padding: 3px 10px;
+  color: var(--camera-ink);
+  background: color-mix(in srgb, var(--camera-record) 70%, var(--camera-black));
+  font-variant-numeric: tabular-nums;
+  line-height: 24px;
+}
+[data-viewfinder] .video-recon-camera-disconnect {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  top: calc(max(12px, env(safe-area-inset-top)) + 54px);
+  width: 44px;
+  height: 44px;
+}
+
+[data-viewfinder]:has(.camera-format-sheet) :is(.camera-mode,.camera-flip,.timer-video-source-action,.camera-timed-capture,.video-recon-camera-disconnect) { opacity: 0; visibility: hidden; pointer-events: none; }
+@container (orientation: portrait) {
+  .timer-video-review [data-viewfinder]:has(.camera-format-sheet) button[data-shutter] {
+    bottom: min(calc(var(--camera-sheet-height, 11rem) + 60px), 52cqh);
+  }
+}
+.timer-video-review [data-viewfinder] button[data-shutter] {
+  border-color: color-mix(in srgb, var(--camera-ink) 32%, transparent);
+  transition: scale 130ms ease-out, border-color 160ms;
+}
+.timer-video-review [data-viewfinder] button[data-shutter]:active:enabled { scale: .94; }
+[data-viewfinder] button[data-shutter]::before { transition: inset 200ms cubic-bezier(.22,.8,.3,1), border-radius 200ms; }
+[data-viewfinder] .camera-clock { animation: camera-clock-in 160ms ease-out; }
+@keyframes camera-clock-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .timer-video-review [data-viewfinder] button[data-shutter], [data-viewfinder] button[data-shutter]::before { transition: none; }
+  .timer-video-review [data-viewfinder] button[data-shutter]:active:enabled { scale: 1; }
+  [data-viewfinder] .camera-clock { animation: none; }
+}
+
+[data-viewfinder] button[data-shutter='saving']::before { opacity: .55; }
+[data-viewfinder]:has(button[data-shutter='saving']) .camera-format-trigger { visibility: hidden; }

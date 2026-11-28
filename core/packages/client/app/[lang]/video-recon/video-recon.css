@@ -147,9 +147,14 @@
   }
 }
 @container (max-width: 420px) {
-  .video-recon-stage .lesson-video-toolbar { gap: 2px; height: auto; min-height: 40px; flex-wrap: wrap; }
+  .video-recon-stage .lesson-video-toolbar { gap: 2px; }
   .video-recon-stage :is(.lesson-video-left, .lesson-video-right) { gap: 0; }
   .video-recon-stage .lesson-video-time { margin-inline: 2px; }
+  .video-recon-stage .playback-speed-select { padding-inline: 2px; width: auto; }
+}
+@container (max-width: 300px) {
+  .video-recon-stage .lesson-video-icon { flex-basis: clamp(20px, 8cqi, 24px); width: clamp(20px, 8cqi, 24px); height: 36px; padding-inline: 1px; }
+  .video-recon-stage .lesson-video-time { font-size: 11px; }
 }
 
 .video-recon-panel,
@@ -161,6 +166,8 @@
   gap: 14px;
   min-width: 0;
 }
+
+.video-recon-source-panel { grid-template-columns: minmax(0, 1fr); }
 
 .video-recon-panel {
   padding: clamp(12px, 2vw, 20px);
@@ -729,3 +736,40 @@
 @media (hover: hover) and (pointer: fine) {
   .video-recon-page .video-recon-system-camera { display: none; }
 }
+
+/* Fit the camera, decoded frame or crop image as one rectangle. The stage,
+   overlays and progress ring all follow that rectangle, including on rotation. */
+.video-recon-player-frame[hidden] { display: none; }
+.video-recon-player-frame[data-media-sized] {
+  width: min(100%, calc(var(--video-stage-height, 55dvh) * var(--video-frame-aspect)));
+  justify-self: center;
+}
+.video-recon-player-frame[data-media-sized] > .video-recon-stage {
+  width: 100%;
+  aspect-ratio: var(--video-frame-aspect);
+  max-height: none;
+}
+.video-recon-player-frame[data-media-sized] .video-recon-stage > :is(.video-recon-source-viewport, video, .video-recon-crop-frame) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.video-recon-player-frame[data-media-sized] .video-recon-source-viewport:not([hidden]) {
+  display: grid;
+  grid-template: minmax(0,1fr) / minmax(0,1fr);
+  place-items: center;
+}
+.video-recon-player-frame[data-media-sized] :is(.video-recon-source-viewport > canvas, .video-recon-crop-frame > img) {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+}
+.video-recon-player-frame[data-quarter-turn] .video-recon-source-viewport > canvas {
+  width: calc(100% / var(--video-frame-aspect));
+  height: auto;
+  max-width: none;
+}
+
+.video-recon-source-viewport[data-camera-overlay] { z-index: 1; pointer-events: none; }

@@ -421,6 +421,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (state.activeTab !== 'record' || !state.stream || (!cameraReady() && !canRecordFileOnly()) || recordingBusy()) return;
     let recorder: ReturnType<typeof startCameraRecording>;
     try {
+      state.sourceFps = state.stream.getVideoTracks()[0]?.getSettings().frameRate || state.sourceFps;
       recorder = startCameraRecording(state.stream);
     } catch (cause) {
       state.cameraRecordingError = cause instanceof Error ? cause.message : String(cause);
@@ -888,7 +889,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     if (token !== generation || disposed) return;
     const overlayStart = performance.now();
     presenter.presentFrame(stage, completed.snapshot, state.showRoi || displayPose()
-      ? (context, width, height) => drawOverlay(context, width, height, packet.result) : undefined);
+      ? (context, width, height) => drawOverlay(context, width, height, packet.result) : undefined, state.sourceKind === 'camera' && state.activeTab === 'record');
     const presentedAtMs = performance.now();
     packet.result.pipeline = {
       detectorStartedAtMs: completed.sentAt,
@@ -1149,7 +1150,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     state.mediaError = "";
     const token = generation;
     try {
-      const input = await (request ?? requestVideoCamera());
+      const input = await (request ?? requestVideoCamera(undefined, state.activeTab === 'record'));
       if (token !== generation || disposed) {
         closeVideoCamera(input);
         return;
@@ -1201,6 +1202,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
           scheduleNext();
         },
         metrics=>{if(token===generation&&!disposed){state.captureFps=metrics.captureFps;}},
+        state.activeTab === 'record' && !simulation ? 640 : undefined,
       );
       if (token !== generation || disposed) {
         activeCapture.stop();
@@ -1589,7 +1591,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       staticEnd != null && sourceFrame <= staticEnd);
   }
   function drawOverlay(
-    ctx: OffscreenCanvasRenderingContext2D,
+    ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D,
     width: number,
     height: number,
     frame = state.result,
@@ -1875,7 +1877,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
     },
     get showCameraPreview() {
       return state.sourceKind === 'camera' && state.timerCamera && !state.captureStopped &&
-        (state.timerCapturePhase === 'idle' || state.activeTab === 'timer' && (!state.result || state.presentedTimestamp < timerPreviewStart));
+        (state.timerCapturePhase === 'idle' || !state.result || state.presentedTimestamp < timerPreviewStart);
     },
   };
   function getView() {
@@ -1931,6 +1933,7 @@ export function createVideoWorkspace(stage: HTMLCanvasElement, initialTab: Works
       cropPreview: state.cropPreview,
       sourceCrop: state.sourceCrop,
       videoSize: state.videoSize,
+      presentedAspect: presenter.snapshot && stage.height ? stage.width / stage.height : undefined,
       thumbnails: state.thumbnails,
       showCameraPreview: derived.showCameraPreview,
       stream: state.stream,

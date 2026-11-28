@@ -69,7 +69,7 @@ scope.onmessage = async ({ data }) => {
       processor = new Constructor({ track, maxBufferSize: 8 });
       reader = processor.readable.getReader();
     }
-    const selector = new FrameSelector(data.sourceFps || 30);
+    const selector = new FrameSelector(data.analysisMaxEdge ? 0 : data.sourceFps || 30);
     const rate=new CameraFrameRate();let lastStats=-Infinity;
     let firstTimestamp: number | undefined;
     let clockOriginMs: number | undefined;
@@ -95,18 +95,19 @@ scope.onmessage = async ({ data }) => {
             skippedFrames:buffer.skipped,browserSkippedFrames:processor?.discardedFrames??0}});}
           continue;
         }
-        if (
-          !canvas ||
-          canvas.width !== frame.displayWidth ||
-          canvas.height !== frame.displayHeight
-        ) {
-          canvas = new OffscreenCanvas(frame.displayWidth, frame.displayHeight);
+        // Only detection frames enter the pre-roll and inference queues. The
+        // viewfinder and MediaRecorder consume the original camera track.
+        const scale = Math.min(1, (data.analysisMaxEdge ?? Infinity) / Math.max(frame.displayWidth, frame.displayHeight));
+        const width = Math.max(1, Math.round(frame.displayWidth * scale));
+        const height = Math.max(1, Math.round(frame.displayHeight * scale));
+        if (!canvas || canvas.width !== width || canvas.height !== height) {
+          canvas = new OffscreenCanvas(width, height);
         }
         const context = canvas.getContext("2d", { alpha: false });
         if (!context) throw new Error("Camera frame copying is unavailable.");
         // Copy out of the camera's native buffer pool before retaining a frame.
         const copyStart=performance.now();
-        context.drawImage(frame, 0, 0);
+        context.drawImage(frame, 0, 0, width, height);
         const bitmap = canvas.transferToImageBitmap();
         const copyMs=performance.now()-copyStart;
         const captured = { bitmap, timestamp, clockOriginMs, close: () => bitmap.close(),

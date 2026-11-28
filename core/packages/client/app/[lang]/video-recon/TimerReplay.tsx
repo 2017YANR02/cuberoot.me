@@ -172,7 +172,7 @@ export function TimerReplay({ clip, reconstruction, disabled, seekRequest, onPos
     {coverage && reconstruction.status === 'failed' && <p className="video-recon-muted" role="status">
       {t(`部分复盘 · 已识别至第 ${coverage.ordinal} 帧（${timecode(coverage.timestamp - start)}）`,
         `Partial reconstruction · Recognized through frame ${coverage.ordinal} (${timecode(coverage.timestamp - start)})`)}
-      {pose && index >= coverage.ordinal && t('。当前显示最后一个有效局面。', '. Showing the last available cube state.')}
+      {pose && index >= coverage.ordinal && t('。当前显示最后一个有效状态。', '. Showing the last available cube state.')}
     </p>}
     <div className={!sourceOnly && (sourceFile || hasRecording) ? 'video-recon-columns' : undefined}>
       {sourceFile && <div className="video-recon-stage">

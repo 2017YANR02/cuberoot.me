@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Upload, Video } from '@app-foundation/icons/lucide';
+import { FolderOpen, Images, Video } from '@app-foundation/icons/lucide';
 import { ClearButton } from '@/components/ClearButton';
 import SettingsDialog from '@/components/SettingsDialog';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -23,12 +23,14 @@ interface Props {
   onTimedCapture?: (deviceId?: string) => void;
   onBusyChange?: (busy: boolean) => void;
   onSourceOpen?: () => void;
+  onViewfinderChange?: (active: boolean) => void;
 }
 
-export function TimerVideoReview({ scramble, onTimedCapture, onBusyChange, onSourceOpen }: Props) {
+export function TimerVideoReview({ scramble, onTimedCapture, onBusyChange, onSourceOpen, onViewfinderChange }: Props) {
   const t = useT();
   const [source, setSource] = useState<{ mode: 'record' | 'detector'; scramble: string; file?: File }>();
   const [busy, setBusy] = useState(false);
+  const reviewRegion = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const pending = useRef<Promise<MediaStream> | undefined>(undefined);
   const takeCamera = useCallback(() => {
@@ -40,6 +42,10 @@ export function TimerVideoReview({ scramble, onTimedCapture, onBusyChange, onSou
     void takeCamera()?.then(closeVideoCamera, () => {});
   }, [takeCamera]);
   useEffect(() => releasePending, [releasePending]);
+  const mode = source?.mode;
+  useEffect(() => {
+    if (mode) reviewRegion.current?.focus({ preventScroll: true });
+  }, [mode]);
   const reportBusy = useCallback((value: boolean) => {
     setBusy(value);
     onBusyChange?.(value);
@@ -49,27 +55,28 @@ export function TimerVideoReview({ scramble, onTimedCapture, onBusyChange, onSou
     onSourceOpen?.();
     setSource({ mode: 'detector', scramble, file });
   };
-  return <div className="timer-video-review">
-    <div className="timer-video-source-actions">
-      {source?.mode !== 'record' && <button className="btn-secondary timer-video-source-action" type="button" disabled={busy} onClick={() => {
-        releasePending();
-        pending.current = requestVideoCamera();
-        // Keep the permission request attached while the workspace is loading.
-        void pending.current.catch(() => {});
-        onSourceOpen?.();
-        setSource({ mode: 'record', scramble });
-      }}><Video size={18} aria-hidden />{t('现场录制', 'Record live')}</button>}
-      {source?.mode !== 'detector' && <button className="btn-secondary timer-video-source-action" type="button" disabled={busy} onClick={() => input.current?.click()}>
-        <Upload size={18} aria-hidden />{t('上传已有视频', 'Upload a video')}
-      </button>}
-    </div>
+  const recordButton = <button className="btn-secondary timer-video-source-action" type="button" disabled={busy} onClick={() => {
+    releasePending();
+    pending.current = requestVideoCamera(undefined, true);
+    // Keep the permission request attached while the workspace is loading.
+    void pending.current.catch(() => {});
+    onSourceOpen?.();
+    setSource({ mode: 'record', scramble });
+  }}><Video size={18} aria-hidden />{t('录制', 'Record')}</button>;
+  const chooseVideoButton = <button className="btn-secondary timer-video-source-action" type="button" disabled={busy} onClick={() => input.current?.click()}>
+    {mode === 'record' ? <Images size={22} aria-hidden /> : <FolderOpen size={18} aria-hidden />}<span>{t('选视频', 'Choose video')}</span>
+  </button>;
+  return <div className="timer-video-review" data-source={mode} ref={reviewRegion} tabIndex={mode && -1}
+    role={mode && 'region'} aria-label={mode && (mode === 'record' ? t('录制', 'Record') : t('视频复盘', 'Video reconstruction'))}>
+    {!source && <div className="timer-video-source-actions">{recordButton}{chooseVideoButton}</div>}
     <input type="file" ref={input} hidden accept="video/*,.mp4,.mov,.webm" onChange={event => {
       const file = event.currentTarget.files?.[0];
       event.currentTarget.value = '';
       if (file) openFile(file);
     }} />
     {source && <Workspace key={source.mode} mode={source.mode} onTimerBusyChange={reportBusy}
-      timerSource={{ scramble: source.scramble, file: source.file, takeCamera, onTimedCapture, onRecordedFile: openFile }} />}
+      timerSource={{ scramble: source.scramble, file: source.file, takeCamera, onTimedCapture, onViewfinderChange, onRecordedFile: openFile,
+        switchSourceAction: source.mode === 'record' ? chooseVideoButton : recordButton }} />}
   </div>;
 }
 
@@ -77,7 +84,7 @@ export default function TimerVideoReviewDialog({ onClose, ...props }: Props & { 
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [confirmExit, setConfirmExit] = useState(false);
-  return <SettingsDialog heading label={t('视频复盘', 'Video reconstruction')} panelClassName="timer-video-dialog"
+  return <SettingsDialog heading label={t('视频复盘', 'Video reconstruction')} panelClassName="timer-video-dialog timer-video-glass af-glass-surface"
     dismissDisabled={busy} onClose={onClose} renderCloseButton={(close, closing) => <ClearButton variant="standalone"
       ariaLabel={t('关闭', 'Close')} disabled={closing} onClick={() => { if (busy) setConfirmExit(true); else close(); }} />}>
     {close => <>

@@ -462,7 +462,7 @@
 .shell-topbar .tb-btn:hover:not(.timer-camera-toggle) { background: var(--shell-hover); color: var(--foreground); }
 .shell-topbar .shell-topbar-device-center .shell-device-center-trigger:hover { background: transparent; }
 .shell-topbar .tb-btn.connected { color: var(--signal-success); }
-.shell-topbar .tb-btn.timer-camera-toggle[aria-pressed='true'] { color: var(--accent); }
+.shell-topbar .tb-btn.timer-camera-toggle[aria-expanded='true'] { color: var(--accent); }
 .timer-camera-preview {
   --timer-camera-preview-height: min(250px, 30dvh);
   width: min(100%, 30rem);
@@ -474,25 +474,11 @@
   margin-block-start: max(0px, calc(var(--solo-cube-offset-y, 0px) * var(--solo-apply-offsets, 1)));
 }
 .timer-camera-preview .video-recon-page { padding: 0; }
-.timer-camera-preview .video-recon-camera-layout .video-recon-stage { max-height: var(--timer-camera-preview-height); }
-.timer-camera-preview .video-recon-source-panel[data-timer-camera-connected] {
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
+.timer-camera-preview .video-recon-player-frame {
+  --video-stage-height: var(--timer-camera-preview-height);
 }
-.timer-camera-preview [data-timer-camera-connected] .video-recon-stage {
-  width: auto;
-  aspect-ratio: auto;
-  max-height: none;
-}
-.timer-camera-preview [data-timer-camera-connected] .video-recon-stage > :is(video, .video-recon-source-viewport) {
-  position: static;
-}
-.timer-camera-preview [data-timer-camera-connected] .video-recon-stage :is(canvas, video) {
-  width: auto;
-  height: auto;
-  max-height: var(--timer-camera-preview-height);
-}
+.timer-camera-preview .video-recon-stage { border: 0; background: transparent; }
+.timer-camera-preview .video-recon-actions { justify-content: center; }
 
 /* Keep the readout and analyzed camera frame together during capture. */
 .timer-shell[data-camera-capture] :is(.timing-surface-scramble-top, .timing-surface-cube,

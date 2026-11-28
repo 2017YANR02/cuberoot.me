@@ -158,6 +158,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         #endif
         bridge?.registerPluginInstance(viewportPlugin)
         if let controller = bridge?.webView?.configuration.userContentController {
+            controller.addScriptMessageHandler(ReviewCamera(self), contentWorld: .page, name: "cuberootReviewCamera")
             GuestTourPreference.install(in: controller)
         }
         if let controller = bridge?.webView?.configuration.userContentController,

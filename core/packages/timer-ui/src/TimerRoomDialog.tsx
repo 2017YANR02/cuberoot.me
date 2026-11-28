@@ -10,6 +10,7 @@ export interface TimerRoomDialogProps {
   title: string;
   headerTitle?: ReactNode;
   className?: string;
+  surface?: 'panel' | 'solid';
   overlayClassName?: string;
   headerControls?: ReactNode;
   hideHeader?: boolean;
@@ -21,7 +22,7 @@ export interface TimerRoomDialogProps {
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, headerTitle, className, overlayClassName, headerControls, hideHeader = false, topLayer = false, language, canClose, onClose: onClosed, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, headerTitle, className, surface = 'panel', overlayClassName, headerControls, hideHeader = false, topLayer = false, language, canClose, onClose: onClosed, children }: TimerRoomDialogProps) {
   const { motionRef, close: animateClose } = useDialogMotion(onClosed);
   const onClose = () => { if (canClose?.() !== false) animateClose(); };
   const ref = useRef<HTMLDivElement>(null);
@@ -53,7 +54,7 @@ export function TimerRoomDialog({ title, headerTitle, className, overlayClassNam
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
   return createPortal(<div ref={motionRef} popover={topLayer ? 'manual' : undefined} className={['timer-room-overlay timer-no-selection', overlayClassName].filter(Boolean).join(' ')} data-no-timer {...backdrop}>
-    <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true"
+    <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface={surface} role="dialog" aria-modal="true"
       aria-labelledby={headerTitle == null ? titleId : undefined} aria-label={headerTitle == null ? undefined : title}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();

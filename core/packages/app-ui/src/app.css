@@ -1161,6 +1161,9 @@ button {
 }
 
 .timer-room-dialog.installed-video-review {
+  position: relative;
+  background: transparent;
+  border: 0;
   display: flex;
   flex-direction: column;
   width: min(100%, 30rem);

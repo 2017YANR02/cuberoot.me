@@ -1,5 +1,6 @@
 import { MEDIA_CLOCK_HZ } from '../pose-fitter/runtime/reconstruction-policy.mjs';
 import type {CameraCaptureMetrics} from './camera-metrics';
+import type {InputVideoTrack, VideoSinkDecoderOptions} from 'mediabunny';
 /** Source-time sampling is independent of inference speed. */
 export class FrameSelector {
   private origin: number | undefined;
@@ -95,6 +96,26 @@ export class FramePrefetcher<T extends { close(): void }> {
   }
 }
 
+// The Android SDK virtual AVC decoder can return green or transparent frames
+// without reporting a decoding error. Prefer software only on that virtual device.
+async function fileDecoderOptions(track: InputVideoTrack): Promise<VideoSinkDecoderOptions | undefined> {
+  if (!/Android/i.test(navigator.userAgent) || typeof VideoDecoder === 'undefined' || await track.getCodec() !== 'avc') return;
+  const virtualDevice = /sdk_gphone|Android SDK built for/i;
+  try {
+    if (!virtualDevice.test(navigator.userAgent)) {
+      const { userAgentData } = navigator as Navigator & {
+        userAgentData?: { getHighEntropyValues(hints: string[]): Promise<{ model?: string }> };
+      };
+      const hints = await userAgentData?.getHighEntropyValues(['model']);
+      if (!virtualDevice.test(hints?.model ?? '')) return;
+    }
+    const config = await track.getDecoderConfig();
+    if (config && (await VideoDecoder.isConfigSupported({ ...config, hardwareAcceleration: 'prefer-software' })).supported) {
+      return { hardwareAcceleration: 'prefer-software' };
+    }
+  } catch { /* The platform default remains available if hints or software decoding are unavailable. */ }
+}
+
 /** Sequential decoding with one selected frame prepared ahead of inference. */
 export async function openVideoFile(file: File) {
   // Keep demux/decoder code out of the camera/image startup bundle.
@@ -113,9 +134,10 @@ export async function openVideoFile(file: File) {
     const [duration, width, height] = await Promise.all([track.computeDuration(), track.getDisplayWidth(), track.getDisplayHeight()]);
     const firstTimestamp = await track.getFirstTimestamp();
     const metrics = await track.computeFrameRateMetrics();
-    const sink = new CanvasSink(track, { poolSize: 2 });
-    const previewSink = new CanvasSink(track, { poolSize: 1 });
-    const thumbnailSink = new CanvasSink(track, { width: 144, height: 80, fit: "cover", poolSize: 1 });
+    const decoderOptions = await fileDecoderOptions(track);
+    const sink = new CanvasSink(track, { poolSize: 2, decoderOptions });
+    const previewSink = new CanvasSink(track, { poolSize: 1, decoderOptions });
+    const thumbnailSink = new CanvasSink(track, { width: 144, height: 80, fit: "cover", poolSize: 1, decoderOptions });
     let iterator = sink.canvases();
     const samplingFps =
       metrics.maxFrameRate <= 30.001

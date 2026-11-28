@@ -3,3 +3,10 @@
 html:has(.timer-video-embedded) nextjs-portal {
   display: none !important;
 }
+.timer-video-embedded {
+  --video-stage-height: min(calc(var(--review-host-height, 100dvh) * .55),
+    max(6rem, calc(var(--review-available-height, 100dvh) - var(--review-control-height, 0px))));
+}
+html[data-timer-video-embedded], html[data-timer-video-embedded] body {
+  background: transparent;
+}

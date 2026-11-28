@@ -5,7 +5,10 @@ export function startCameraRecording(stream: MediaStream) {
 
   const mimeType = ['video/mp4', 'video/webm;codecs=vp8', 'video/webm']
     .find(type => MediaRecorder.isTypeSupported(type));
-  const recorder = new MediaRecorder(new MediaStream([track]), mimeType ? { mimeType } : undefined);
+  const { width, height } = track.getSettings();
+  const pixels = (width ?? 0) * (height ?? 0);
+  const videoBitsPerSecond = pixels >= 3840 * 2160 ? 40_000_000 : pixels >= 1920 * 1080 ? 10_000_000 : undefined;
+  const recorder = new MediaRecorder(new MediaStream([track]), { mimeType, videoBitsPerSecond });
   const chunks: Blob[] = [];
   let stopRequested = false;
   let settle: (file: File) => void;

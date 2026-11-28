@@ -1,7 +1,7 @@
 import {cropPixels, type PixelCrop, type SourceCrop} from './source-crop';
 
 export type OverlayPainter = (
-  context: OffscreenCanvasRenderingContext2D,
+  context: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D,
   width: number,
   height: number,
 ) => void;
@@ -10,6 +10,7 @@ export type OverlayPainter = (
 export class FramePresenter {
   private pending?: OffscreenCanvas;
   private displayed?: OffscreenCanvas;
+  private overlayOnly = false;
   private composite?: OffscreenCanvas;
   private reusable: OffscreenCanvas[] = [];
   previewCrop?: SourceCrop;
@@ -42,7 +43,8 @@ export class FramePresenter {
     if (frame !== this.displayed && this.reusable.length < 4) this.reusable.push(frame);
   }
 
-  presentFrame(target: HTMLCanvasElement, frame: OffscreenCanvas, overlay?: OverlayPainter) {
+  presentFrame(target: HTMLCanvasElement, frame: OffscreenCanvas, overlay?: OverlayPainter, overlayOnly = false) {
+    this.overlayOnly = overlayOnly;
     const old = this.displayed;
     this.displayed = frame;
     if (old && old !== frame) this.releaseFrame(old);
@@ -62,6 +64,14 @@ export class FramePresenter {
     const scale = Math.min(1, 1920 / Math.max(source.width, source.height));
     const width = Math.round(source.width * scale),
       height = Math.round(source.height * scale);
+    if (this.overlayOnly) {
+      if (target.width !== width) target.width = width;
+      if (target.height !== height) target.height = height;
+      const context = target.getContext('2d')!;
+      context.clearRect(0, 0, width, height);
+      overlay?.(context, width, height);
+      return;
+    }
     let image = source;
     if (overlay) {
       if (

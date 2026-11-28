@@ -20,19 +20,46 @@ export function InstalledTimerVideoReview({ language, origin, scramble, appearan
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [height, setHeight] = useState(96);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
+  const [formatOpen, setFormatOpen] = useState(false);
+  const [viewfinder, setViewfinder] = useState(false);
   const canClose = useCallback(() => !busy.current || window.confirm({ zh: '结束当前录制或分析并关闭？', en: 'End the current recording or analysis and close?' }[language]), [language]);
   const dismiss = useCallback(() => {
-    if (canClose()) onClose();
+    if (viewfinder && formatOpen) frame.current?.contentWindow?.postMessage({ type: 'cuberoot:video-review:close-format' }, origin);
+    else if (canClose()) onClose();
     return true;
-  }, [canClose, onClose]);
+  }, [canClose, formatOpen, onClose, origin, viewfinder]);
   useEffect(() => {
     onDismissChange(dismiss);
     return () => onDismissChange(null);
   }, [dismiss, onDismissChange]);
   useEffect(() => {
     const timeout = window.setTimeout(() => setStatus('failed'), 30000);
+    const iframe = frame.current;
+    const dialog = iframe?.parentElement;
+    const overlay = dialog?.parentElement;
+    const sendViewport = () => {
+      if (!iframe || !dialog || !overlay) return;
+      const height = window.visualViewport?.height ?? window.innerHeight;
+      const overlayStyle = getComputedStyle(overlay);
+      const contentHeight = Math.min(height, overlay.clientHeight)
+        - Number.parseFloat(overlayStyle.paddingTop) - Number.parseFloat(overlayStyle.paddingBottom);
+      const maxHeight = getComputedStyle(dialog).maxHeight;
+      const dialogLimit = maxHeight.endsWith('px') ? Math.min(contentHeight, Number.parseFloat(maxHeight)) : contentHeight;
+      const chromeHeight = dialog.offsetHeight - iframe.offsetHeight;
+      iframe.contentWindow?.postMessage({
+        type: 'cuberoot:video-review:viewport', height, available: Math.max(0, dialogLimit - chromeHeight),
+      }, origin);
+    };
     const receive = (event: MessageEvent) => {
       if (event.source !== frame.current?.contentWindow || event.origin !== origin) return;
+      if (event.data?.type === 'cuberoot:video-review:format' && typeof event.data.open === 'boolean') {
+        setFormatOpen(event.data.open);
+        return;
+      }
+      if (event.data?.type === 'cuberoot:video-review:viewfinder' && typeof event.data.active === 'boolean') {
+        setViewfinder(event.data.active);
+        return;
+      }
       if (event.data?.type === 'cuberoot:video-review:workspace') {
         setWorkspaceOpen(true);
         return;
@@ -42,14 +69,26 @@ export function InstalledTimerVideoReview({ language, origin, scramble, appearan
         return;
       }
       if (event.data?.type !== 'cuberoot:video-review:ready' || typeof event.data.busy !== 'boolean') return;
+      sendViewport();
       window.clearTimeout(timeout);
       busy.current = event.data.busy;
       setStatus('ready');
     };
     window.addEventListener('message', receive);
-    return () => { window.clearTimeout(timeout); window.removeEventListener('message', receive); };
+    const observer = new ResizeObserver(sendViewport);
+    if (dialog) observer.observe(dialog);
+    if (overlay) observer.observe(overlay);
+    window.addEventListener('resize', sendViewport);
+    window.visualViewport?.addEventListener('resize', sendViewport);
+    return () => {
+      window.clearTimeout(timeout);
+      observer.disconnect();
+      window.removeEventListener('message', receive);
+      window.removeEventListener('resize', sendViewport);
+      window.visualViewport?.removeEventListener('resize', sendViewport);
+    };
   }, [attempt, origin]);
-  return <TimerRoomDialog title={title} language={language} className={workspaceOpen ? 'installed-video-review is-workspace' : 'installed-video-review'} canClose={canClose} onClose={onClose}>
+  return <TimerRoomDialog hideHeader={viewfinder && formatOpen} title={title} language={language} className={`installed-video-review timer-video-glass af-glass-surface${workspaceOpen ? ' is-workspace' : ''}${viewfinder ? ' is-viewfinder' : ''}`} canClose={canClose} onClose={onClose}>
     {status === 'loading' && <p role="status">{{ zh: '正在加载视频复盘…', en: 'Loading video review…' }[language]}</p>}
     {status === 'failed' && <div role="status">
       <p>{{ zh: '视频复盘加载失败，请检查网络连接。', en: 'Could not load video review. Check your connection.' }[language]}</p>
