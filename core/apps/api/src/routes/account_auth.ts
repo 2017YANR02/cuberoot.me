@@ -10,6 +10,7 @@ import { registrationReport, membershipSummaryReport } from '../utils/admin_repo
  *      合并登录/注册为同一流程 → 天然免用户枚举(不泄露某邮箱是否已注册)。
  * 可选服务:email/sms 未配 env 时对应端点返 503(不崩),与 membership 同款降级。
  */
+import { decodeSiteSettings, decodeSiteSettingsPatch, type SiteSettings } from '@cuberoot/shared/appearance';
 import { parseTeacherSignature, type TeacherSignature } from '@cuberoot/shared/account';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -1135,6 +1136,30 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   const user = await getUserById(uid);
   const token = user ? signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name }) : undefined;
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
+});
+
+accountAuthRoutes.get('/auth/site-settings', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const uid = await requireAppUserId(c);
+  const [row] = await query<{ site_settings: SiteSettings | null }>(
+    'SELECT site_settings FROM app_users WHERE id = ? AND merged_into_user_id IS NULL', [uid]);
+  if (!row) return c.json({ error: 'Account changed' }, 409);
+  return c.json({ uid, settings: row.site_settings });
+});
+
+accountAuthRoutes.post('/auth/site-settings', bodyLimit({ maxSize: 8192 }), async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const uid = await requireAppUserId(c);
+  const body = await c.req.json().catch(() => null);
+  if (body?.expectedUid !== uid) return c.json({ error: 'Account changed' }, 409);
+  const seed = decodeSiteSettings(body.seed);
+  const patch = decodeSiteSettingsPatch(body.patch);
+  if (!seed || !patch) return c.json({ error: 'Invalid site settings' }, 400);
+  const [row] = await query<{ site_settings: SiteSettings }>(
+    `UPDATE app_users SET site_settings = COALESCE(site_settings, ?::jsonb) || ?::jsonb
+     WHERE id = ? AND merged_into_user_id IS NULL RETURNING site_settings`, [seed, patch, uid]);
+  if (!row) return c.json({ error: 'Account changed' }, 409);
+  return c.json({ uid, settings: row.site_settings });
 });
 
 // ── 站内资料(展示名 + 头像 + 本人私密基本资料)──

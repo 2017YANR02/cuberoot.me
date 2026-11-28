@@ -241,7 +241,7 @@ const TABLES: Table[] = [
   { name: 'wca_users', domain: 'comp', origin: 'snapshot', purpose: { zh: 'WCA OAuth 登录用户(身份 / 头像 / admin)', en: 'WCA OAuth users (identity, avatar, admin flag)' } },
 
   // ── accounts & auth ────────────────────────────────────
-  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206, 210, 214], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
+  { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206, 210, 214, 371], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'account_last_devices', domain: 'account', origin: '0199', purpose: { zh: '每个账号最近使用设备的粗粒度类型、系统、浏览器和时间；不保存原始 User-Agent、IP 或设备指纹', en: 'Coarse latest-device type, OS, browser, and time per account; raw User-Agent, IP, and device fingerprints are not stored' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
   { name: 'friend_chat_conversations', domain: 'account', origin: '0249', purpose: { zh: '每对账号唯一的私聊会话，记录最新消息序号和双方已读位置；任一参与账号注销时级联删除', en: 'One private conversation per account pair, with the latest message sequence and both read positions; cascades on either participant account deletion' }, cols: [{ name: 'user_low_id, user_high_id' }, { name: 'last_sequence, last_message_at' }, { name: 'low_read_sequence, high_read_sequence' }] },
@@ -618,6 +618,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 371, slug: 'account_site_settings', desc: { zh: '按账号保存网站通用及外观设置。', en: 'Save general and appearance settings per account.' } },
   { n: 370, slug: 'vault_item_order', desc: { zh: '保存每位用户的资料库条目顺序及排序版本。', en: 'Store each user’s vault item order and its revision.' } },
   { n: 369, slug: 'competition_duel_seats', desc: { zh: '记录对局报到时间、弃权原因和监考房版本。', en: 'Track duel readiness deadlines, forfeits and supervision room generations.' } },
   { n: 368, slug: 'competition_checkin_gate', desc: { zh: '记录同步赛场就绪状态，扩大双败实况通知范围。', en: 'Persist arena readiness and notify live duel clients of more phase changes.' } },

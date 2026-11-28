@@ -132,3 +132,38 @@ export function decodeMiniProgramPreferences(value: unknown): MiniProgramPrefere
     lightBackground: p.lightBackground, darkBackground: p.darkBackground,
     ...(p.accent !== undefined ? { accent: p.accent } : {}) };
 }
+
+/** The account stores choices, including device-following modes, never resolved device values. */
+export interface SiteSettings extends AppearancePreferences {
+  timeZone: string;
+  deskPetVisible: boolean;
+  lastLightBackground: HomeBackgroundChoice;
+  lastDarkBackground: HomeBackgroundChoice;
+}
+
+export const DEFAULT_SITE_SETTINGS: Readonly<SiteSettings> = {
+  ...DEFAULT_APPEARANCE_PREFERENCES, timeZone: '', deskPetVisible: true,
+  lastLightBackground: 'auto', lastDarkBackground: 'auto',
+};
+
+export function decodeSiteSettings(input: unknown): SiteSettings | null {
+  const appearance = decodeAppearancePreferences(input);
+  if (!appearance) return null;
+  const p = input as SiteSettings;
+  if (typeof p.timeZone !== 'string' || p.timeZone.length > 100
+    || typeof p.deskPetVisible !== 'boolean' || !isHomeBackgroundChoice(p.lastLightBackground)
+    || !isHomeBackgroundChoice(p.lastDarkBackground)) return null;
+  if (p.timeZone) {
+    try { new Intl.DateTimeFormat('en', { timeZone: p.timeZone }); } catch { return null; }
+  }
+  return { ...appearance, timeZone: p.timeZone, deskPetVisible: p.deskPetVisible,
+    lastLightBackground: p.lastLightBackground, lastDarkBackground: p.lastDarkBackground };
+}
+
+export function decodeSiteSettingsPatch(input: unknown): Partial<SiteSettings> | null {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const keys = Object.keys(input) as (keyof SiteSettings)[];
+  if (!keys.every(key => Object.hasOwn(DEFAULT_SITE_SETTINGS, key))) return null;
+  const settings = decodeSiteSettings({ ...DEFAULT_SITE_SETTINGS, ...input });
+  return settings && Object.fromEntries(keys.map(key => [key, settings[key]]));
+}

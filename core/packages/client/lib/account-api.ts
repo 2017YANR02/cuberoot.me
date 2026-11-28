@@ -1,5 +1,6 @@
 'use client';
 
+import { decodeSiteSettings, type SiteSettings } from '@cuberoot/shared/appearance';
 import type { TeacherSignature } from '@cuberoot/shared/account';
 
 import { sessionFetch } from '@/lib/session-fetch';
@@ -397,4 +398,17 @@ export async function fetchIdentities(): Promise<{ identities: Identity[]; hasPa
   });
   if (!res.ok || !Array.isArray(data.identities)) throw new Error(tr({ zh: '无法读取账号信息，请重试或重新登录。', en: 'Could not load account details. Retry or sign in again.' }));
   return { identities: data.identities, hasPassword: !!data.hasPassword, canResetPassword: !!data.canResetPassword };
+}
+
+export async function syncSiteSettings(uid: number, signal: AbortSignal,
+  update?: { seed: SiteSettings; patch: Partial<SiteSettings> }): Promise<SiteSettings | null> {
+  const { response, data } = await authJson<{ uid?: number; settings?: unknown }>('/v1/auth/site-settings', {
+    method: update ? 'POST' : 'GET', headers: authHeaders(Boolean(update)), signal, cache: 'no-store',
+    body: update ? JSON.stringify({ expectedUid: uid, ...update }) : undefined,
+  });
+  if (!response.ok || data.uid !== uid) throw new Error('Account settings unavailable');
+  if (data.settings === null && !update) return null;
+  const settings = decodeSiteSettings(data.settings);
+  if (!settings) throw new Error('Invalid account settings');
+  return settings;
 }

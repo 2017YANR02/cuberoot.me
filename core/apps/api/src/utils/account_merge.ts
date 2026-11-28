@@ -172,6 +172,7 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number, 
           END,
           forum_banned = target.forum_banned OR source.forum_banned,
           home_onboarding_seen = target.home_onboarding_seen OR source.home_onboarding_seen,
+          site_settings = COALESCE(target.site_settings, source.site_settings),
           deskpet_selection = COALESCE(target.deskpet_selection, source.deskpet_selection),
           full_name = COALESCE(target.full_name, source.full_name),
           birth_date = COALESCE(target.birth_date, source.birth_date),
@@ -211,7 +212,7 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number, 
           wca_id = NULL, is_admin = FALSE, full_name = NULL, birth_date = NULL, gender = NULL,
           country_iso2 = NULL, region_code = NULL, city_name = NULL, public_intro = NULL,
           public_intro_image_ids = '[]'::jsonb, show_in_member_list = FALSE,
-          password_hash = NULL, password_updated_at = NULL, email_notify = FALSE, lang = NULL,
+          password_hash = NULL, password_updated_at = NULL, email_notify = FALSE, lang = NULL, site_settings = NULL,
           merged_into_user_id = ?
         WHERE id = ?
       `, [targetUserId, sourceUserId]);
