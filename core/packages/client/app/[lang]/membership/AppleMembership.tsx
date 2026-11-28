@@ -8,6 +8,7 @@ import { tr } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import PageBackLink from '@/components/PageBackLink';
 import { annualStoreSavings } from '@/lib/membership-format';
+import { useInstalledAccountDetailNavigation } from '@/lib/installed-shell-navigation';
 import MembershipSkeleton from './MembershipSkeleton';
 import PlanPicker from './PlanPicker';
 import MoreToggle from '@/components/MoreToggle';
@@ -24,6 +25,7 @@ export default function StoreMembership({ store, refresh, benefits, manageOnly =
   manageOnly?: boolean;
 }) {
   const user = useAuthUser();
+  const hasAppBack = useInstalledAccountDetailNavigation() && !manageOnly;
   const available = useStoreMembershipAvailable(store);
   const storeName = store === 'apple' ? 'App Store' : 'Google Play';
   const [catalog, setCatalog] = useState<{ uid: number; attempt: number; products: AppleMembershipProduct[] }>();
@@ -85,7 +87,7 @@ export default function StoreMembership({ store, refresh, benefits, manageOnly =
     <section className="mem-store">
       <header className="mem-head">
         <div className="page-back-heading">
-          <PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback={manageOnly ? '/membership' : '/account'} />
+          {!hasAppBack && <PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback={manageOnly ? '/membership' : '/account'} />}
           <h1 className="mem-title">{manageOnly
             ? tr({ zh: '管理 Pro 订阅', en: 'Manage Pro subscriptions' })
             : 'CubeRoot Pro'}</h1>

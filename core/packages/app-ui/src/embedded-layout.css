@@ -241,6 +241,10 @@
   display: none;
 }
 
+:root[data-native-pro-frame] .mem-head .back-home {
+  display: none;
+}
+
 :root .settings-panel-page.settings-panel-account-detail > .settings-panel-content,
 :root[data-native-account-detail-frame] .settings-panel-page > .settings-panel-content {
   grid-area: 1 / 1;

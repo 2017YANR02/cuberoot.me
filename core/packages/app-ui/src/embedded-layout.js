@@ -121,6 +121,7 @@ window.addEventListener('message', ({ source, origin, data }) => {
   } else {
     root.toggleAttribute('data-native-account-frame', supportedPage);
     root.toggleAttribute('data-native-account-detail-frame', supportedPage && data.accountDetailNavigation === true);
+    root.toggleAttribute('data-native-pro-frame', pathname === '/membership' && data.accountDetailNavigation === true);
   }
 
   const usesTop = supportedPage && isInset(top?.left) && isInset(top?.right);

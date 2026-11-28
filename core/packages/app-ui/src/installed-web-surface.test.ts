@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { startWebSurfaceHandshake } from './web-surface-handshake';
@@ -6,6 +7,7 @@ import { startWebSurfaceHandshake } from './web-surface-handshake';
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
 const embeddedCss = readFileSync(new URL('./embedded-layout.css', import.meta.url), 'utf8');
+const embeddedLayout = readFileSync(new URL('./embedded-layout.js', import.meta.url), 'utf8');
 
 describe('installed website surfaces', () => {
   afterEach(() => vi.useRealTimers());
@@ -21,6 +23,30 @@ describe('installed website surfaces', () => {
   it('hides the pending Account frame and the legacy in-frame sign-in form visually', () => {
     expect(css).toMatch(/\.web-surface--account iframe\[aria-hidden="true"\] \{ visibility: hidden; \}/);
     expect(embeddedCss).toMatch(/:root\[data-native-account-detail-frame\] \.settings-panel-page \[data-mobile-auth-entry\] \{\s*display: none;/);
+  });
+
+  it.each([
+    ['/zh/membership', true, true],
+    ['/en/membership/subscription', true, false],
+    ['/membership', false, false],
+  ] as const)('hides the website Pro back link only when the shell owns it (%s, %s)', (pathname, accountDetailNavigation, hidden) => {
+    const origin = 'capacitor://localhost';
+    const parent = { postMessage: vi.fn() };
+    const addEventListener = vi.fn();
+    const root = { style: { removeProperty: vi.fn(), setProperty: vi.fn() }, toggleAttribute: vi.fn() };
+    const location = new URL(pathname, 'https://cuberoot.me');
+    runInNewContext(`(() => { ${embeddedLayout} })()`, {
+      window: { name: 'cuberoot-mobile-account', parent, addEventListener, clearTimeout: vi.fn() },
+      location, URL, crypto: { randomUUID: () => 'document' }, styles: embeddedCss, parentOrigins: [origin],
+      document: { documentElement: root, head: { append: vi.fn() }, createElement: () => ({}),
+        querySelector: (selector: string) => selector === '.mem-page' ? { querySelector: (inner: string) => inner.includes('.mem-empty') ? {} : null } : null },
+    });
+    const receiveInit = addEventListener.mock.calls[0][1];
+    receiveInit({ source: {}, origin, data: { type: 'cuberoot:mobile:init', surface: 'account', accountDetailNavigation } });
+    expect(root.toggleAttribute).not.toHaveBeenCalled();
+    receiveInit({ source: parent, origin, data: { type: 'cuberoot:mobile:init', surface: 'account', accountDetailNavigation } });
+    expect(root.toggleAttribute).toHaveBeenCalledWith('data-native-pro-frame', hidden);
+    expect(embeddedCss).toMatch(/\[data-native-pro-frame\] \.mem-head \.back-home\s*\{\s*display: none;/);
   });
 
   it('bounds init retries, lets a trusted acknowledgement stop early, and exposes recovery', () => {

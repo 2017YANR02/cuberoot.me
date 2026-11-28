@@ -41,6 +41,7 @@ import AppleMembership from './AppleMembership';
 import { isIosMembershipSurface, useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';
 import { installedMembershipStore, useStoreMembershipAvailable } from '@/lib/store-membership-bridge';
 import { useWebMembershipAvailable } from '@/lib/web-membership-bridge';
+import { useInstalledAccountDetailNavigation } from '@/lib/installed-shell-navigation';
 
 
 function intersectPerks(plans: MembershipPlan[]): string[] {
@@ -69,6 +70,7 @@ export default function MembershipPage() {
   const isZh = lang !== 'en';
 
   const user = useAuthUser();
+  const hasAppBack = useInstalledAccountDetailNavigation();
   const login = authActions.login;
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -254,7 +256,7 @@ export default function MembershipPage() {
     return (
       <div className="mem-page">
         <header className="mem-head">
-          <div className="page-back-heading"><PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback="/account" /><h1 className="mem-title">
+          <div className="page-back-heading">{!hasAppBack && <PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback="/account" />}<h1 className="mem-title">
             <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
             CubeRoot Pro
           </h1></div>
@@ -334,7 +336,7 @@ export default function MembershipPage() {
   return (
     <div className="mem-page mem-comparison">
       <header className="mem-head">
-        <div className="page-back-heading"><PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback="/account" /><h1 className="mem-title">
+        <div className="page-back-heading">{!hasAppBack && <PageBackLink label={tr({ zh: '返回', en: 'Back' })} fallback="/account" />}<h1 className="mem-title">
           <CubeRootLogo className="mem-title-logo" height={22} variant="mark" />
           CubeRoot Pro
         </h1></div>
