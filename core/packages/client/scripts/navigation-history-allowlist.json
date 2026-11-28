@@ -251,18 +251,8 @@
   },
   {
     "path": "app/[lang]/wca/comp/page.tsx",
-    "call": "setViewMode('calendar') history=viewMode === 'globe' ? 'push' : 'replace'",
-    "reason": "进入或离开地球视图；列表布局切换另用 replace"
-  },
-  {
-    "path": "app/[lang]/wca/comp/page.tsx",
-    "call": "setViewMode('card') history=viewMode === 'globe' ? 'push' : 'replace'",
-    "reason": "进入或离开地球视图；列表布局切换另用 replace"
-  },
-  {
-    "path": "app/[lang]/wca/comp/page.tsx",
-    "call": "setViewMode('list') history=viewMode === 'globe' ? 'push' : 'replace'",
-    "reason": "进入或离开地球视图；列表布局切换另用 replace"
+    "call": "setViewMode(next) history=viewMode === 'globe' ? 'push' : 'replace'",
+    "reason": "退出地球视图属于页面导航；日历、卡片和列表之间切换用 replace"
   },
   {
     "path": "app/[lang]/wca/persons/[wcaId]/PersonDetailClient.tsx",

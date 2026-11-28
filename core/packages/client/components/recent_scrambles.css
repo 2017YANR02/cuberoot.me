@@ -1,86 +1,17 @@
-/* RecentScrambles — 落地页 tagline 下方「近期打乱」栏:本批最简单打乱,变体×类型×底色切片。
-   双主题,走 :root token;底色 swatch/色点用魔方固定色(inline)。 */
+/* Recent scramble cards on the homepage and scramble hub. */
 
-/* 标题/日期/项目图标/变体控件一律揉进这一行流:.rs-topbar 与 .rs-head 是
-   display:contents 空壳(标记原意,不占布局),其子节点直接当本容器的 flex item;
-   卡片/空态(rs-cards / rs-empty / rs-rare-more)撑满整行强制换行,单独另起。 */
 .recent-scrambles {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto 2.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.6rem;
 }
 
 .recent-scrambles--loading {
   min-height: 320px;
 }
 
-.rs-topbar, .rs-head, .rs-body { display: contents; }
-
-.rs-all-link {
-  order: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  color: var(--muted-foreground);
-  text-decoration: none;
-}
-.rs-all-link:hover { color: var(--accent); }
-.rs-cards, .rs-empty, .rs-rare-more { order: 2; }
-
-.rs-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--foreground);
-}
-
-.rs-date-range {
-  font-size: 0.8rem;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
-
-.rs-select {
-  appearance: none;
-  padding: 0.4rem 0.35rem;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--foreground);
-  font: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: border-color 0.12s;
-}
-
-.rs-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
-
-/* 概率提示:跟在头部「N 步」选择器后,展示该难度在全部 WCA 三阶打乱里的出现频率
-   (链到 /scramble/stats)。同一桶里所有卡片步数/概率都相同,故只在头部显示一次。 */
-.rs-prob {
-  margin-left: 0.15rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--foreground) 7%, transparent);
-  font-size: 0.76rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-  text-decoration: none;
-  white-space: nowrap;
-  transition: color 0.12s, background-color 0.12s;
-}
-.rs-prob:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
-
-/* 卡片网格:桌面一行两卡,单卡也保持半宽。固定高度 + 右侧滚动条走
-   .scroll-panel(scroll_panel.css)。minmax(0,…) 让列缩到容器、不被卡内容顶宽。 */
+/* Two columns on desktop, one on narrow screens. */
 .rs-cards {
-  flex: 1 1 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
@@ -101,6 +32,28 @@
   border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
   transform: translateY(-2px);
 }
+.rs-scard--home {
+  position: relative;
+}
+.rs-scard--home .rs-scard-rarity {
+  min-block-size: 1.5rem;
+  padding-inline-end: 1.5rem;
+}
+.rs-scard-more {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-end: 0.5rem;
+  display: grid;
+  place-items: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.rs-scard-more:hover { color: var(--accent); }
+.rs-scard-more:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
 .rs-scard.af-glass-surface {
   position: relative;
   background: transparent;
@@ -164,14 +117,6 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-/* 稀有汇总超出渲染上限时的提示行 */
-.rs-rare-more {
-  flex: 1 1 100%;
-  margin-top: 0.5rem;
-  font-size: 0.76rem;
-  color: var(--faint-foreground);
-  text-align: center;
-}
 .rs-scard-scramble {
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -215,16 +160,6 @@
 .rs-hero-src:hover .rs-src-comp { color: var(--accent); }
 .rs-src-comp { font-size: 0.85rem; font-weight: 600; }
 .rs-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
-
-.rs-empty {
-  flex: 1 1 100%;
-  padding: 1.2rem;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--faint-foreground);
-  border: 1px dashed var(--border-default);
-  border-radius: 14px;
-}
 
 .rs-row-comp {
   display: flex;

@@ -44,7 +44,7 @@ describe('local entry navigation', () => {
     expect(back()).toBe('/shop?q=mat');
   });
   it('preserves recent-scramble filters and loaded count only on that page', () => {
-    const source = '/zh/scramble/recent?view=custom&method=eo&stage=xc&colors=W&moves=4&match=max&count=48&scope=recent';
+    const source = '/zh/scramble?view=custom&method=eo&stage=xc&colors=W&moves=4&match=max&count=48&scope=recent';
     visit(source);
     go('/zh/recon/submit');
     expect(back()).toBe(source);

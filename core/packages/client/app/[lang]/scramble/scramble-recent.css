@@ -1,19 +1,15 @@
-.recent-scrambles-page {
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 1.75rem 1.25rem 4rem;
+.scramble-hub-recent {
+  margin-top: 2.5rem;
+  scroll-margin-top: 1rem;
 }
 
-.recent-scrambles-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
+.scramble-hub-recent > h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
 }
 
 .rs-browser { min-width: 0; }
-.rs-browser-toolbar { scroll-margin-top: 1rem; }
+.rs-browser-toolbar { scroll-margin-top: 1rem; margin-bottom: 0.85rem; }
 .rs-browser-primary,
 .rs-browser-filters {
   display: flex;
@@ -34,8 +30,8 @@
   cursor: pointer;
   max-width: 100%;
 }
-.rs-browser-range {
-  margin-inline-start: auto;
+.rs-browser-range,
+.rs-browser-count {
   color: var(--muted-foreground);
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
@@ -48,12 +44,11 @@
   gap: 0.5rem 0.75rem;
   margin: 1.75rem 0 0.85rem;
 }
-.rs-browser-summary h2 {
+.rs-browser-summary h3 {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
 }
-.rs-browser-summary > span,
 .rs-browser-pagination > span,
 .rs-browser-note {
   font-size: 0.8rem;
@@ -135,9 +130,7 @@
   .rs-browser .rs-browser-cards { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
-  .recent-scrambles-page { padding: 1.25rem 0.85rem 3rem; }
-  .recent-scrambles-page-header { margin-bottom: 1.25rem; }
-  .rs-browser-range { flex-basis: 100%; margin: 0.25rem 0 0; }
+  .rs-browser-primary { column-gap: 0.4rem; }
   .rs-browser-summary { margin-top: 1.25rem; }
   .rs-browser .rs-scard { padding: 0.85rem 0.7rem; gap: 0.7rem; }
   .rs-browser .rs-scard-rtag { font-size: 0.78rem; }

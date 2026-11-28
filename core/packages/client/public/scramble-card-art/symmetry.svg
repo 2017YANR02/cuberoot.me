@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 264 126">
+<style>
+  .tone-face { --tone: #d45050; }
+  .tone-corner { --tone: #539b76; }
+  .tone-edge { --tone: #4d9de1; }
+  .sym-glyph-face { stroke: #69716f; stroke-width: .55; stroke-linejoin: round; }
+  .sym-glyph-face-u { fill: #e7ecea; }
+  .sym-glyph-face-r { fill: #bfc9c5; }
+  .sym-glyph-face-f { fill: #d5dfdb; }
+  .sym-glyph-plane { fill: var(--tone); fill-opacity: .32; stroke: var(--tone); stroke-width: 1; stroke-linejoin: round; }
+  .sym-glyph-axis { stroke: var(--tone); stroke-width: 1.5; stroke-linecap: round; }
+  .sym-glyph-dot { fill: var(--tone); }
+</style>
+<g class="tone-face" transform="translate(22 21) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="0" y1="7.56" x2="0" y2="-7.56">
+</line>
+<circle class="sym-glyph-dot" cx="0" cy="7.56" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="0" cy="-7.56" r="2.4">
+</circle>
+</g>
+<g class="tone-face" transform="translate(66.5 21) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="0" y1="7.56" x2="0" y2="-7.56">
+</line>
+<circle class="sym-glyph-dot" cx="0" cy="7.56" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="0" cy="-7.56" r="2.4">
+</circle>
+</g>
+<g class="tone-face" transform="translate(111 21) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="-6.61" y1="-1.99" x2="6.61" y2="1.99">
+</line>
+<circle class="sym-glyph-dot" cx="-6.61" cy="-1.99" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="6.61" cy="1.99" r="2.4">
+</circle>
+</g>
+<g class="tone-face" transform="translate(155.5 21) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="-6.61" y1="-1.99" x2="6.61" y2="1.99">
+</line>
+<circle class="sym-glyph-dot" cx="-6.61" cy="-1.99" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="6.61" cy="1.99" r="2.4">
+</circle>
+</g>
+<g class="tone-face" transform="translate(200 21) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="4.95" y1="-2.66" x2="-4.95" y2="2.66">
+</line>
+<circle class="sym-glyph-dot" cx="4.95" cy="-2.66" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="-4.95" cy="2.66" r="2.4">
+</circle>
+</g>
+<g class="tone-face" transform="translate(244.5 21) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="4.95" y1="-2.66" x2="-4.95" y2="2.66">
+</line>
+<circle class="sym-glyph-dot" cx="4.95" cy="-2.66" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="-4.95" cy="2.66" r="2.4">
+</circle>
+</g>
+<g class="tone-corner" transform="translate(22 62.5) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="-1.65" y1="2.9" x2="1.65" y2="-2.9">
+</line>
+<circle class="sym-glyph-dot" cx="-1.65" cy="2.9" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="1.65" cy="-2.9" r="2.4">
+</circle>
+</g>
+<g class="tone-corner" transform="translate(66.5 62.5) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="11.56" y1="6.89" x2="-11.56" y2="-6.89">
+</line>
+<circle class="sym-glyph-dot" cx="11.56" cy="6.89" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="-11.56" cy="-6.89" r="2.4">
+</circle>
+</g>
+<g class="tone-corner" transform="translate(111 62.5) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="1.65" y1="12.21" x2="-1.65" y2="-12.21">
+</line>
+<circle class="sym-glyph-dot" cx="1.65" cy="12.21" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="-1.65" cy="-12.21" r="2.4">
+</circle>
+</g>
+<g class="tone-corner" transform="translate(155.5 62.5) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="-11.56" y1="8.22" x2="11.56" y2="-8.22">
+</line>
+<circle class="sym-glyph-dot" cx="-11.56" cy="8.22" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="11.56" cy="-8.22" r="2.4">
+</circle>
+</g>
+<g class="tone-corner" transform="translate(200 62.5) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="-1.65" y1="2.9" x2="1.65" y2="-2.9">
+</line>
+<circle class="sym-glyph-dot" cx="-1.65" cy="2.9" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="1.65" cy="-2.9" r="2.4">
+</circle>
+</g>
+<g class="tone-corner" transform="translate(244.5 62.5) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<line class="sym-glyph-axis" x1="-11.56" y1="8.22" x2="11.56" y2="-8.22">
+</line>
+<circle class="sym-glyph-dot" cx="-11.56" cy="8.22" r="2.4">
+</circle>
+<circle class="sym-glyph-dot" cx="11.56" cy="-8.22" r="2.4">
+</circle>
+</g>
+<g class="tone-face" transform="translate(22 104) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-plane" points="4.2,4.15 4.2,-8.66 -4.2,-4.15 -4.2,8.66">
+</polygon>
+</g>
+<g class="tone-face" transform="translate(66.5 104) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-plane" points="-5.6,4.71 5.6,8.1 5.6,-4.71 -5.6,-8.1">
+</polygon>
+</g>
+<g class="tone-face" transform="translate(111 104) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-plane" points="-9.8,0.56 1.4,3.95 9.8,-0.56 -1.4,-3.95">
+</polygon>
+</g>
+<g class="tone-edge" transform="translate(155.5 104) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-plane" points="1.4,10.35 1.4,-2.46 -1.4,-10.35 -1.4,2.46">
+</polygon>
+</g>
+<g class="tone-edge" transform="translate(200 104) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-plane" points="9.8,5.84 9.8,-6.97 -9.8,-5.84 -9.8,6.97">
+</polygon>
+</g>
+<g class="tone-edge" transform="translate(244.5 104) scale(1.35)">
+<polygon class="sym-glyph-face sym-glyph-face-u" points="1.4,-2.46 9.8,-6.97 -1.4,-10.35 -9.8,-5.84">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-r" points="1.4,-2.46 9.8,-6.97 9.8,5.84 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-face sym-glyph-face-f" points="1.4,-2.46 -9.8,-5.84 -9.8,6.97 1.4,10.35">
+</polygon>
+<polygon class="sym-glyph-plane" points="-9.8,-5.84 1.4,-2.46 9.8,5.84 -1.4,2.46">
+</polygon>
+</g>
+</svg>

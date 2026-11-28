@@ -765,8 +765,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'scramble': {
     title: { zh: '打乱分析', en: 'Scramble Analysis' },
     description: {
-      zh: '打乱分析中心:最优求解器、阶段难度统计、图案搜索,数据来自 WCA 真实打乱语料。',
-      en: 'Scramble analysis — optimal solvers, per-step difficulty statistics and pattern search, computed over the WCA’s real scramble corpus.',
+      zh: '浏览近期 WCA 比赛打乱，按项目与难度筛选，并使用最优求解器、阶段难度统计和图案搜索。',
+      en: 'Browse recent WCA scrambles by event and difficulty, with optimal solvers, stage difficulty statistics, and pattern search.'
     },
   },
   'scramble/555-about': { title: { zh: '5×5 打乱方法', en: '5×5 Scramble Methods' } },
@@ -775,13 +775,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'scramble/gen': { title: { zh: '打乱生成器', en: 'Scramble Generator' } },
   'scramble/gen-about': { title: { zh: '打乱生成器说明', en: 'Scramble Generator Guide' } },
   'scramble/hardest': { title: { zh: '最难开局', en: 'Hardest openings' } },
-  'scramble/recent': {
-    title: { zh: '近期打乱', en: 'Recent scrambles' },
-    description: {
-      zh: '浏览近期 WCA 比赛中的稀有打乱，按项目与难度筛选并复盘。',
-      en: 'Explore rare scrambles from recent WCA competitions, filter by event and difficulty, and reconstruct solves.',
-    },
-  },
   'scramble/mcc': { title: { zh: 'MCC (步数系数)', en: 'Movecount Coefficient' } },
   'scramble/pattern': { title: { zh: '图案', en: 'Patterns' } },
   'scramble/pattern/search': { title: { zh: '图案搜索', en: 'Pattern Search' } },

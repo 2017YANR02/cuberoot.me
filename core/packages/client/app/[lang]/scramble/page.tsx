@@ -7,10 +7,12 @@
  */
 import Link from '@/components/AppLink';
 import PageHeading from '@/components/PageHeading';
+import RecentScrambles from '@/components/RecentScrambles';
 import { useT } from "@/hooks/useT";
-import { tr } from '@/i18n/tr';
-import type { CSSProperties } from 'react';
+import { tr, useLang } from '@/i18n/tr';
+import { Suspense } from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import './scramble-recent.css';
 
 interface Card {
   to: string;
@@ -33,6 +35,7 @@ const CARDS: Card[] = [
 
 export default function ScrambleHubPage() {
   const t = useT();
+  const lang = useLang();
 
   return (
     <div className="scramble-hub-page">
@@ -48,17 +51,19 @@ export default function ScrambleHubPage() {
             prefetch={false}
             className={`scramble-hub-card scramble-hub-card--${c.size} scramble-hub-card--${c.area}`}
             data-site-surface="panel"
-            style={{
-              gridArea: c.area,
-              '--scramble-card-art': `url("/scramble-card-art/${c.area}.webp")`,
-            } as CSSProperties}
+            style={{ gridArea: c.area }}
           >
             <span className="scramble-hub-card-heading">
               <span className="scramble-hub-card-title">{tr(c).title}</span>
               <ArrowUpRight className="scramble-hub-card-arrow" size={17} aria-hidden="true" />
             </span>
             <span className="scramble-hub-art" aria-hidden="true">
-              <span className="scramble-hub-art-image" />
+              {c.area !== 'mcc' && (
+                <span
+                  className="scramble-hub-art-image"
+                  style={{ backgroundImage: `url("/scramble-card-art/${c.area === 'solve' || c.area === 'subsolver' ? 'solver-cube' : c.area}.svg")` }}
+                />
+              )}
               {c.area === 'generate' && (
                 <span className="scramble-hub-art-formula">
                   {"F B2 R B' U2 R B' U B' R2 U2 D2 F' R2 D2 F U2 B' D2 F' U"}
@@ -77,6 +82,12 @@ export default function ScrambleHubPage() {
           </Link>
         ))}
       </div>
+      <section id="recent-scrambles" className="scramble-hub-recent" aria-labelledby="recent-scrambles-heading">
+        <h2 id="recent-scrambles-heading">{t('近期打乱', 'Recent scrambles')}</h2>
+        <Suspense fallback={null}>
+          <RecentScrambles lang={lang} standalone />
+        </Suspense>
+      </section>
     </div>
   );
 }
@@ -155,7 +166,6 @@ const INLINE_CSS = `
   flex: 1;
   width: 100%;
   min-height: 0;
-  background-image: var(--scramble-card-art);
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -209,9 +219,6 @@ const INLINE_CSS = `
   font: inherit;
   font-weight: 400;
   white-space: nowrap;
-}
-.scramble-hub-page .scramble-hub-card--mcc .scramble-hub-art-image {
-  display: none;
 }
 .scramble-hub-page .scramble-hub-card:hover,
 .scramble-hub-page .scramble-hub-card:focus-visible {
