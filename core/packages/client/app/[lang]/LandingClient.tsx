@@ -677,6 +677,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         {renderCardGrid('calendar', SECTIONS.flatMap((section) => section.cards).filter((card) => card.id === 'calendar'), 'landing-calendar-link')}
         {!user ? (
           <Link href={`/account${nextQuery(pathname)}`} className="landing-auth-btn is-login" prefetch={false}
+            data-mini-program-target="account"
             onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); authActions.login(); } }}
             aria-label={tr({ zh: '登录', en: 'Log in' })}>
             <User size={16} aria-hidden />
@@ -685,6 +686,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
         ) : (
           <Link
             href="/account"
+            data-mini-program-target="account"
             aria-label={tr({ zh: '个人页面', en: 'Account' })}
             className="landing-auth-btn is-avatar"
             prefetch={false}

@@ -92,6 +92,15 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('homepage development cards', () => {
+  it.each([null, { wcaId: '2024TEST01' }])('targets the native account tab from the homepage account entry (%j)', (user) => {
+    auth.user = user;
+    const host = document.createElement('div');
+    host.innerHTML = renderToString(renderLanding({ locks: {}, orders: {} }));
+    const link = host.querySelector('a.landing-auth-btn');
+    expect(link?.getAttribute('href')).toMatch(/\/account$/);
+    expect(link?.getAttribute('data-mini-program-target')).toBe('account');
+  });
+
   it('keeps navigation in server HTML when query-dependent onboarding suspends', () => {
     auth.user = null;
     queryRendering.suspend = true;

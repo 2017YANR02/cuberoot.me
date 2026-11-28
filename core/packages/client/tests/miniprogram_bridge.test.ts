@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('Mini Program web-view bridge', () => {
   it.each(['MicroMessenger miniProgram', 'MicroMessenger'])('returns to the native Tools tab from %s', async (userAgent) => {
-    const switchTab = vi.fn();
+    const switchTab = vi.fn((options: { success(): void }) => options.success());
     const navigateTo = vi.fn((options: { success(): void }) => options.success());
     vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout, setTimeout, navigator: { userAgent },
@@ -15,7 +15,20 @@ describe('Mini Program web-view bridge', () => {
     await expect(openMiniProgramHome()).resolves.toBe(true);
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?nativeTab=tools&path=%2F' }));
     await expect(openMiniProgramHome('account')).resolves.toBe(true);
-    expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/web/index?nativeTab=account' }));
+    expect(switchTab).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/account/index' }));
+    expect(navigateTo).toHaveBeenCalledOnce();
+  });
+
+  it('uses the native account adapter if a WeChat version rejects the direct tab switch', async () => {
+    const switchTab = vi.fn((options: { fail(error: object): void }) => options.fail({}));
+    const navigateTo = vi.fn((options: { success(): void }) => options.success());
+    vi.stubGlobal('window', {
+      addEventListener: vi.fn(), clearTimeout, setTimeout, navigator: { userAgent: 'MicroMessenger miniProgram' },
+      wx: { miniProgram: { switchTab, navigateTo } },
+    });
+    const { openMiniProgramHome } = await import('@/lib/miniprogram-bridge');
+    await expect(openMiniProgramHome('account')).resolves.toBe(true);
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?nativeTab=account' }));
   });
 
   it('keeps ordinary WeChat browser home navigation on the website', async () => {

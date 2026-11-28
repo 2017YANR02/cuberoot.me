@@ -8,7 +8,7 @@ import { MINI_PROGRAM_LOGOUT_MESSAGE } from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from '@/lib/api-base';
 
 export interface MiniProgramNavigationApi {
-  switchTab?(options: { url: string }): void;
+  switchTab?(options: { url: string; fail?(error: { errMsg?: string }): void; success?(): void }): void;
   getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
   navigateBack?(options?: {
     delta?: number;
@@ -90,7 +90,7 @@ export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi
     .find(supportsMiniProgramNavigation)?.miniProgram ?? null;
 }
 
-/** Route through a native adapter so returning within the active tab also works. */
+/** Use the native account tab or restore a destination within Tools. */
 export async function openMiniProgramHome(tab: 'tools' | 'account' = 'tools'): Promise<boolean> {
   return openMiniProgramTab(tab, tab === 'tools' ? '/' : undefined);
 }
@@ -108,12 +108,25 @@ export async function openMiniProgramTab(tab: 'tools' | 'timer' | 'account', pat
       resolve(handled);
     };
     const timeout = window.setTimeout(() => finish(false), SDK_LOAD_TIMEOUT_MS);
-    try {
-      miniProgram.navigateTo({
-        url: `/pages/web/index?nativeTab=${tab}${path ? `&path=${encodeURIComponent(path)}` : ''}`,
-        success: () => finish(true), fail: () => finish(false),
-      });
-    } catch { finish(false); }
+    const openAdapter = () => {
+      if (settled) return;
+      try {
+        miniProgram.navigateTo({
+          url: `/pages/web/index?nativeTab=${tab}${path ? `&path=${encodeURIComponent(path)}` : ''}`,
+          success: () => finish(true), fail: () => finish(false),
+        });
+      } catch { finish(false); }
+    };
+    if (tab === 'account' && !isDouyinWebViewCandidate() && miniProgram.switchTab) {
+      try {
+        miniProgram.switchTab({
+          url: '/pages/account/index',
+          success: () => finish(true), fail: openAdapter,
+        });
+      } catch { openAdapter(); }
+      return;
+    }
+    openAdapter();
   });
 }
 
