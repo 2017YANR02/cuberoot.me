@@ -484,6 +484,7 @@ describe('deployment workflow path contracts', () => {
     const transfer = readStepRun('deploy_next.yml', 'rsync standalone + systemd unit');
     const step = readStepLines('deploy_next.yml', 'rsync standalone + systemd unit').lines.join('\n');
     expect(step).toContain('timeout-minutes: 27');
+    expect(transfer.trimStart()).toMatch(/^set -o pipefail\n/);
     expect(transfer).toContain('for i in 1 2; do');
     expect(transfer).toContain('timeout --kill-after=15s 480s rsync -az --checksum');
     expect(transfer).toContain("split -t '\\0' -n r/8");

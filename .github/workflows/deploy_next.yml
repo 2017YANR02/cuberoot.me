@@ -184,6 +184,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
+          set -o pipefail
           RSH="ssh -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
           SOURCE="core/${{ steps.workspace.outputs.web }}/.next/standalone/"
           DEST="$DEPLOY_USER@$DEPLOY_HOST:/www/wwwroot/toolkit-next.new/"
