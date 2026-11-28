@@ -4651,7 +4651,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       bottom: embeddedBottom,
     };
     for (const surface of MOBILE_EMBED_SURFACES) {
-      if (webBridgeReadyRef.current[surface]) postWebSurfaceInit(surface);
+      if (webBridgeReadyRef.current[surface] || (surface === 'tools' && webSurfaceLoadedRef.current.tools)) {
+        postWebSurfaceInit(surface);
+      }
     }
   }, [floatingNavigation, frameInsetByHost, embeddedTopBar?.left, embeddedTopBar?.right, embeddedBottom, toolsSearchExpanded, searchKeyboardVisible, postWebSurfaceInit]);
 

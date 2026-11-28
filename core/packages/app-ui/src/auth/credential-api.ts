@@ -7,7 +7,7 @@ import {
 } from '@cuberoot/shared/auth/web-session';
 import type { SupportedLanguage } from '../copy';
 
-const AUTH_URL = 'https://api.cuberoot.me/v1/auth';
+import { mobileApiUrl } from '../data/api-url';
 
 export class InstalledAccountChoiceRequired extends Error {
   constructor(readonly pending: PendingIdentity) { super('ACCOUNT_CHOICE_REQUIRED'); }
@@ -24,7 +24,7 @@ export async function accountRequest(
   options.signal?.addEventListener('abort', abort, { once: true });
   if (options.signal?.aborted) abort();
   try {
-    const response = await fetch(AUTH_URL + path, {
+    const response = await fetch(mobileApiUrl(`/v1/auth${path}`), {
       method: options.body ? 'POST' : 'GET',
       headers: {
         'Accept-Language': language === 'zh' ? 'zh-CN' : 'en',

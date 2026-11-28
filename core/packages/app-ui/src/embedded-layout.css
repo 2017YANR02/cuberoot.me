@@ -173,6 +173,9 @@
   transform: translateY(8px) scale(.98);
   transition: opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
 }
+:root[data-embedded-search-button]:not([data-embedded-search-open]) .landing-page > .landing-search {
+  display: none;
+}
 :root[data-embedded-search-button][data-embedded-search-open] .landing-page > .landing-search {
   visibility: visible;
   pointer-events: auto;
@@ -211,6 +214,21 @@
 /* Older site builds offset the panel a second time inside its positioned layer. */
 :root[data-embedded-bottom-nav] .settings-popover-layer > .sim-playback-settings-panel {
   bottom: auto;
+}
+
+/* Keep the Agent workspace and its pinned composer above the floating tabs. */
+:root[data-embedded-bottom-nav] .deskpet-search-workspace {
+  height: calc(100dvh - var(--embedded-nav-clearance));
+}
+:root[data-embedded-bottom-nav] .site-assistant-backdrop {
+  bottom: var(--embedded-nav-clearance);
+}
+:root[data-embedded-bottom-nav] .site-assistant-backdrop > .site-assistant-dialog {
+  max-height: 100%;
+}
+:root[data-embedded-bottom-nav] .site-assistant-dialog.is-expanded {
+  bottom: var(--embedded-nav-clearance);
+  height: auto;
 }
 
 /* Keep the renewal banner above the installed navigation on every frame route. */

@@ -108,8 +108,16 @@ fn secure_remove(key: String) -> Result<(), String> {
 }
 
 pub fn run() {
+    let context = tauri::generate_context!();
+    let mut parent_origins = vec![String::from("tauri://localhost"), String::from("https://tauri.localhost")];
+    if cfg!(debug_assertions) {
+        if let Some(url) = &context.config().build.dev_url {
+            parent_origins.push(url.origin().ascii_serialization());
+        }
+    }
     let layout_script = format!(
-        "(() => {{ const parentOrigins = ['tauri://localhost', 'https://tauri.localhost', 'http://127.0.0.1:1420']; const styles = {};\n(() => {{ {} }})();\n{}\n}})();",
+        "(() => {{ const parentOrigins = {}; const styles = {};\n(() => {{ {} }})();\n{}\n}})();",
+        serde_json::json!(parent_origins),
         serde_json::json!(include_str!("../../../../packages/app-ui/src/embedded-layout.css")),
         include_str!("../../../../packages/app-ui/src/embedded-layout.js"),
         include_str!("tools-input.js")
@@ -163,6 +171,6 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![copy_text, navigation_menu::configure_navigation_menu, primary_navigation::render_primary_navigation, desktop_distribution, prepare_auth_callback, open_web_link, screen_awake::set_keep_awake, native_print::print_document, file_export::export_file, secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac, apple_membership::apple_membership, apple_membership::apple_membership_mode])
-        .run(tauri::generate_context!())
+        .run(context)
         .expect("error while running CubeRoot");
 }

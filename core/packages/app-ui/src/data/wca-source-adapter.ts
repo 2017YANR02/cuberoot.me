@@ -1,3 +1,4 @@
+import { mobileApiUrl } from './api-url';
 import { createTimerWcaCompetitionCatalog } from '@cuberoot/shared/timer/wca-competition-catalog';
 import type {
   TimerWcaCompetitionScramble,
@@ -11,14 +12,11 @@ import {
 } from '@cuberoot/shared/timer';
 
 const STATIC_ORIGIN = 'https://static.cuberoot.me';
-const API_ORIGIN = 'https://api.cuberoot.me';
+
+export { mobileApiUrl } from './api-url';
 
 export function mobileStaticUrl(path: string): string {
   return `${STATIC_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
-}
-
-export function mobileApiUrl(path: string): string {
-  return `${API_ORIGIN}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 const mobileWcaFetch: TimerWcaHttpFetch = (url, init) => fetch(url, init);

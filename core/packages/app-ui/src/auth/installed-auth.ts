@@ -14,7 +14,8 @@ import {
 
 import type { SupportedLanguage } from '../copy';
 
-const API_ORIGIN = 'https://api.cuberoot.me';
+import { mobileApiUrl } from '../data/api-url';
+
 const SITE_ORIGIN = 'https://cuberoot.me';
 const SESSION_KEY = 'session';
 const PENDING_KEY = 'pending_auth';
@@ -148,7 +149,7 @@ export class InstalledAuthClient {
     try {
       const response = await fetchWithTimeout(
         this.runtime.fetcher,
-        `${API_ORIGIN}/v1/auth/refresh`,
+        mobileApiUrl('/v1/auth/refresh'),
         { method: 'POST', headers: { Authorization: `Bearer ${session.token}` } },
       );
       if (revision !== this.sessionRevision) return null;
@@ -175,7 +176,7 @@ export class InstalledAuthClient {
     try {
       const response = await fetchWithTimeout(
         this.runtime.fetcher,
-        `${API_ORIGIN}/v1/auth/me`,
+        mobileApiUrl('/v1/auth/me'),
         { headers: { Authorization: `Bearer ${session.token}` } },
       );
       if (revision !== this.sessionRevision) return null;
@@ -260,7 +261,7 @@ export class InstalledAuthClient {
     if (!session) throw new Error('mobile auth session unavailable');
     const response = await fetchWithTimeout(
       this.runtime.fetcher,
-      `${API_ORIGIN}/v1/auth/web-session/ticket`,
+      mobileApiUrl('/v1/auth/web-session/ticket'),
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.token}` },
@@ -321,7 +322,7 @@ export class InstalledAuthClient {
 
     const response = await fetchWithTimeout(
       this.runtime.fetcher,
-      `${API_ORIGIN}/v1/auth/mobile-session/exchange`,
+      mobileApiUrl('/v1/auth/mobile-session/exchange'),
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

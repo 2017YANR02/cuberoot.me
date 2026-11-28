@@ -38,11 +38,19 @@ static BOOL NavigationFrame(WKWebView *webView, CGFloat viewportHeight, id value
     return YES;
 }
 
+// Let clicks at the edge of the decorative lens pass through.
+API_AVAILABLE(macos(26.0))
+@interface CubeRootNavigationLens : NSGlassEffectView
+@end
+
+@implementation CubeRootNavigationLens
+- (NSView *)hitTest:(NSPoint)point { return nil; }
+@end
+
 API_AVAILABLE(macos(26.0))
 @interface CubeRootPrimaryNavigation : NSObject
 @property (nonatomic, weak) WKWebView *webView;
 @property (nonatomic, strong) NSView *tabGroup;
-@property (nonatomic, strong) NSGlassEffectContainerView *glassGroup;
 @property (nonatomic, strong) NSGlassEffectView *capsule;
 @property (nonatomic, strong) NSGlassEffectView *selection;
 @property (nonatomic, copy) NSArray<NSButton *> *tabs;
@@ -54,6 +62,12 @@ API_AVAILABLE(macos(26.0))
 @property (nonatomic) NSInteger pressedSegment;
 @property (nonatomic) CGFloat pressCenterOffset;
 @property (nonatomic) CGFloat pressedCenter;
+@property (nonatomic) CGFloat pressStartY;
+@property (nonatomic) BOOL trackingLens;
+@property (nonatomic) NSRect selectionTarget;
+@property (nonatomic) CGFloat verticalDrag;
+@property (nonatomic, strong) NSShadow *liftShadow;
+@property (nonatomic, strong) NSColor *accent;
 - (instancetype)initWithWebView:(WKWebView *)webView;
 - (BOOL)render:(id)state;
 @end
@@ -68,16 +82,20 @@ API_AVAILABLE(macos(26.0))
     _tabGroup = [[NSView alloc] initWithFrame:NSZeroRect];
     _tabGroup.accessibilityElement = YES;
     _tabGroup.accessibilityRole = NSAccessibilityTabGroupRole;
-    _glassGroup = [[NSGlassEffectContainerView alloc] initWithFrame:NSZeroRect];
-    _glassGroup.contentView = [[NSView alloc] initWithFrame:NSZeroRect];
-    [_tabGroup addSubview:_glassGroup];
     _capsule = [[NSGlassEffectView alloc] initWithFrame:NSZeroRect];
     _capsule.contentView = [[NSView alloc] initWithFrame:NSZeroRect];
-    [_glassGroup.contentView addSubview:_capsule];
-    _selection = [[NSGlassEffectView alloc] initWithFrame:NSZeroRect];
+    [_tabGroup addSubview:_capsule];
+    _tabGroup.wantsLayer = YES;
+    _tabGroup.clipsToBounds = NO;
+    _liftShadow = [[NSShadow alloc] init];
+    _liftShadow.shadowColor = NSColor.shadowColor;
+    _liftShadow.shadowOffset = NSMakeSize(0, -3);
+    _liftShadow.shadowBlurRadius = 5;
+    _selection = [[CubeRootNavigationLens alloc] initWithFrame:NSZeroRect];
     _selection.style = NSGlassEffectViewStyleClear;
     _selection.contentView = [[NSView alloc] initWithFrame:NSZeroRect];
-    [_glassGroup.contentView addSubview:_selection];
+    // Composite the glass over the rail, then draw the native button labels in front.
+    [_tabGroup addSubview:_selection];
 
     NSImageSymbolConfiguration *tabSymbol = [NSImageSymbolConfiguration configurationWithPointSize:15 weight:NSFontWeightMedium];
     NSArray<NSString *> *symbols = @[@"clock", @"square.grid.2x2", @"person.crop.circle"];
@@ -116,6 +134,7 @@ API_AVAILABLE(macos(26.0))
 
 #if __MAC_OS_X_VERSION_MAX_ALLOWED >= 270000
     if (@available(macOS 27.0, *)) {
+        _capsule.effectIsInteractive = YES;
         _searchCapsule.effectIsInteractive = YES;
     }
 #endif
@@ -124,6 +143,7 @@ API_AVAILABLE(macos(26.0))
 
 - (void)hide {
     self.tabGroup.hidden = YES;
+    self.selectionTarget = NSZeroRect;
     self.pressedSegment = -1;
     self.searchCapsule.hidden = YES;
 }
@@ -135,17 +155,29 @@ API_AVAILABLE(macos(26.0))
 
 - (void)layoutSelectionAnimated:(BOOL)animated {
     BOOL reduceMotion = NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceMotion;
-    NSInteger index = self.pressedSegment < 0 ? self.selectedSegment : self.pressedSegment;
+    BOOL tracking = self.pressedSegment >= 0 && self.trackingLens;
+    NSInteger index = tracking ? self.pressedSegment : self.selectedSegment;
     NSRect frame = [self tabFrame:index];
-    if (self.pressedSegment >= 0) {
-        if (!reduceMotion) frame = NSInsetRect(frame, -NSWidth(frame) * 0.09, -2.5);
+    BOOL raised = tracking && !reduceMotion;
+    self.selection.shadow = raised ? self.liftShadow : nil;
+    self.selection.tintColor = raised ? nil : [self.accent colorWithAlphaComponent:0.20];
+    if (tracking) {
+        if (raised) {
+            frame = NSInsetRect(frame, -NSWidth(frame) * 0.10, -6);
+            frame.origin.y += 5 + self.verticalDrag;
+        }
         CGFloat left = self.pressedCenter - NSWidth(frame) / 2;
-        frame.origin.x = MAX(2, MIN(left, NSWidth(self.tabGroup.bounds) - NSWidth(frame) - 2));
+        CGFloat edge = raised ? -4 : 2;
+        frame.origin.x = MAX(edge, MIN(left, NSWidth(self.tabGroup.bounds) - NSWidth(frame) - edge));
     }
+    // Repeated web layout updates must leave an in-flight slide to the same target alone.
+    if (NSEqualRects(self.selectionTarget, frame)) return;
+    self.selectionTarget = frame;
     CGFloat radius = NSHeight(frame) / 2;
     if (animated && !reduceMotion) {
         [NSAnimationContext runAnimationGroup:^(NSAnimationContext *context) {
-            context.duration = 0.16;
+            context.duration = 0.24;
+            context.allowsImplicitAnimation = YES;
             self.selection.animator.frame = frame;
             self.selection.cornerRadius = radius;
         }];
@@ -210,12 +242,10 @@ API_AVAILABLE(macos(26.0))
     BOOL animateSelection = !self.tabGroup.hidden && !NSIsEmptyRect(self.selection.frame)
         && self.selectedSegment != (NSInteger)selected && NSEqualSizes(self.tabGroup.frame.size, capsuleFrame.size);
     self.tabGroup.frame = capsuleFrame;
-    self.glassGroup.frame = self.tabGroup.bounds;
-    self.glassGroup.contentView.frame = self.glassGroup.bounds;
-    self.capsule.frame = self.glassGroup.bounds;
+    self.capsule.frame = self.tabGroup.bounds;
     self.capsule.cornerRadius = NSHeight(capsuleFrame) / 2;
     self.capsule.contentView.frame = self.capsule.bounds;
-    self.selection.tintColor = [accent colorWithAlphaComponent:0.20];
+    self.accent = accent;
     self.selectedSegment = (NSInteger)selected;
     for (NSButton *tab in self.tabs) tab.frame = [self tabFrame:tab.tag];
     [self layoutSelectionAnimated:animateSelection];
@@ -245,6 +275,9 @@ API_AVAILABLE(macos(26.0))
 - (void)pressTab:(NSButton *)sender {
     NSPoint point = [self.tabGroup convertPoint:NSApp.currentEvent.locationInWindow fromView:nil];
     self.pressedSegment = sender.tag;
+    self.trackingLens = sender.tag == self.selectedSegment;
+    self.pressStartY = point.y;
+    self.verticalDrag = 0;
     self.pressedCenter = NSMidX([self tabFrame:sender.tag]);
     self.pressCenterOffset = self.pressedCenter - point.x;
     [self layoutSelectionAnimated:YES];
@@ -253,7 +286,11 @@ API_AVAILABLE(macos(26.0))
 - (void)dragTab:(NSButton *)sender {
     if (self.pressedSegment != sender.tag) return;
     NSPoint point = [self.tabGroup convertPoint:NSApp.currentEvent.locationInWindow fromView:nil];
-    self.pressedCenter = point.x + self.pressCenterOffset;
+    CGFloat center = point.x + self.pressCenterOffset;
+    if (!self.trackingLens && hypot(center - NSMidX([self tabFrame:sender.tag]), point.y - self.pressStartY) < 3) return;
+    self.trackingLens = YES;
+    self.pressedCenter = center;
+    self.verticalDrag = 4 * tanh((point.y - self.pressStartY) / 12);
     [self layoutSelectionAnimated:NO];
 }
 
@@ -265,15 +302,17 @@ API_AVAILABLE(macos(26.0))
 - (void)releaseTab:(NSButton *)sender {
     if (self.pressedSegment != sender.tag) return;
     NSPoint point = [self.tabGroup convertPoint:NSApp.currentEvent.locationInWindow fromView:nil];
-    [self cancelTab:sender];
-    // The native button handles release in its own segment. A drag can end in a different one.
-    if (!NSPointInRect(point, self.tabGroup.bounds)) return;
+    self.pressedSegment = -1;
+    // Settle directly on the drop target, including when the web view is still switching pages.
     for (NSButton *tab in self.tabs) {
-        if (tab != sender && NSPointInRect(point, tab.frame)) {
-            [self switchTab:tab];
+        if (tab.enabled && NSPointInRect(point, tab.frame)) {
+            self.selectedSegment = tab.tag;
+            [self layoutSelectionAnimated:YES];
+            if (tab != sender) [self switchTab:tab];
             return;
         }
     }
+    [self layoutSelectionAnimated:YES];
 }
 
 - (void)switchTab:(NSButton *)sender {
