@@ -343,6 +343,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Controlled alg <textarea>: only half-width moves land, even with a CJK IME on. Skips composition, restores the caret after stripping.',
   },
   {
+    name: 'usePersonCompetitionIds',
+    sig: 'usePersonCompetitionIds(wcaId: string | undefined, indexedIds?: ReadonlySet<string>): Set<string> | null',
+    imp: "import { usePersonCompetitionIds } from '@/hooks/usePersonCompetitionIds';",
+    category: 'hook',
+    zh: '合并指定 WCA 选手的往届比赛、即将举行的比赛和目录索引。未选择选手时返回 null。',
+    en: 'Combines past, upcoming, and indexed competition IDs for a WCA competitor. Returns null until a competitor is selected.',
+  },
+  {
     name: 'useVideoViewport',
     sig: "useVideoViewport(element: RefObject<HTMLDivElement | null>, enabled: boolean, cropping = false, wheelZoom: 'always' | 'modified' = 'always')",
     imp: "import { useVideoViewport } from '@/hooks/useVideoViewport';",
