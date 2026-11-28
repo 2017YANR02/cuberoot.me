@@ -93,6 +93,7 @@ export default function LiquidGlassChips<T extends string | number>({
     <div
       ref={containerRef}
       className={`lg-chips af-glass-surface${className ? ` ${className}` : ''}`}
+      data-af-glass-optics="frosted"
       role={role}
       aria-orientation="horizontal"
       onClick={onCommit}
@@ -107,6 +108,7 @@ export default function LiquidGlassChips<T extends string | number>({
           <div
             className="lg-chips-thumb-fallback af-glass-surface"
             data-af-glass-role="popover"
+            data-af-glass-optics="lens"
             aria-hidden="true"
             style={{
               top: chipBox.centerY,

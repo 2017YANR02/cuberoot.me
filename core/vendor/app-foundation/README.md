@@ -13,3 +13,5 @@ Navigation UI 0.1.2 is the current local candidate: adds grouped menus, count ba
 Careers UI 0.1.0 is a shared local candidate for the careers browser and detail sections. Both sites pin the same artifact; positions, labels, routes and styling remain host-owned. Publish an immutable artifact before deployment.
 
 UI Controls 0.2.7 provides the shared Liquid Glass Studio optics and material tokens. Both sites pin identical bytes from [App Foundation v0.8.3](https://github.com/2017YANR02/app-foundation/releases/tag/v0.8.3).
+
+CubeRoot locally pins UI Controls 0.2.8, which adds an explicit frosted track for nested liquid lenses. The candidate checksum is in SHA256SUMS.

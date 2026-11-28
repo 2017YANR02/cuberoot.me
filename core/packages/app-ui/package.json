@@ -65,7 +65,7 @@
   },
   "dependencies": {
     "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz",
-    "@app-foundation/ui-controls": "file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.7.tgz",
+    "@app-foundation/ui-controls": "file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.8.tgz",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
