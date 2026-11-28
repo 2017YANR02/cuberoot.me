@@ -19,7 +19,7 @@ import type { VerifiedVideoDraft } from '../../video-recon/VideoSolveAnalysis';
 import { useT } from '@/hooks/useT';
 import { downloadBlob } from '@/lib/scramble-dist/download';
 import { bindTrackpadZoom } from '@/lib/cube-trackpad';
-import { captionCubeRect, initialCaptionStyle, paintCaption, prepareCaptions, solutionCues } from '@/lib/video-tools/recon-captions';
+import { captionAss, captionCubeRect, initialCaptionStyle, paintCaption, prepareCaptions, solutionCues } from '@/lib/video-tools/recon-captions';
 
 const rounded = (n: number) => Math.round(n * 1000) / 1000;
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
@@ -50,7 +50,7 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
   const [stepping, setStepping] = useState(false);
   const task = useRef<AbortController | null>(null);
   const customFaces = useRef(new Set<FontFace>());
-  const [customFont, setCustomFont] = useState<{ family: string; name: string }>();
+  const [customFont, setCustomFont] = useState<{ family: string; name: string; installedFamily: string }>();
   const [fontReady, setFontReady] = useState('');
   const [loadingFont, setLoadingFont] = useState(false);
   const [videoSource, setSource] = useState({ width: 0, height: 0, duration: 0 });
@@ -359,7 +359,8 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
       const face = await new FontFace(family, await picked.arrayBuffer(), { weight: '700' }).load();
       if (!fontInput.current) return;
       document.fonts.add(face); customFaces.current.add(face);
-      setCustomFont({ family, name: picked.name }); setStyle(s => ({ ...s, font: family })); setError('');
+      setCustomFont({ family, name: picked.name, installedFamily: picked.name.replace(/\.[^.]+$/, '') });
+      setStyle(s => ({ ...s, font: family })); setError('');
     } catch { setError(t('无法读取字体，请选择 TTF、OTF 或 WOFF 字体。', 'Choose a valid TTF, OTF or WOFF font.')); }
     finally { setLoadingFont(false); }
   }
@@ -384,6 +385,14 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
       closeCubeEditor();
     }
     moveCube((e.clientX - frame.left) / frame.width - grip.x, (e.clientY - frame.top) / frame.height - grip.y);
+  }
+  function downloadAss() {
+    const families: Record<string, string> = {
+      CaptionSilkscreen: 'Silkscreen', 'system-ui': 'Arial', monospace: 'Courier New', serif: 'Georgia',
+    };
+    const family = customFont && style.font === customFont.family ? customFont.installedFamily : families[style.font] ?? 'Arial';
+    const content = captionAss(prepared, style, family, media.width, media.height);
+    downloadBlob(file.name.replace(/\.[^.]+$/, '') + '.ass', new Blob(['\uFEFF', content], { type: 'text/plain;charset=utf-8' }));
   }
   async function render(useOutput = false) {
     if (task.current || !valid || !ready) return;
@@ -529,6 +538,10 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
               else setStyle(previous => ({ ...previous, font }));
             }} />
         </div>
+        {customFont && style.font === customFont.family && <label>
+          {t('ASS 使用的字体名称', 'Installed font name for ASS')}
+          <input value={customFont.installedFamily} onChange={e => setCustomFont({ ...customFont, installedFamily: e.currentTarget.value })} />
+        </label>}
         <div className="recon-caption-actions">
           <label>{t('字号', 'Size')} <input type="number" min={MIN_CAPTION_SIZE} max={MAX_CAPTION_SIZE}
             value={sizeInput ?? Math.round(style.size)} onChange={e => {
@@ -571,6 +584,8 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
           else void render(true);
         }} />}
       <button type="button" className="btn-primary" disabled={!valid || !ready || busy} onClick={() => void render()}>{t('导出', 'Export')}</button>
+      <button type="button" className="submit-reuse-btn" onClick={downloadAss}
+        disabled={!valid || framing?.file !== file || !media.width || !media.height || busy}>{t('下载 ASS 字幕', 'Download ASS subtitles')}</button>
     </div>
     {!review && !recognized && duration > 0 && <button type="button" className="submit-reuse-btn" disabled={busy}
       onClick={() => setOffset(video.current?.currentTime ?? 0)}>{t('以当前画面作为还原起点', 'Use current frame as solve start')}</button>}
