@@ -2,9 +2,9 @@
   "app": {
     "bundleName": "me.cuberoot.app",
     "vendor": "CubeRoot",
-    "versionCode": 1000,
-    "versionName": "0.1.0",
-    "icon": "$media:layered_image",
+    "versionCode": 1001,
+    "versionName": "0.1.1",
+    "icon": "$media:foreground",
     "label": "$string:app_name"
   }
 }
