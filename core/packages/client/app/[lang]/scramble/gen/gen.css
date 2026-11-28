@@ -1,3 +1,4 @@
+@reference "../../../../components/glass-utilities.css";
 /* /gen — batch scramble generator */
 
 /* Same TTFs that tnoodle_pdf.ts loads into jsPDF — keep web sheet fonts
@@ -47,11 +48,18 @@
         max(2rem, calc((100vw - 980px) / 2 + var(--sar)))
         1rem
         max(2rem, calc((100vw - 980px) / 2 + var(--sal)));
-    background: color-mix(in srgb, var(--gen-bg) 88%, transparent);
+    isolation: isolate;
     position: sticky;
     top: 0;
     z-index: 10;
-    backdrop-filter: var(--glass-filter);
+}
+.gen-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--gen-bg);
 }
 
 /* flex: 1 0 auto — grow 把 chips 推到右沿,但 shrink:0 保证标题永不被压到内容宽以下
@@ -1406,13 +1414,15 @@ html[data-theme=dark] .gen-page {
     background: transparent;
   }
 
-  body[data-site-scenery] .gen-header,
+  body[data-site-scenery] .gen-header::before {
+    @apply site-glass-heading;
+  }
   body[data-site-scenery] .gen-tn-event-card {
-    background: var(--glass-surface-bg);
-    border-color: var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
+    @apply site-glass-panel;
+  }
+  body[data-site-scenery] .gen-tn-event-card.is-on {
+    border-color: var(--gen-accent);
+    background: color-mix(in srgb, var(--gen-accent) 16%, var(--glass-menu-bg));
   }
 }
 

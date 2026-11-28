@@ -69,6 +69,7 @@ describe('site materials have one definition and shared scenery tokens', () => {
   it.each([
     '.calendar-page .toolbar',
     'body[data-site-scenery] .calendar-page :is(.calendar, .toolbar)',
+    '.gen-header',
     ':where(.sor-race-bar, .shell-topbar):hover',
     '.viz-page .toolbar:has(.wca-pp-results)',
     '.space-top-tools > *',

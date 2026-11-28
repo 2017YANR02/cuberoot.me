@@ -242,6 +242,7 @@ body[data-site-scenery] .vkb-popup::after {
 }
 
 /* Filters and image export menus need stronger separation from text below. */
+body[data-site-scenery] .gen-comp-header-slot .comp-picker-popup,
 body[data-site-scenery] .sites-filter-row .pp-popup,
 body[data-site-scenery] .compact-select-popup.recon-filter-popup,
 body[data-site-scenery] .compact-select-popup.stsv-solution-menu,

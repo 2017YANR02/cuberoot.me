@@ -17,6 +17,9 @@ const fixtures: Fixture[] = [
     await button.focus();
     await button.press('Enter');
   } },
+  { name: 'scramble-competition-search', path: '/zh/scramble/gen', panel: '.comp-picker-popup', open: async p => {
+    await p.locator('.gen-comp-header-slot .comp-picker-input').fill('Shanghai');
+  } },
   ...['calendar', 'list'].flatMap(view => [
     { name: `competition-${view}-countries`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.region-picker-popup', open: (p: Page) => p.locator('.toolbar .region-picker-trigger').click() },
     { name: `competition-${view}-filters`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.comp-filters-panel', open: (p: Page) => p.locator('.comp-filters-btn').click() },
@@ -47,7 +50,7 @@ function inspectMenu(element: Element) {
   const rect = element.getBoundingClientRect();
   const style = getComputedStyle(element);
   const issues: string[] = [];
-  if (style.backdropFilter === 'none') issues.push('Menu has no backdrop filter');
+  if (document.body.hasAttribute('data-site-scenery') && style.backdropFilter === 'none') issues.push('Menu has no backdrop filter');
   if (rect.left < -1 || rect.right > innerWidth + 1) issues.push('Menu exceeds viewport width');
   for (let ancestor = element.parentElement; ancestor; ancestor = ancestor.parentElement) {
     const s = getComputedStyle(ancestor), r = ancestor.getBoundingClientRect();
@@ -86,7 +89,7 @@ try {
       try {
         const response = await page.goto(base + fixture.path, { waitUntil: 'domcontentloaded' });
         if (!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
-        await page.waitForFunction(() => !!document.body.dataset.siteScenery);
+        if (mode.image) await page.waitForFunction(() => !!document.body.dataset.siteScenery);
         if (fixture.name.startsWith('competition-')) {
           const hasToolbarSurface = await page.locator('.calendar-page .toolbar').evaluate(element =>
             [null, '::before', '::after'].some(pseudo => {

@@ -13,7 +13,7 @@ const LEGACY_OVERRIDES = {
 // These containers host non-portaled menus. Their glass belongs on ::before,
 // otherwise the browser stops sampling the page at the ancestor backdrop root.
 // Unknown/dynamic containers are covered by audit-glass-menus.mts in a browser.
-const MENU_HOST = /\.(?:toolbar|shell-topbar|sor-race-bar|space-top-tools)(?![\w-])/;
+const MENU_HOST = /\.(?:toolbar|shell-topbar|gen-header|sor-race-bar|space-top-tools)(?![\w-])/;
 // Compile once per process; reuse the existing CSS pass, without extra file IO.
 const UNFRAMED_RULES = unframedSurfaces.map(policy => ({
   kind: policy.kind,
