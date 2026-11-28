@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { InstalledSignIn } from './InstalledSignIn';
@@ -55,7 +55,12 @@ async function render(handler: (path: string, body: Record<string, unknown>) => 
     busy: false, error: false, loading: false, session: null,
   };
   const onClose = vi.fn();
-  await act(async () => root.render(<InstalledSignIn recovering={false} onRecoveryChange={vi.fn()} auth={auth} language="en" onClose={onClose} openPolicy={vi.fn()} />));
+  function SignIn() {
+    const [recovering, setRecovering] = useState(false);
+    return <InstalledSignIn recovering={recovering} onRecoveryChange={setRecovering} auth={auth}
+      language="en" onClose={onClose} openPolicy={vi.fn()} />;
+  }
+  await act(async () => root.render(<SignIn />));
   return { auth, onClose, request };
 }
 
@@ -136,7 +141,7 @@ describe('bundled Account sign-in', () => {
     expect(auth.installCredentialSession).not.toHaveBeenCalled();
   });
 
-  it('verifies the existing account before confirming a new credential link', async () => {
+  it.each([false, true])('confirms the intended existing account (recover password: %s)', async (recoverPassword) => {
     const ticket = 'A'.repeat(43);
     const { auth, request } = await render((path, body) => {
       if (path.endsWith('/send')) return Response.json({ ok: true });
@@ -153,7 +158,18 @@ describe('bundled Account sign-in', () => {
     };
     await verify('test@example.invalid');
     await act(async () => { button('Sign in to an existing account').click(); });
+    if (recoverPassword) {
+      await act(async () => { button('Sign in with a password').click(); });
+      await act(async () => { button('Forgot your password?').click(); });
+    }
     await verify('existing@example.invalid');
+    if (recoverPassword) {
+      await act(async () => { button('Skip').click(); });
+      expect(container.textContent).toContain('Link email');
+      await act(async () => { button('Use another account').click(); });
+      expect(container.querySelector('[data-mobile-auth-provider="apple"]')).not.toBeNull();
+      await verify('existing@example.invalid');
+    }
     expect(request).toHaveBeenLastCalledWith('/v1/auth/email/verify', {
       email: 'existing@example.invalid', code: '123456', existingOnly: true,
     });
