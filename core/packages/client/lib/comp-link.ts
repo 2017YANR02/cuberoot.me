@@ -2,8 +2,6 @@
 // 比赛页内部链接 + WCA URL anchor 解析. compLinkProps tweaked for Next: returns
 // `href` (next/link) instead of `to` (react-router).
 import type { CompResultLocation } from '@cuberoot/shared/wca-comp-link';
-import { apiUrl } from './api-base';
-import { statsUrl } from './stats-base';
 
 export interface CompLinkOpts {
   event?: string;
@@ -101,36 +99,9 @@ export function rewriteWcaCompUrl(url: string): string | null {
   return compHref(compId, parseWcaAnchor(anchor));
 }
 
-const _prefetched = new Set<string>();
-export function prefetchComp(compId: string): void {
-  if (_prefetched.has(compId)) return;
-  _prefetched.add(compId);
-  fetch(statsUrl(`/stats/comp/${encodeURIComponent(compId)}.json`), { cache: 'force-cache' })
-    .then(r => {
-      if (r.ok) return;
-      // Background hover prefetch must not navigate to a verification page.
-      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`), { cache: 'force-cache', credentials: 'include' })
-        .catch(() => { _prefetched.delete(compId); });
-    })
-    .catch(() => { _prefetched.delete(compId); });
-}
-
-/**
- * Props for next/link <Link>: { href, prefetch, onMouseEnter, onFocus, onTouchStart }.
- * prefetch:false — comp pages are bulk-listed (landing OngoingComps / calendar / search),
- * and Next's default viewport auto-prefetch would background-render dozens of them on
- * every page view. Intent (hover/focus/touch) still warms the comp stats JSON via
- * prefetchComp. Pattern B: English is the bare path, so only `lang === 'zh'`
- * adds a prefix; English/undefined stay bare (no proxy round-trip either way).
- */
+// A link can appear hundreds of times on a results page. Only navigation should
+// request protected competition data or count against a visitor's browsing limit.
 export function compLinkProps(compId: string, opts?: CompLinkOpts, lang?: 'zh' | 'en') {
-  const warm = () => prefetchComp(compId);
   const href = compHref(compId, opts);
-  return {
-    href: lang === 'zh' ? `/zh${href}` : href,
-    prefetch: false as const,
-    onMouseEnter: warm,
-    onFocus: warm,
-    onTouchStart: warm,
-  };
+  return { href: lang === 'zh' ? `/zh${href}` : href, prefetch: false as const };
 }

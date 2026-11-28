@@ -1,6 +1,6 @@
 'use client';
 
-// Unified competition + cuber search for /wca/comp. Merges CompPicker (type to
+// Unified competition + cuber search for the homepage and /wca/comp. Merges CompPicker (type to
 // live-filter the calendar by comp name + pick/paste to open a comp) and
 // WcaPersonPicker (pick a cuber to filter the calendar to their comps) into one
 // box with a two-section dropdown, modeled on the site-search box. Reuses the
@@ -45,6 +45,9 @@ interface Props {
   /** Comp-name live filter (mirror of the page's compQuery). */
   query: string;
   onQueryChange: (val: string) => void;
+  onQuerySubmit?: (query: string) => void;
+  competitionHref?: (competition: Comp) => string;
+  competitionNewTab?: boolean;
   /** A pasted WCA / cubing.com URL resolves to a bare id → open it. */
   onUrlPaste?: (wcaId: string) => void;
   /** Selected cuber (filters the calendar to their comps); shown as a chip. */
@@ -52,6 +55,7 @@ interface Props {
   onCuberChange: (cuber: WcaPersonLite | null) => void;
   /** Top-cuber static index for instant name matches. */
   staticCubers?: WcaPersonLite[];
+  preloadPersons?: boolean;
   /** Count shown on the cuber chip (their matching comps). */
   cuberMatchCount?: number | null;
   isZh?: boolean;
@@ -60,8 +64,8 @@ interface Props {
 }
 
 export function CompCuberPicker({
-  query, onQueryChange, onUrlPaste,
-  cuber, onCuberChange, staticCubers = [], cuberMatchCount,
+  query, onQueryChange, onQuerySubmit, onUrlPaste, competitionHref, competitionNewTab = false,
+  cuber, onCuberChange, staticCubers = [], preloadPersons = true, cuberMatchCount,
   isZh, className, placeholder,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -82,9 +86,9 @@ export function CompCuberPicker({
 
   // 后台预拉本地选手索引(全站共享, 拉过一次后即时命中)
   useEffect(() => {
-    if (indexReady) return;
+    if (indexReady || (!preloadPersons && !open)) return;
     loadPersonsIndex().then(() => setIndexReady(true)).catch(() => {});
-  }, [indexReady]);
+  }, [indexReady, open, preloadPersons]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,11 +103,11 @@ export function CompCuberPicker({
   useEffect(() => {
     let cancelled = false;
     if (!open || !query.trim()) { setCompResults([]); return; }
-    (async () => {
-      const data = await ensureComps();
-      if (cancelled) return;
-      setCompResults(searchComps(query, data, MAX_COMPS));
-    })();
+    void ensureComps().then(data => {
+      if (!cancelled) setCompResults(searchComps(query, data, MAX_COMPS));
+    }).catch(() => {
+      if (!cancelled) setCompResults([]);
+    });
     return () => { cancelled = true; };
   }, [query, open, ensureComps]);
 
@@ -202,7 +206,13 @@ export function CompCuberPicker({
           onQueryChange(v);
           setOpen(true);
         }}
-        onFocus={() => { setOpen(true); void ensureComps(); }}
+        onFocus={() => { setOpen(true); void ensureComps().catch(() => {}); }}
+        onKeyDown={event => {
+          if (!onQuerySubmit || event.key !== 'Enter' || event.nativeEvent.isComposing || !query.trim()) return;
+          event.preventDefault();
+          setOpen(false);
+          onQuerySubmit(query.trim());
+        }}
         placeholder={placeholder}
         autoComplete="off"
         spellCheck={false}
@@ -226,7 +236,10 @@ export function CompCuberPicker({
                 return (
                   <AppLink
                     key={`c-${c.id}`}
-                    {...compLinkProps(c.id)}
+                    href={competitionHref ? competitionHref(c) : compLinkProps(c.id).href}
+                    prefetch={false}
+                    target={competitionNewTab ? '_blank' : undefined}
+                    rel={competitionNewTab ? 'noopener' : undefined}
                     className={`comp-picker-item${cancelled ? ' is-cancelled' : ''}`}
                     onClick={() => setOpen(false)}
                   >

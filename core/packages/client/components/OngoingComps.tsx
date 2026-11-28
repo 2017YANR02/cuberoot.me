@@ -12,12 +12,13 @@ import { loadLandingComps, type Comp } from '@/lib/comp-search';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
 import { Flag } from '@/components/Flag';
-import { toIsoDate, formatDateRangeIso } from '@/lib/wca-date';
+import { compLocalDate, toIsoDate, formatDateRangeIso } from '@/lib/wca-date';
 import { countryName } from '@/lib/country-name';
 import { RecentRecordsList, type RecentRecord } from '@/components/RecentRecords';
 import { useAnnouncedComps, AnnouncedCard } from '@/components/AnnouncedComps';
 import { RegistrationView } from '@/components/RegistrationComps';
 import type { CompFollowState } from '@/components/CompFollow';
+import { HomeCountryCompetitions } from '@/components/competitions/HomeCountryCompetitions';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
 import './scroll_panel.css';
@@ -50,16 +51,6 @@ function shiftIso(iso: string, days: number): string {
   const d = new Date(iso + 'T00:00:00');
   d.setDate(d.getDate() + days);
   return toIsoDate(d);
-}
-
-// 比赛日期(start_date/end_date)存的是「比赛当地时区」的日历日。若用用户浏览器本地 today
-// 分桶,领先时区正在进行的比赛会被误判:中国比赛在美洲看像「明天才开始」而落进「未来」。
-// 用比赛经度估算 UTC 偏移(≈ 经度/15 小时)得到比赛当地「今天」,各比赛按自己的本地日期分桶。
-// 经度缺失时回退用户本地日期(同旧行为)。
-function compLocalDate(nowMs: number, lon: number | undefined): string {
-  if (lon == null || !Number.isFinite(lon)) return toIsoDate(new Date(nowMs));
-  const d = new Date(nowMs + Math.round((lon / 15) * 60) * 60_000);
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
 // 多地比赛(跨国 / 跨洲 / 全球,如 FMC World)的 WCA「国家」用 X 系码表示 —— 永远排最前。
@@ -218,12 +209,6 @@ export default function OngoingComps({ lang, compFollows, records }: Props) {
   // 「报名」标签:全世界 upcoming 比赛里,视野内还有报名里程碑(开放/截止)的场数。
   const regCount = useMemo(() => comps ? countActionableReg(comps, Date.now()) : 0, [comps]);
 
-  const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
-  if (comps === null && announced === null && records.length === 0) {
-    return <div className="ongoing-comps ongoing-comps--loading" aria-hidden="true" />;
-  }
-  if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) return <p className="landing-slot-message">{tr({ zh: '暂无比赛动态', en: 'No competition updates available' })}</p>;
-
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
   const allTabs: { key: TabKey; zh: string; en: string; count: number
  }[] = [
@@ -241,7 +226,16 @@ export default function OngoingComps({ lang, compFollows, records }: Props) {
   ];
   const tabs = allTabs.filter(t => t.count > 0);
 
-  return (
+  const countryList = <HomeCountryCompetitions comps={comps} followedIds={follows} isZh={isZh} />;
+  const total = buckets.upcoming.length + buckets.inProgress.length + buckets.past.length;
+  if (comps === null && announced === null && records.length === 0) {
+    return <>{countryList}<div className="ongoing-comps ongoing-comps--loading" aria-hidden="true" /></>;
+  }
+  if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) {
+    return <>{countryList}<p className="landing-slot-message">{tr({ zh: '暂无比赛动态', en: 'No competition updates available' })}</p></>;
+  }
+
+  const activity = (
     <div className="ongoing-comps">
       <div className="ongoing-comps-tabbar">
         <div className="ongoing-comps-tabs" role="tablist">
@@ -302,4 +296,5 @@ export default function OngoingComps({ lang, compFollows, records }: Props) {
       </div>
     </div>
   );
+  return <>{countryList}{activity}</>;
 }

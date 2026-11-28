@@ -121,7 +121,7 @@ html[data-theme=dark] {
   color: var(--foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
-.page-notice > .page-notice-actions > .page-notice-btn:hover { background: transparent; }
+.page-notice-actions > .page-notice-btn:hover { background: transparent; }
 
 @media (hover: hover) and (pointer: fine) {
   :is(.page-notice-wrap[data-home] .page-notice, .landing-featured-news):not(:hover, :focus-within)

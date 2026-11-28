@@ -7,6 +7,19 @@ export function toIsoDate(d: Date): string {
   return toLocalIsoDate(d);
 }
 
+// 比赛日期(start_date/end_date)存的是「比赛当地时区」的日历日。若用用户浏览器本地 today
+// 分桶,领先时区正在进行的比赛会被误判:中国比赛在美洲看像「明天才开始」而落进「未来」。
+// 已知中国大陆赛事使用北京时间，其余赛事按经度估算 UTC 偏移(≈ 经度/15 小时)。
+// 经度缺失时回退用户本地日期(同旧行为)。
+const chinaDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai', dateStyle: 'short' });
+
+export function compLocalDate(nowMs: number, lon: number | null | undefined, country?: string): string {
+  if (country?.toUpperCase() === 'CN') return chinaDate.format(nowMs);
+  if (lon == null || !Number.isFinite(lon)) return toIsoDate(new Date(nowMs));
+  const d = new Date(nowMs + Math.round((lon / 15) * 60) * 60_000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
 /** ISO 时间戳 → 本地时区 'YYYY-MM-DD HH:MM'(报名起止等需要时分的场合,不带秒);非法输入返回 ''。 */
 export function formatDateTimeLocal(iso: string): string {
   const d = new Date(iso);

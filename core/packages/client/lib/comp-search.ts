@@ -1,4 +1,5 @@
 // Ported from packages/client-vite/src/utils/comp_search.ts.
+import type { UpcomingCompRecord } from '@cuberoot/shared';
 import {
   CompetitionIndexContractError,
   mergeCompetitionIndexes,
@@ -8,7 +9,9 @@ import { resolveCompName } from './comp-localize';
 import { localizeCity, resolveCnProvince } from './city-localize';
 import { statsUrl } from './stats-base';
 
-export interface Comp {
+export interface Comp extends Pick<UpcomingCompRecord,
+  'event_change_deadline' | 'round_meta' | 'event_regs' | 'registered' | 'dual_events' | 'h2h_events'
+> {
   id: string;
   name: string;
   /** Source-provided Chinese name, including non-WCA competitions. */
@@ -175,6 +178,26 @@ export function compNameMatches(haystack: string, rawQuery: string): boolean {
     }
   }
   return anyExpanded;
+}
+
+export function competitionMatchesQuery(
+  comp: Pick<Comp, 'id' | 'name' | 'name_zh' | 'city' | 'country'> & { city_zh?: string },
+  query: string,
+): boolean {
+  const raw = query.trim();
+  if (!raw) return true;
+  const nameZh = resolveCompName(comp.id, comp.name, true, { explicitNameZh: comp.name_zh });
+  const cityZh = comp.city ? localizeCity(comp.city, true, comp.country) : '';
+  const text = [comp.id, comp.name, comp.name_zh, nameZh, comp.city, comp.city_zh, cityZh].join(' ').toLowerCase();
+  return compNameMatches(text, raw);
+}
+
+export function competitionCountryOptions(comps: readonly Pick<Comp, 'country'>[]): string[] {
+  const counts = new Map<string, number>();
+  for (const { country } of comps) {
+    if (country) counts.set(country, (counts.get(country) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1]).map(([iso2]) => iso2);
 }
 
 export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {

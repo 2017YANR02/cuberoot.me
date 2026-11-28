@@ -42,27 +42,38 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
   const [geometry, setGeometry] = useState({ top: 0, height: 0 });
   const headerRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusFrame = useRef<number | null>(null);
-  const cancelLeave = useCallback(() => {
-    if (leaveTimer.current !== null) clearTimeout(leaveTimer.current);
-    leaveTimer.current = null;
+  const cancelHoverTimer = useCallback(() => {
+    if (hoverTimer.current !== null) clearTimeout(hoverTimer.current);
+    hoverTimer.current = null;
   }, []);
-  const closeFlyout = useCallback(() => { cancelLeave(); setExpanded(false); }, [cancelLeave]);
+  const closeFlyout = useCallback(() => { cancelHoverTimer(); setExpanded(false); }, [cancelHoverTimer]);
   const scheduleClose = () => {
-    cancelLeave();
-    leaveTimer.current = setTimeout(closeFlyout, 120);
+    cancelHoverTimer();
+    hoverTimer.current = setTimeout(closeFlyout, 120);
   };
   const allowedFlyout = flyout && (flyout !== 'admin' || isAdmin) && Children.count(flyouts[flyout]) > 0 ? flyout : null;
   const shown = expanded && !!allowedFlyout && !open;
   const showFlyout = (id: string) => {
-    cancelLeave();
+    cancelHoverTimer();
     if (!window.matchMedia(DESKTOP_NAV_QUERY).matches || !Children.count(flyouts[id])) {
       closeFlyout();
       return;
     }
     setFlyout(id);
     setExpanded(true);
+  };
+  const previewSection = (id: string) => {
+    cancelHoverTimer();
+    if (shown) showFlyout(id);
+    else hoverTimer.current = setTimeout(() => showFlyout(id), 180);
+  };
+  const selectOverview = (id: string) => {
+    closeFlyout();
+    // The overview has its own grid. Remove the preview in the same update.
+    setFlyout(null);
+    onSelect(id);
   };
   useEffect(() => {
     const desktop = window.matchMedia(DESKTOP_NAV_QUERY);
@@ -80,7 +91,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     window.addEventListener('resize', syncFloating);
     syncFloating();
     return () => {
-      cancelLeave();
+      cancelHoverTimer();
       if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
       desktop.removeEventListener('change', onDesktopChange);
       window.removeEventListener('resize', closeFlyout);
@@ -88,7 +99,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       window.removeEventListener('scroll', syncFloating);
       window.removeEventListener('resize', syncFloating);
     };
-  }, [cancelLeave, closeFlyout]);
+  }, [cancelHoverTimer, closeFlyout]);
   useLayoutEffect(() => {
     if (!shown || !headerRef.current || !contentRef.current) return;
     const header = headerRef.current;
@@ -137,7 +148,9 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
       aria-expanded={shown && allowedFlyout === href}
       aria-controls="home-navigation-flyout"
       data-home-section={href}
-      onPointerEnter={event => { if (event.pointerType === 'mouse') showFlyout(href); }}
+      onPointerEnter={event => { if (event.pointerType === 'mouse') previewSection(href); }}
+      onPointerLeave={cancelHoverTimer}
+      onPointerDown={cancelHoverTimer}
       onFocus={() => { if (shown) showFlyout(href); }}
       onKeyDown={event => {
         if (event.key !== 'ArrowDown') return;
@@ -146,14 +159,14 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
         if (focusFrame.current !== null) cancelAnimationFrame(focusFrame.current);
         focusFrame.current = requestAnimationFrame(() => contentRef.current?.querySelector<HTMLAnchorElement>('a')?.focus());
       }}
-      onClick={() => { onSelect(href); closeFlyout(); }}>{children}</button>;
+      onClick={() => selectOverview(href)}>{children}</button>;
     }} />;
 
   return <header ref={headerRef} className="home-navigation" data-admin={isAdmin || undefined}
     data-drawer-open={open || undefined} data-drawer-closing={open && drawerClosing || undefined} inert={open}
-    data-flyout-open={shown || undefined} data-floating={floating || undefined}
+    data-flyout-section={allowedFlyout ?? undefined} data-flyout-open={shown || undefined} data-floating={floating || undefined}
     style={{ '--home-nav-bottom': `${geometry.top}px`, '--home-flyout-height': `${geometry.height}px` } as CSSProperties}
-    onPointerEnter={cancelLeave} onPointerLeave={scheduleClose}
+    onPointerEnter={cancelHoverTimer} onPointerLeave={scheduleClose}
     onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) closeFlyout(); }}
     onKeyDown={event => {
       if (event.key !== 'Escape' || !shown) return;
@@ -163,7 +176,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
     }}>
     <span className="home-navigation-surface af-glass-surface" aria-hidden="true" />
     <button type="button" className="home-navigation-brand" aria-label={tr({ zh: '首页', en: 'Home' })}
-      onPointerEnter={closeFlyout} onClick={() => { closeFlyout(); onSelect('home'); }}>{brand}</button>
+      onPointerEnter={closeFlyout} onClick={() => selectOverview('home')}>{brand}</button>
     <div className="home-navigation-desktop">{menu()}</div>
     {actions}
     <button ref={drawerToggleRef} type="button" className="home-navigation-toggle menu-toggle-icon" aria-label={label} aria-expanded={open}
@@ -176,9 +189,9 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
         setOpen(true);
       }} />
     <div className="home-navigation-curtain" aria-hidden="true" onPointerEnter={scheduleClose} onClick={closeFlyout} />
-    <div id="home-navigation-flyout" className="home-navigation-flyout af-glass-surface" data-af-glass-role="popover" role="region"
+    <div id="home-navigation-flyout" className="home-navigation-flyout af-glass-surface" data-af-glass-theme="" data-af-glass-role="popover" role="region"
       aria-labelledby={allowedFlyout ? `home-nav-${allowedFlyout}` : undefined} aria-hidden={!shown} inert={!shown}
-      onPointerEnter={cancelLeave}>
+      onPointerEnter={cancelHoverTimer}>
       <div ref={contentRef} className="home-navigation-flyout-content">
         <div key={allowedFlyout} className="home-navigation-flyout-grid" onClickCapture={event => {
           if ((event.target as Element).closest('a')) closeFlyout();
@@ -192,7 +205,7 @@ export default function HomeNavigation({ selected, onSelect, isAdmin, sections, 
         className="home-navigation-toggle home-navigation-drawer-toggle menu-toggle-icon"
         aria-label={tr({ zh: '关闭', en: 'Close' })} aria-expanded={!closing}
         aria-disabled={closing || undefined} onClick={close} />}
-      panelClassName="home-navigation-drawer af-glass-surface" onCloseStart={() => setDrawerClosing(true)} onClose={() => setOpen(false)}>
+      surface="solid" panelClassName="home-navigation-drawer" onCloseStart={() => setDrawerClosing(true)} onClose={() => setOpen(false)}>
       {close => <div className="home-navigation-drawer-content">
         {menu(close)}
         <div className="home-navigation-drawer-actions"

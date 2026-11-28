@@ -1,0 +1,360 @@
+:is(.calendar-page, .competition-list-layout) .flag-span {
+    display: inline-block;
+    width: 14px;
+    height: 10.5px;
+    flex-shrink: 0;
+}
+:is(.calendar-page, .competition-list-layout) .flag-img {
+    width: 14px;
+    height: 10.5px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+:is(.calendar-page, .competition-list-layout) .comp-follow-mark {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    color: var(--accent);
+}
+/* 列表行 name-cell 走 baseline 对齐,标记需垂直居中 */
+:is(.calendar-page, .competition-list-layout) .comp-list-name-cell .comp-follow-mark {
+    align-self: center;
+}
+.competition-list-layout .event-chips-grid {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    /* flex:none + width:max-content 让 grid 量到真实列宽总和而不被表头 flex 容器压缩(否则右侧项目列被裁,
+     * JS 据此设 --cl-list-min)。grid 取内容宽左对齐,与 .comp-list-row(width=--cl-list-min)横向对齐。 */
+    flex: none;
+    width: max-content;
+    padding: 6px 12px;
+    box-sizing: border-box;
+}
+/* ── 列表视图（虚拟滚动 + 项目对齐网格） ── */
+/* 共享网格列模板：date | flag | name | city | event*N
+ * name / city 各占一列，列宽由 JS 测当前过滤集各自 max 实际宽度后注入 --cl-name-width / --cl-city-width；
+ * 默认 fallback 18rem / 11rem。这样筛选短名（如"北京"）时不留多余空白；
+ * 全集时按真实最长宽度撑开，长名完整显示，所有行 city 起点对齐成独立一列，events 列与 chips 表头对齐。
+ * comp-list-row（行）与 event-chips-grid（表头）共用 */
+.competition-list-layout {
+    --cl-country-col: var(--cl-country-width, 6rem);
+    --cl-city-col: var(--cl-city-width, 11rem);
+    --cl-ev-w: 1.3rem;
+    --cl-event-cols: repeat(var(--cl-event-count), var(--cl-ev-w));
+    --cl-comp-w: 2.8rem;  /* 整场单列（实际人数 / 上限 / 满员率）；选「不显示」时收为 0 */
+    --cl-reg-w: 8rem;     /* 报名列（最近的将来节点：日期 时刻 + 开放/截止/退赛/重开/修改截止；按最长 4 字标签留宽） */
+    --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-col) var(--cl-city-col) 1.6rem var(--cl-comp-w) var(--cl-event-cols);
+    --cl-min-width: 86rem;
+}
+/* 宽值 metric（限时 / 及格线 / 晋级）：事件列加宽到能塞下 "10:00" / "≤6:00"，整体网格更宽，横向滚动 */
+.competition-list-layout[data-wide-metric] {
+    --cl-ev-w: 3rem;
+    --cl-min-width: 121rem;
+}
+/* 双列整场列：经纬度（纬度 + 经度）/ 人数和上限（人数 + 上限）——整场列拆成两列，比单计数列宽 */
+.competition-list-layout[data-comp-2col] {
+    --cl-comp-w: 3.8rem;
+    --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-col) var(--cl-city-col) 1.6rem var(--cl-comp-w) var(--cl-comp-w) var(--cl-event-cols);
+}
+/* 人数 / 上限是 2-4 位计数,不需要经纬度那么宽,收窄让两列贴近 */
+.competition-list-layout[data-comp-peoplelimit] { --cl-comp-w: 2.4rem; }
+.competition-list-layout .comp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* 列各取自然宽,整张表超出视口时横向滚动(桌面 + 移动端统一),保证比赛名 / 国家名完整 */
+    overflow-x: auto;
+}
+.competition-list-layout .comp-list-empty {
+    text-align: center;
+    color: var(--muted-foreground);
+    font-size: 0.85rem;
+    padding: 3rem 1rem;
+    background: var(--card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+}
+/* 虚拟滚动容器 */
+.competition-list-layout .comp-list-virtual {
+    position: relative;
+    /* 宽度 = 表头 grid 实测内容宽(JS 写 --cl-list-min);未测时回退固定 floor。
+     * 取自然内容宽(非 100%)→ 宽屏时表格左对齐到内容宽,右侧留白是页面底色而非行内空列;
+     * 内容宽 > 视口时由 .comp-list 横向滚动(不设 max-width,否则会裁掉右侧项目列)。 */
+    width: var(--cl-list-min, var(--cl-min-width));
+}
+.competition-list-layout .comp-list-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+}
+/* chip 行最左侧的 sticky 年份 cell（替代 date 列占位） */
+.competition-list-layout .cl-year-cell {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.competition-list-layout .cl-year-num {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+    font-feature-settings: "tnum" 1;
+    line-height: 1;
+}
+/* 年内比赛数计数 pill —— 放在「比赛名」列头排序按钮里(AZ 图标右侧) */
+.competition-list-layout .cl-list-count {
+    margin-left: 5px;
+    font-size: 0.7rem;
+    color: var(--muted-foreground);
+    background: var(--muted);
+    padding: 2px 7px;
+    border-radius: 10px;
+}
+/* 日期列头：年份格子变可点排序按钮 */
+.competition-list-layout button.cl-year-cell {
+    align-items: center;
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+.competition-list-layout .cl-date-chevron {
+    flex: none;
+    color: var(--muted-foreground);
+    transition: color 0.15s;
+}
+.competition-list-layout button.cl-year-cell:hover .cl-date-chevron {
+    color: var(--foreground);
+}
+.competition-list-layout button.cl-year-cell.is-active .cl-date-chevron {
+    color: var(--accent);
+}
+.competition-list-layout .comp-list-row {
+    display: grid;
+    grid-template-columns: var(--cl-cols);
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    border: 1px solid var(--border-default);
+    background: var(--card);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--foreground);
+    cursor: pointer;
+    text-align: left;
+    text-decoration: none;
+    overflow: hidden;
+    transition: border-color 0.12s, background 0.12s;
+}
+.competition-list-layout .comp-list-row:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.competition-list-layout .comp-list-date {
+    color: var(--muted-foreground);
+    font-size: 0.78rem;
+}
+/* 跨年比赛日期: 两半各自 nowrap, 用 block 强制 ~ 后换行 */
+.competition-list-layout .cl-date-half {
+    display: block;
+    white-space: nowrap;
+}
+/* 国家名列：比赛名右侧、城市左侧的国家文字，弱色、过长截断。 */
+.competition-list-layout .comp-list-country {
+    color: var(--muted-foreground);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+/* name 列：仅含关注标记 + 比赛名；city 独立成下一列。
+ * 内部用 flex 让关注标记紧跟在名字前；名字过长截断。 */
+.competition-list-layout .comp-list-name-cell {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-width: 0;
+    overflow: hidden;
+    /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
+    margin-left: -6px;
+}
+.competition-list-layout .comp-list-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    font-weight: 500;
+    flex: 0 1 auto;
+}
+/* city 独立一列：所有行起点对齐 */
+.competition-list-layout .comp-list-city {
+    color: var(--muted-foreground);
+    font-size: 0.78rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+/* 报名列：下一个里程碑「日期 时刻」(弱色) + 状态词(开放绿/截止黄/24h内红/已截止灰) */
+.competition-list-layout .cl-reg-cell {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.competition-list-layout .cl-reg-when {
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.competition-list-layout .cl-reg-word { flex: none; }
+.competition-list-layout .cl-reg-cell--open .cl-reg-word { color: var(--signal-success); }
+.competition-list-layout .cl-reg-cell--close .cl-reg-word { color: var(--signal-warning); }
+.competition-list-layout .cl-reg-cell--urgent .cl-reg-word { color: var(--destructive); }
+.competition-list-layout .cl-reg-cell--closed .cl-reg-word { color: var(--muted-foreground); font-weight: 500; }
+/* 报名列头（最左）：文字「报名」+ 排序箭头，贴左对齐（复合选择器压过后定义的 .cl-col-icon 的 justify-self:end） */
+.competition-list-layout .cl-col-icon.cl-reg-head {
+    justify-self: start;
+    justify-content: flex-start;
+    gap: 2px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.competition-list-layout .cl-reg-head-text { line-height: 1; }
+.competition-list-layout .cl-event-cell {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+/* 双轮赛制（WCA Reg 9v）：该项目格子的值套强调色圈（列首图标即该项目，圈=此场此项目为双轮） */
+.competition-list-layout .cl-event-dual {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3em;
+    height: 1.3em;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+    color: var(--accent);
+}
+/* 「项目首秀」筛选：该项目格子=此场首次出现该项目，填色圈跟双轮的纯描边圈区分开，一眼可辨 */
+.competition-list-layout .cl-event-debut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3em;
+    height: 1.3em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--signal-info) 18%, transparent);
+    box-shadow: inset 0 0 0 1.5px var(--signal-info);
+    color: var(--signal-info);
+}
+/* 天数 / 人数 / 上限列：数字右对齐，多位数按个位对齐 */
+.competition-list-layout .cl-days-cell {
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+/* 人数列：实际参赛人数(走 text，是主值) + 人数上限(走 text-sub，次值) */
+.competition-list-layout .cl-people-cell {
+    text-align: right;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    overflow: hidden;
+}
+.competition-list-layout .cl-limit-cell { color: var(--muted-foreground); font-weight: 500; }
+/* 列表表头里人数 / 上限列头(可点击排序)：右对齐，压在下方右对齐数字上方；弱色 */
+.competition-list-layout .cl-col-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    justify-self: end;
+    gap: 1px;
+    color: var(--muted-foreground);
+    background: transparent;
+    border: 0;
+    padding: 0;
+    font: inherit;
+}
+/* 比赛名 / 城市名列头排序按钮：在左对齐文本列上方,贴左 */
+.competition-list-layout .cl-text-sort { justify-self: start; justify-content: flex-start; }
+.competition-list-layout .cl-col-sort { cursor: pointer; transition: color 0.15s; }
+.competition-list-layout .cl-col-sort:hover { color: var(--foreground); }
+.competition-list-layout .cl-col-sort.is-active { color: var(--signal-success); }
+
+.competition-list-layout .comp-list-row.is-cancelled {
+    opacity: 0.55;
+}
+.competition-list-layout .comp-list-row.is-cancelled .comp-list-name,
+.competition-list-layout .comp-list-row.is-cancelled .comp-list-date {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+@media (max-width: 768px) {
+    /* 虚拟列表：行高固定，移动端横向滚动以保留项目列对齐 */
+    .competition-list-layout {
+        --cl-country-col: var(--cl-country-width, 4.5rem);
+        --cl-city-col: var(--cl-city-width, 8rem);
+        --cl-ev-w: 1.1rem;
+        --cl-comp-w: 2.4rem;
+        --cl-reg-w: 8rem;
+        --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-col) var(--cl-city-col) 1.4rem var(--cl-comp-w) var(--cl-event-cols);
+        --cl-min-width: 68rem;
+    }
+    .competition-list-layout[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 102rem; }
+    .competition-list-layout[data-comp-2col] {
+        --cl-comp-w: 3.4rem;
+        --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-col) var(--cl-city-col) 1.4rem var(--cl-comp-w) var(--cl-comp-w) var(--cl-event-cols);
+    }
+    .competition-list-layout[data-comp-peoplelimit] { --cl-comp-w: 2.3rem; }
+    .competition-list-layout .event-chips-grid { padding: 4px 8px; gap: 4px; }
+    .competition-list-layout .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
+    .competition-list-layout .comp-list-name-cell { margin-left: -4px; }
+    .competition-list-layout .comp-list-date { font-size: 0.7rem; }
+    .competition-list-layout .cl-event-cell { font-size: 0.65rem; }
+    .competition-list-layout .cl-year-num { font-size: 1rem; }
+}
+
+.competition-list-layout[data-hide-country] { --cl-country-col: ; }
+.competition-list-layout[data-hide-city] { --cl-city-col: ; }
+.competition-list-layout[data-no-events] { --cl-event-cols: ; }
+
+.competition-list-layout .cl-fill-pie {
+    justify-self: center;
+    inline-size: 1.1rem;
+    block-size: 1.1rem;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent) var(--cl-fill-percent), var(--border-strong) 0);
+}
+.competition-list-layout .cl-fill-pie.is-unknown {
+    background: transparent;
+    border: 1px dashed var(--muted-foreground);
+}

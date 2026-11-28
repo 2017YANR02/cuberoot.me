@@ -1,5 +1,6 @@
 import { wallPartsIn, dayDelta } from '@cuberoot/shared/tz';
 // Registration instants are compared as epoch milliseconds; grouping uses the viewer's calendar.
+import { apiUrl } from './api-base';
 import type { Comp } from './comp-search';
 import type { CubingRegistration } from '@cuberoot/shared/cubing-live';
 
@@ -10,6 +11,19 @@ export type RegBucketKey = 'today' | 'tomorrow' | 'dayAfter' | 'soon' | 'later' 
 export interface RegBucket { key: RegBucketKey; items: RegItem[] }
 export interface RegView { followed: RegItem[]; buckets: RegBucket[]; total: number }
 export type CubingRegistrations = Readonly<Record<string, CubingRegistration>>;
+
+export async function fetchCubingRegistrations(signal: AbortSignal): Promise<CubingRegistrations> {
+  const res = await fetch(apiUrl('/v1/cubing-registration?v=1'), {
+    signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
+  });
+  if (!res.ok) throw new Error('registration source');
+  const data = await res.json() as { registrations?: CubingRegistrations };
+  if (!data.registrations || typeof data.registrations !== 'object' || Array.isArray(data.registrations)) {
+    throw new Error('registration data');
+  }
+  return data.registrations;
+}
+
 const MS_DAY = 86_400_000;
 export const REG_HORIZON_DAYS = 60;
 const BUCKET_ORDER: RegBucketKey[] = ['today', 'tomorrow', 'dayAfter', 'soon', 'later', 'closed', 'unknown'];
@@ -17,6 +31,10 @@ const BUCKET_ORDER: RegBucketKey[] = ['today', 'tomorrow', 'dayAfter', 'soon', '
 /** Require an explicit offset: a UTC timestamp must never silently become browser wall time. */
 function instant(value: string | null | undefined): number {
   return value && /(?:Z|[+-]\d{2}:\d{2})$/i.test(value) ? Date.parse(value) : NaN;
+}
+
+export function isBeforeRegistrationOpen(opensAt: string | null | undefined, now: number): boolean {
+  return instant(opensAt) > now;
 }
 
 /** Cubing's registration rules include an early pause after having filled, even after withdrawals.

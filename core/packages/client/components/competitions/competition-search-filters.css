@@ -1,0 +1,51 @@
+.competition-search-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+/* 合并后:toolbar 里的 CompPicker 一框两用(打字过滤日历 + 粘贴/选中直达详情)。
+   外层 .comp-picker 套用原 search-box 的占位与外观,保持工具栏一致。 */
+.competition-search-toolbar .search-box-comp {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+}
+.competition-search-toolbar .search-box-comp .comp-picker-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--card);
+    border: 1px solid var(--border-default);
+    color: var(--foreground);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    padding-right: 28px;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.competition-search-toolbar .search-box-comp .comp-picker-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.competition-search-toolbar .country-filter {
+    width: auto;
+    min-width: 200px;
+}
+
+@media (max-width: 768px) {
+    .competition-search-toolbar { gap: 0.4rem; flex-wrap: nowrap; }
+    .competition-search-toolbar :is(.comp-picker-input, .region-picker-trigger) {
+        height: 44px;
+        min-height: 44px;
+        box-sizing: border-box;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 1.25;
+    }
+    /* 搜索让出空间，地区与筛选入口始终保持在同一行。 */
+    .competition-search-toolbar .search-box-comp { min-width: 0; flex: 1 1 0; }
+    .competition-search-toolbar .country-filter { flex: 0 1 125px; min-width: 0; }
+}

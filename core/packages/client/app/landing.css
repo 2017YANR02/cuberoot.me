@@ -271,10 +271,8 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 
 .landing-page .landing-training-links {
     display: flex;
-    flex-wrap: wrap;
-    align-self: stretch;
-    flex-shrink: 0;
-    gap: 8px;
+    flex: none;
+    gap: var(--home-shortcut-gap);
 }
 .landing-page .landing-training-links > .landing-card {
     flex-direction: row;
@@ -283,13 +281,14 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
     gap: 6px;
     border-radius: 10px;
 }
-.landing-page .landing-training-links .landing-card-name,
-.landing-page .landing-personal-comps .rc-name {
+.landing-page :is(.landing-training-links .landing-card-name, .landing-personal-comps .rc-name, .landing-world-record-result) {
     font-family: inherit;
     font-size: var(--home-shortcut-font-size, 0.875rem);
     font-weight: 400;
     line-height: 1.25;
     letter-spacing: normal;
+}
+.landing-page :is(.landing-training-links .landing-card-name, .landing-personal-comps .rc-name) {
     white-space: nowrap;
 }
 :is(.landing-page, .home-navigation-drawer) .landing-calendar-link .landing-card {
@@ -375,7 +374,7 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
     margin: 0 auto 2.5rem;
     padding-inline: 0;
 }
-.landing-page .landing-shortcuts-and-notices {
+.landing-page :is(.landing-notice-row, .landing-shortcuts-and-notices) {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -384,18 +383,40 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
     width: 100%;
     max-width: var(--landing-content-max);
 }
+.landing-page .landing-notice-row:not(:has(> .page-notice-wrap, > .landing-featured-notices > *)) {
+    display: none;
+}
+.landing-page .landing-notice-row {
+    --home-notice-gap: 0.75rem;
+    --home-notice-width: 15rem;
+    align-items: stretch;
+    gap: var(--home-notice-gap);
+}
+.landing-page .landing-notice-row > .page-notice-wrap[data-home] {
+    flex: 1 1 var(--home-notice-width);
+    display: flex;
+    flex-direction: column;
+    width: auto;
+    max-width: 100%;
+    min-width: 0;
+}
+.landing-page .landing-notice-row .page-notice:only-child {
+    flex: 1;
+    margin-inline: 0;
+}
 .landing-page .landing-featured-notices {
+    flex: 2 1 calc(2 * var(--home-notice-width) + var(--home-notice-gap));
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-    width: max-content;
+    gap: var(--home-notice-gap);
     max-width: 100%;
     min-width: 0;
 }
 .landing-page .landing-featured-notices:has(> :only-child) {
+    flex: 1 1 var(--home-notice-width);
     grid-template-columns: minmax(0, 1fr);
 }
-.landing-page .landing-featured-notices:has(> .landing-history-feature) { width: 100%; }
+.landing-page .landing-featured-notices:has(> .landing-history-feature) { flex-basis: 100%; }
 .landing-page .landing-featured-notices > .landing-history-feature { grid-column: 1 / -1; }
 .landing-page .landing-featured-notices:empty { display: none; }
 .landing-page .landing-featured-notices > .landing-featured-news {
@@ -421,6 +442,30 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 }
 .landing-page .landing-featured-news:hover {
     background: color-mix(in srgb, var(--home-news-color) 16%, var(--background));
+}
+.landing-page .landing-notice-row .page-notice {
+    --home-notice-color: var(--pn-color);
+}
+.landing-page .landing-notice-row .landing-featured-news:not(.landing-history-feature) {
+    --home-notice-color: var(--home-news-color);
+    border-radius: 8px;
+}
+@supports (color: light-dark(black, white)) {
+    .landing-page .landing-notice-row :is(.page-notice, .landing-featured-news:not(.landing-history-feature)) {
+        --home-notice-light-tint: 11%;
+        --home-notice-dark-tint: 27%;
+        background-color: light-dark(
+            color-mix(in srgb, var(--home-notice-color) var(--home-notice-light-tint), var(--background)),
+            color-mix(in srgb, var(--home-notice-color) var(--home-notice-dark-tint), var(--background))
+        );
+    }
+    .landing-page .landing-notice-row :is(.page-notice, .landing-featured-news:not(.landing-history-feature)):is(:hover, :focus-within) {
+        --home-notice-light-tint: 17%;
+        --home-notice-dark-tint: 34%;
+    }
+    .landing-page .landing-featured-news:not(.landing-history-feature) .landing-featured-news-body {
+        color: light-dark(var(--text-sub), var(--foreground));
+    }
 }
 .landing-page .landing-featured-news-target {
     display: flex;
@@ -537,7 +582,8 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 }
 .landing-page :is(.landing-card, .rc-card, .recon-card, .ongoing-comps-chip).af-glass-surface {
     --landing-card-light: 7%;
-    --af-glass-tint: color-mix(in srgb, var(--glass-popover-bg), var(--foreground) var(--landing-card-light));
+    --landing-card-tint: color-mix(in srgb, var(--glass-popover-bg), var(--foreground) var(--landing-card-light));
+    --af-glass-tint: var(--landing-card-tint);
     position: relative;
     background: transparent;
     border-color: transparent;
@@ -549,40 +595,102 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 @media (prefers-reduced-motion: no-preference) {
     .landing-page :is(.landing-card, .rc-card, .recon-card, .ongoing-comps-chip).af-glass-surface::before { transition: background-color 180ms ease; }
 }
-/* The hover palette follows the nine colored squares in the CubeRoot mark. */
+@property --home-logo-hover {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 0%;
+}
+
+.home-turn-mask { display: none; }
+
+/* The nine tiles follow the CubeRoot mark. Scroll controls the fill directly;
+   hover can reveal more of the same color without interrupting that progress. */
 .landing-page .landing-home-hero > .hero-grids:has(> .primary-hero-grid > :nth-child(6)):has(> .wca-hero-grid > :nth-child(3)) {
     --home-logo-red: #ff1212;
     --home-logo-blue: #1481ef;
 
-    .sortable-card { --home-logo-tile: var(--home-logo-blue); }
+    .sortable-card {
+        --home-logo-tile: var(--home-logo-blue);
+        --home-logo-light-switch: 82%;
+    }
     .primary-hero-grid > :is(:nth-child(-n+3), :nth-child(5)),
-    .wca-hero-grid > :nth-child(2) { --home-logo-tile: var(--home-logo-red); }
-
-    @media (hover: hover) and (pointer: fine) {
-        &:is(:hover, :has(.landing-card:focus-visible)) .landing-card.af-glass-surface {
-            --af-glass-fill: color-mix(in srgb, var(--home-logo-tile) 76%, black);
-            --af-glass-tint: var(--af-glass-fill);
-            color: white;
-        }
-        &:is(:hover, :has(.landing-card:focus-visible)) .landing-card-icon { color: white; }
+    .wca-hero-grid > :nth-child(2) {
+        --home-logo-tile: var(--home-logo-red);
+        --home-logo-light-switch: 73%;
     }
 
-    @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-        .primary-hero-grid > :is(:nth-child(2), :nth-child(4)) { --home-logo-delay: 35ms; }
-        .primary-hero-grid > :is(:nth-child(3), :nth-child(5)),
-        .wca-hero-grid > :first-child { --home-logo-delay: 70ms; }
-        .primary-hero-grid > :nth-child(6),
-        .wca-hero-grid > :nth-child(2) { --home-logo-delay: 105ms; }
-        .wca-hero-grid > :nth-child(3) { --home-logo-delay: 140ms; }
+    .primary-hero-grid > :nth-child(-n+3) { --home-logo-scroll: var(--home-logo-row-1, 0%); }
+    .primary-hero-grid > :nth-child(n+4) {
+        --home-logo-scroll: var(--home-logo-row-2, 0%);
+        --home-logo-hover-delay: 28ms;
+    }
+    .wca-hero-grid > * {
+        --home-logo-scroll: var(--home-logo-row-3, 0%);
+        --home-logo-hover-delay: 56ms;
+    }
 
-        .landing-card.af-glass-surface::before {
-            transition: background-color 420ms cubic-bezier(.22, .75, .24, 1);
+    .landing-card.af-glass-surface {
+        --home-logo-hover: 0%;
+        --home-logo-progress: max(var(--home-logo-scroll, 0%), var(--home-logo-hover));
+        --home-logo-color: color-mix(in srgb, var(--home-logo-tile) 76%, black);
+        --home-logo-base-progress: var(--home-logo-progress);
+        --af-glass-fill: color-mix(in srgb, var(--af-glass-card, Canvas), var(--home-logo-color) var(--home-logo-base-progress));
+        --af-glass-tint: color-mix(in srgb, var(--landing-card-tint), var(--home-logo-color) var(--home-logo-base-progress));
+        /* Light labels keep dark ink until the surface can support white. */
+        --home-logo-light-ink: clamp(0%, (var(--home-logo-progress) - var(--home-logo-light-switch)) * 100, 100%);
+    }
+    .landing-card.af-glass-surface::before { transition: none; }
+    .landing-card .landing-card-icon { --home-logo-base-ink: var(--accent); }
+    .landing-card.af-glass-surface,
+    .landing-card .landing-card-icon {
+        color: color-mix(in srgb, var(--home-logo-base-ink, var(--text)), white var(--home-logo-progress));
+        @supports (color: light-dark(black, white)) {
+            color: light-dark(
+                color-mix(in srgb, var(--home-logo-base-ink, var(--text)), white var(--home-logo-light-ink)),
+                color-mix(in srgb, var(--home-logo-base-ink, var(--text)), white var(--home-logo-progress))
+            );
         }
-        .landing-card-icon { transition: color 320ms ease; }
-        &:is(:hover, :has(.landing-card:focus-visible)) {
-            .landing-card.af-glass-surface::before,
-            .landing-card-icon { transition-delay: var(--home-logo-delay, 0ms); }
+    }
+
+    &:has(.landing-card:focus-visible) .landing-card.af-glass-surface { --home-logo-hover: 100%; }
+    @media (hover: hover) and (pointer: fine) {
+        &:hover .landing-card.af-glass-surface { --home-logo-hover: 100%; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+        &[data-turning] .landing-card.af-glass-surface {
+            --home-logo-base-progress: 0%;
+            --home-logo-hover: 100%;
         }
+        &[data-turning] .landing-card:hover { transform: none; }
+        &[data-turning] .home-turn-mask {
+            display: block;
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            overflow: clip;
+            border-radius: inherit;
+            pointer-events: none;
+        }
+        .home-turn-mask > span {
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+        }
+        .home-turn-mask > span::before {
+            content: "";
+            display: block;
+            height: 100%;
+            border-radius: inherit;
+            background-color: var(--home-logo-color);
+        }
+        .landing-card.af-glass-surface {
+            transition: --home-logo-hover 360ms cubic-bezier(.22, .75, .24, 1) var(--home-logo-hover-delay, 0ms),
+                border-color 180ms ease, transform 180ms ease;
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .landing-card.af-glass-surface { transition: none; }
+        .landing-card.af-glass-surface:hover { transform: none; }
     }
 }
 
@@ -651,16 +759,12 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
     }
 
     /* 首页信息区在手机端至少保持可读字号，极次要标注除外。 */
-    .landing-page .rs-title {
-        font-size: 1rem;
-    }
     .landing-page .rs-src-comp,
     .landing-page .rs-row-name,
     .landing-page .recon-card-evt,
     .landing-page .recon-card-solver {
         font-size: 0.9375rem;
     }
-    .landing-page .rs-date-range,
     .landing-page .rs-scard-scramble,
     .landing-page .rs-src-meta,
     .landing-page .rs-row-sub,
@@ -672,10 +776,8 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
     .landing-page .pill-toggle {
         font-size: 0.875rem;
     }
-    .landing-page .rs-prob,
     .landing-page .rs-scard-rtag,
     .landing-page .rs-scard-rprob,
-    .landing-page .rs-rare-more,
     .landing-page .ongoing-comps-scope {
         font-size: 0.8125rem;
     }
@@ -1301,8 +1403,8 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 /* Reserve space only while a widget is pending. Loaded feeds use their
    intrinsic height and existing scroll-panel caps, including short/empty feeds.
    A permanent shell height would turn unused skeleton space into a blank gap. */
-.landing-page .landing-widget {
-    --home-widget-placeholder-height: 320px;
+.landing-page .landing-widget { --home-widget-placeholder-height: 320px; }
+.landing-page :is(.landing-widget, .landing-personal-comps) {
     width: 100%;
     max-width: var(--landing-content-max);
     flex-shrink: 0;
@@ -1321,58 +1423,64 @@ body:is(:not([data-site-scenery]), [data-site-scenery=transparent]) .landing-pag
 .landing-widget > .forum-feed-preview[aria-busy="true"] {
     min-height: var(--home-widget-placeholder-height);
 }
-.landing-page .landing-personal-row {
+.landing-page .landing-records-training-row {
+    --home-shortcut-gap: 8px;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-    width: max-content;
-    max-width: 100%;
+    justify-content: safe center;
+    align-items: stretch;
+    gap: var(--home-shortcut-gap);
+    width: 100%;
     min-width: 0;
-}
-.landing-page .landing-personal-comps {
-    flex: 0 1 auto;
-    min-width: 0;
-    max-width: 100%;
-    margin: 0;
+    box-sizing: border-box;
+    /* Leave room for the hover lift and keyboard focus outline inside the scroller. */
+    padding: 6px;
+    overflow-x: auto;
 }
 .landing-page .landing-personal-comps:empty { display: none; }
 .landing-page .landing-personal-comps .wp-upcoming-card { padding-inline: 0; }
+/* Atomic inline cards let the browser balance rows by their rendered widths. */
 .landing-page .landing-personal-comps .reg-cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    width: 100%;
-    gap: 8px;
+    display: block;
+    text-align: center;
+    text-wrap: balance;
 }
-.landing-page .landing-personal-comps .rc-card { min-width: 0; }
-.landing-page .landing-personal-comps .rc-main {
+.landing-page .landing-personal-comps .reg-cards > .rc-card {
+    display: inline-block;
+    vertical-align: top;
+    margin: var(--home-comp-half-gap, 4px);
+    min-width: 0;
+    max-width: calc(100% - 2 * var(--home-comp-half-gap, 4px));
+    text-align: start;
+    text-wrap: wrap;
+}
+.landing-page :is(.landing-personal-comps .rc-main, .landing-world-record.rc-main) {
     display: grid;
-    grid-template-columns: max-content;
     align-items: center;
-    column-gap: 8px;
+    gap: 4px 8px;
+    padding: 8px 12px;
 }
+.landing-page .landing-personal-comps .rc-main { grid-template-columns: max-content; }
 .landing-page .landing-personal-comps .rc-title { grid-column: 1 / -1; }
-.landing-page .landing-personal-comps .rc-details--compact { font-size: 0.7rem; }
-@media (max-width: 900px) {
-    .landing-page .landing-personal-comps .reg-cards { width: 100%; }
+.landing-page :is(.landing-personal-comps .rc-details--compact, .landing-world-record-event, .landing-world-record > .wca-person-identity) {
+    font-size: var(--home-shortcut-detail-size, 0.7rem);
 }
 @media (max-width: 560px) {
-    .landing-page .landing-personal-row { --home-shortcut-font-size: 0.75rem; }
-    .landing-page .landing-personal-comps .reg-cards { gap: 4px; }
-    .landing-page .landing-personal-comps .rc-main { padding: 6px; gap: 3px; }
+    .landing-page :is(.landing-shortcuts-and-notices, .landing-personal-comps) {
+        --home-shortcut-font-size: 0.75rem;
+        --home-shortcut-detail-size: 0.6rem;
+        --home-comp-half-gap: 2px;
+    }
+    .landing-page :is(.landing-personal-comps .rc-main, .landing-world-record.rc-main) { padding: 6px; gap: 3px; }
+    .landing-page :is(.landing-personal-comps .rc-title, .landing-world-record-result) { line-height: 1.35; }
     .landing-page .landing-personal-comps .rc-title {
         display: block;
-        font-size: 0.75rem;
-        line-height: 1.35;
+        font-size: var(--home-shortcut-font-size);
         overflow-wrap: anywhere;
     }
     .landing-page .landing-personal-comps :is(.rc-flag, .rc-flag-img) { margin-inline-end: 3px; }
     .landing-page .landing-personal-comps .rc-name {
         white-space: normal;
     }
-    .landing-page .landing-personal-comps .rc-details--compact { font-size: 0.6rem; }
     .landing-page .landing-personal-comps :is(.rc-meta, .rc-place) {
         font-size: inherit;
         overflow-wrap: anywhere;

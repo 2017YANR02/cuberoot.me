@@ -12,7 +12,7 @@ export default function SettingsDialog({ ref, label, heading = false, panelClass
   label: string;
   heading?: ReactNode;
   panelClassName?: string;
-  surface?: 'popover' | 'dialog';
+  surface?: 'popover' | 'dialog' | 'solid';
   drawer?: boolean;
   curtain?: boolean;
   dismissDisabled?: boolean;

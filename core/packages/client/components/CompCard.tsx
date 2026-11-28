@@ -89,7 +89,7 @@ export function CompCard({ comp, isZh, lang, pill, registrationTiming, dimmed, f
   children?: ReactNode;
 }) {
   const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh ?? undefined, date: comp.start_date });
-  const displayName = compactDetails && isZh && comp.country.toUpperCase() === 'CN'
+  const displayName = compactDetails && isZh && comp.country.toUpperCase() === 'CN' && !name.endsWith('联赛')
     ? name.replace(/(?:公开赛|赛)$/, '') : name;
   const city = !compactDetails && comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date).replace(/20\d\d-/g, '');

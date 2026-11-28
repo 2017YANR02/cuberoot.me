@@ -72,10 +72,6 @@
 
 /* ── Toolbar ── */
 .calendar-page .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
     position: sticky;
     top: 0;
     padding: calc(0.75rem + var(--sat)) 0 0.75rem;
@@ -87,34 +83,6 @@
 .calendar-page--list .toolbar {
     position: static;
 }
-
-/* 合并后:toolbar 里的 CompPicker 一框两用(打字过滤日历 + 粘贴/选中直达详情)。
-   外层 .comp-picker 套用原 search-box 的占位与外观,保持工具栏一致。 */
-.calendar-page .toolbar .search-box-comp {
-    flex: 1;
-    min-width: 180px;
-    max-width: 320px;
-}
-.calendar-page .toolbar .search-box-comp .comp-picker-input {
-    width: 100%;
-    box-sizing: border-box;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 0.5rem 0.75rem;
-    padding-right: 28px;
-    font-size: 0.85rem;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-}
-.calendar-page .toolbar .search-box-comp .comp-picker-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-}
-/* 日历下方的「最近浏览」与日历主体留间距 */
-.comp-recent-calendar { margin-top: 32px; }
 
 /* 卡片视图 — 复用首页「报名」卡片(.reg-cards / .rc-*,registration_comps.css) */
 .comp-card-view { margin-top: 0.5rem; }
@@ -143,7 +111,6 @@
 .calendar-page--globe > .toolbar,
 .calendar-page--globe > .event-chips,
 .calendar-page--globe > .legend,
-.calendar-page--globe > .comp-recent,
 .calendar-page--globe > .mode-status { display: none; }
 /* 地球视图不显示浮动视图切换器(会挤 globe 顶栏,手机端尤其);返回靠 globe 自带的
    地球 logo(embedded 时 onClick=onExit 切回日历)。日历/紧凑/列表视图切换器照常。 */
@@ -167,8 +134,6 @@
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
-/* NOTE: RegionPicker 默认 width:220px,这里在 calendar 工具栏下让它走 min-width + flex */
-.calendar-page .country-filter { width: auto; min-width: 200px; }
 
 .calendar-page .mode-toggle {
     display: inline-flex;
@@ -359,18 +324,6 @@
     scrollbar-width: none;
 }
 .calendar-page .event-chips--list-header::-webkit-scrollbar { display: none; }
-.calendar-page .event-chips-grid {
-    display: grid;
-    grid-template-columns: var(--cl-cols);
-    align-items: center;
-    gap: 6px;
-    /* flex:none + width:max-content 让 grid 量到真实列宽总和而不被表头 flex 容器压缩(否则右侧项目列被裁,
-     * JS 据此设 --cl-list-min)。grid 取内容宽左对齐,与 .comp-list-row(width=--cl-list-min)横向对齐。 */
-    flex: none;
-    width: max-content;
-    padding: 6px 12px;
-    box-sizing: border-box;
-}
 /* list 表头：仅覆写尺寸/行内布局/角标定位,使图标对齐下方项目列数字。
  * 无框/hover/选中绿都继承基础 .event-chip,不重复声明。 */
 .calendar-page .event-chips--list-header .event-chip {
@@ -670,19 +623,6 @@
 }
 
 /* ── Flag ── */
-.calendar-page .flag-span {
-    display: inline-block;
-    width: 14px;
-    height: 10.5px;
-    flex-shrink: 0;
-}
-.calendar-page .flag-img {
-    width: 14px;
-    height: 10.5px;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-
 /* ── +N more ── */
 .calendar-page .more-btn {
     margin: 1px 3px;
@@ -838,16 +778,6 @@
 }
 
 /* 已关注比赛标记 — 只读状态指示(日历条 / 列表行 / day-list);切换关注在 CompModal / 详情页 */
-.calendar-page .comp-follow-mark {
-    display: inline-flex;
-    align-items: center;
-    flex: none;
-    color: var(--accent);
-}
-/* 列表行 name-cell 走 baseline 对齐,标记需垂直居中 */
-.calendar-page .comp-list-name-cell .comp-follow-mark {
-    align-self: center;
-}
 /* 日历条子元素 vertical-align: top,标记跟旗/名顶对齐 */
 .calendar-page .event-bar .comp-follow-mark {
     vertical-align: top;
@@ -1060,317 +990,7 @@
 /* 单场弹窗的纪录区(卡片 children)— 对齐卡片内容左缘 */
 .calendar-page .rc-records { padding: 0 0.85rem 0.7rem; }
 
-/* ── View toggle (Calendar / List) ── */
-.calendar-page .view-toggle {
-    display: inline-flex;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
-}
-.calendar-page .view-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0.35rem 0.7rem;
-    border: none;
-    background: transparent;
-    color: var(--text-sub);
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.calendar-page .view-btn:hover { color: var(--text); }
-.calendar-page .view-btn.is-active {
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
-/* ── 列表视图（虚拟滚动 + 项目对齐网格） ── */
-/* 共享网格列模板：date | flag | name | city | event*N
- * name / city 各占一列，列宽由 JS 测当前过滤集各自 max 实际宽度后注入 --cl-name-width / --cl-city-width；
- * 默认 fallback 18rem / 11rem。这样筛选短名（如"北京"）时不留多余空白；
- * 全集时按真实最长宽度撑开，长名完整显示，所有行 city 起点对齐成独立一列，events 列与 chips 表头对齐。
- * comp-list-row（行）与 event-chips-grid（表头）共用 */
-.calendar-page {
-    --cl-ev-w: 1.3rem;
-    --cl-comp-w: 2.8rem;  /* 整场单列（实际人数 / 上限 / 满员率）；选「不显示」时收为 0 */
-    --cl-reg-w: 8rem;     /* 报名列（最近的将来节点：日期 时刻 + 开放/截止/退赛/重开/修改截止；按最长 4 字标签留宽） */
-    --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-width, 6rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) repeat(var(--cl-event-count), var(--cl-ev-w));
-    --cl-min-width: 86rem;
-}
-/* 宽值 metric（限时 / 及格线 / 晋级）：事件列加宽到能塞下 "10:00" / "≤6:00"，整体网格更宽，横向滚动 */
-.calendar-page[data-wide-metric] {
-    --cl-ev-w: 3rem;
-    --cl-min-width: 121rem;
-}
-/* 双列整场列：经纬度（纬度 + 经度）/ 人数和上限（人数 + 上限）——整场列拆成两列，比单计数列宽 */
-.calendar-page[data-comp-2col] {
-    --cl-comp-w: 3.8rem;
-    --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-width, 6rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(var(--cl-event-count), var(--cl-ev-w));
-}
-/* 人数 / 上限是 2-4 位计数,不需要经纬度那么宽,收窄让两列贴近 */
-.calendar-page[data-comp-peoplelimit] { --cl-comp-w: 2.4rem; }
-.calendar-page .comp-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    /* 列各取自然宽,整张表超出视口时横向滚动(桌面 + 移动端统一),保证比赛名 / 国家名完整 */
-    overflow-x: auto;
-}
-.calendar-page .comp-list-empty {
-    text-align: center;
-    color: var(--text-sub);
-    font-size: 0.85rem;
-    padding: 3rem 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-}
-/* 虚拟滚动容器 */
-.calendar-page .comp-list-virtual {
-    position: relative;
-    /* 宽度 = 表头 grid 实测内容宽(JS 写 --cl-list-min);未测时回退固定 floor。
-     * 取自然内容宽(非 100%)→ 宽屏时表格左对齐到内容宽,右侧留白是页面底色而非行内空列;
-     * 内容宽 > 视口时由 .comp-list 横向滚动(不设 max-width,否则会裁掉右侧项目列)。 */
-    width: var(--cl-list-min, var(--cl-min-width));
-}
-.calendar-page .comp-list-row {
-    position: absolute;
-    left: 0;
-    right: 0;
-    box-sizing: border-box;
-}
-/* chip 行最左侧的 sticky 年份 cell（替代 date 列占位） */
-.calendar-page .cl-year-cell {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    overflow: hidden;
-    white-space: nowrap;
-}
-.calendar-page .cl-year-num {
-    font-family: var(--font-serif);
-    font-size: 1.15rem;
-    font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    font-feature-settings: "tnum" 1;
-    line-height: 1;
-}
-/* 年内比赛数计数 pill —— 放在「比赛名」列头排序按钮里(AZ 图标右侧) */
-.calendar-page .cl-list-count {
-    margin-left: 5px;
-    font-size: 0.7rem;
-    color: var(--text-sub);
-    background: var(--surface-alt);
-    padding: 2px 7px;
-    border-radius: 10px;
-}
-/* 日期列头：年份格子变可点排序按钮 */
-.calendar-page button.cl-year-cell {
-    align-items: center;
-    border: none;
-    background: none;
-    padding: 0;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-}
-.calendar-page .cl-date-chevron {
-    flex: none;
-    color: var(--text-sub);
-    transition: color 0.15s;
-}
-.calendar-page button.cl-year-cell:hover .cl-date-chevron {
-    color: var(--text);
-}
-.calendar-page button.cl-year-cell.is-active .cl-date-chevron {
-    color: var(--accent);
-}
-.calendar-page .comp-list-row {
-    display: grid;
-    grid-template-columns: var(--cl-cols);
-    align-items: center;
-    gap: 6px;
-    padding: 0 12px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-family: inherit;
-    color: var(--text);
-    cursor: pointer;
-    text-align: left;
-    overflow: hidden;
-    transition: border-color 0.12s, background 0.12s;
-}
-.calendar-page .comp-list-row:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-.calendar-page .comp-list-date {
-    color: var(--text-sub);
-    font-size: 0.78rem;
-}
-/* 跨年比赛日期: 两半各自 nowrap, 用 block 强制 ~ 后换行 */
-.calendar-page .cl-date-half {
-    display: block;
-    white-space: nowrap;
-}
-/* 国家名列：比赛名右侧、城市左侧的国家文字，弱色、过长截断。 */
-.calendar-page .comp-list-country {
-    color: var(--text-sub);
-    font-size: 0.78rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-}
-/* name 列：仅含关注标记 + 比赛名；city 独立成下一列。
- * 内部用 flex 让关注标记紧跟在名字前；名字过长截断。 */
-.calendar-page .comp-list-name-cell {
-    display: flex;
-    align-items: baseline;
-    gap: 0.35rem;
-    min-width: 0;
-    overflow: hidden;
-    /* 紧贴国旗 — 抵消 grid 列间 gap（桌面 6px / 移动 4px） */
-    margin-left: -6px;
-}
-.calendar-page .comp-list-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-    font-weight: 500;
-    flex: 0 1 auto;
-}
-/* city 独立一列：所有行起点对齐 */
-.calendar-page .comp-list-city {
-    color: var(--text-sub);
-    font-size: 0.78rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-}
-/* 报名列：下一个里程碑「日期 时刻」(弱色) + 状态词(开放绿/截止黄/24h内红/已截止灰) */
-.calendar-page .cl-reg-cell {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.3rem;
-    font-size: 0.7rem;
-    font-weight: 600;
-    line-height: 1;
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-}
-.calendar-page .cl-reg-when {
-    color: var(--text-sub);
-    font-variant-numeric: tabular-nums;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.calendar-page .cl-reg-word { flex: none; }
-.calendar-page .cl-reg-cell--open .cl-reg-word { color: var(--signal-success); }
-.calendar-page .cl-reg-cell--close .cl-reg-word { color: var(--signal-warning); }
-.calendar-page .cl-reg-cell--urgent .cl-reg-word { color: var(--destructive); }
-.calendar-page .cl-reg-cell--closed .cl-reg-word { color: var(--text-sub); font-weight: 500; }
-/* 报名列头（最左）：文字「报名」+ 排序箭头，贴左对齐（复合选择器压过后定义的 .cl-col-icon 的 justify-self:end） */
-.calendar-page .cl-col-icon.cl-reg-head {
-    justify-self: start;
-    justify-content: flex-start;
-    gap: 2px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-.calendar-page .cl-reg-head-text { line-height: 1; }
-.calendar-page .cl-event-cell {
-    text-align: center;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
-/* 双轮赛制（WCA Reg 9v）：该项目格子的值套强调色圈（列首图标即该项目，圈=此场此项目为双轮） */
-.calendar-page .cl-event-dual {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.3em;
-    height: 1.3em;
-    border-radius: 999px;
-    box-shadow: inset 0 0 0 1.5px var(--accent);
-    color: var(--accent);
-}
-/* 「项目首秀」筛选：该项目格子=此场首次出现该项目，填色圈跟双轮的纯描边圈区分开，一眼可辨 */
-.calendar-page .cl-event-debut {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 1.3em;
-    height: 1.3em;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--signal-info) 18%, transparent);
-    box-shadow: inset 0 0 0 1.5px var(--signal-info);
-    color: var(--signal-info);
-}
-/* 天数 / 人数 / 上限列：数字右对齐，多位数按个位对齐 */
-.calendar-page .cl-days-cell {
-    text-align: right;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--text-sub);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
-/* 人数列：实际参赛人数(走 text，是主值) + 人数上限(走 text-sub，次值) */
-.calendar-page .cl-people-cell {
-    text-align: right;
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    overflow: hidden;
-}
-.calendar-page .cl-limit-cell { color: var(--text-sub); font-weight: 500; }
-/* 列表表头里人数 / 上限列头(可点击排序)：右对齐，压在下方右对齐数字上方；弱色 */
-.calendar-page .cl-col-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: flex-end;
-    justify-self: end;
-    gap: 1px;
-    color: var(--text-sub);
-    background: transparent;
-    border: 0;
-    padding: 0;
-    font: inherit;
-}
-/* 比赛名 / 城市名列头排序按钮：在左对齐文本列上方,贴左 */
-.calendar-page .cl-text-sort { justify-self: start; justify-content: flex-start; }
-.calendar-page .cl-col-sort { cursor: pointer; transition: color 0.15s; }
-.calendar-page .cl-col-sort:hover { color: var(--text); }
-.calendar-page .cl-col-sort.is-active { color: #4ade80; }
-
 /* ── 已取消比赛 — 列表 / 日历 / modal 共享样式 ── */
-.calendar-page .comp-list-row.is-cancelled {
-    opacity: 0.55;
-}
-.calendar-page .comp-list-row.is-cancelled .comp-list-name,
-.calendar-page .comp-list-row.is-cancelled .comp-list-date {
-    text-decoration: line-through;
-    text-decoration-thickness: 1px;
-}
 .calendar-page .event-bar.is-cancelled {
     opacity: 0.55;
 }
@@ -1620,9 +1240,6 @@
 }
 /* ── 响应式 ── */
 @media (max-width: 768px) {
-    .calendar-page .toolbar { gap: 0.4rem; flex-wrap: nowrap; }
-    .calendar-page .toolbar .search-box-comp .comp-picker-input,
-    .calendar-page .country-filter .region-picker-trigger,
     .calendar-page .comp-filters-btn,
     .calendar-page .native-select.cal-layout-toggle {
         height: 44px;
@@ -1633,13 +1250,8 @@
         font-weight: 400;
         line-height: 1.25;
     }
-    .calendar-page .view-toggle { height: 44px; box-sizing: border-box; }
-    .calendar-page .view-btn { min-width: 38px; justify-content: center; padding: 0 8px; }
     .calendar-page .search-box { min-width: 100%; }
     .calendar-page .search-box-wrap { min-width: 100%; max-width: 100%; }
-    /* 搜索让出空间，地区与筛选入口始终保持在同一行。 */
-    .calendar-page .toolbar .search-box-comp { min-width: 0; flex: 1 1 0; max-width: 320px; }
-    .calendar-page .country-filter { flex: 0 1 125px; min-width: 0; }
     .calendar-page .comp-filters-wrap { flex-shrink: 0; }
     .calendar-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
     .calendar-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
@@ -1655,28 +1267,8 @@
     .calendar-page--compact .calendar--compact .day-cell { padding: 3px 3px 4px; }
     .calendar-page--compact .compact-flag-grid { gap: 2px; }
     .calendar-page--compact .compact-flag-tile { width: 16px; height: 12px; }
-    /* 虚拟列表：行高固定，移动端横向滚动以保留项目列对齐 */
-    .calendar-page {
-        --cl-ev-w: 1.1rem;
-        --cl-comp-w: 2.4rem;
-        --cl-reg-w: 8rem;
-        --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-width, 4.5rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) repeat(var(--cl-event-count), var(--cl-ev-w));
-        --cl-min-width: 68rem;
-    }
-    .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 102rem; }
-    .calendar-page[data-comp-2col] {
-        --cl-comp-w: 3.4rem;
-        --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-width, 4.5rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(var(--cl-event-count), var(--cl-ev-w));
-    }
-    .calendar-page[data-comp-peoplelimit] { --cl-comp-w: 2.3rem; }
-    .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }
     .calendar-page .event-chips--list-header .event-chip .cubing-icon { font-size: 0.85rem; }
-    .calendar-page .comp-list-row { gap: 4px; padding: 0 8px; font-size: 0.78rem; }
-    .calendar-page .comp-list-name-cell { margin-left: -4px; }
-    .calendar-page .comp-list-date { font-size: 0.7rem; }
-    .calendar-page .cl-event-cell { font-size: 0.65rem; }
-    .calendar-page .cl-year-num { font-size: 1rem; }
     .calendar-page .date-range-pick { font-size: 0.72rem; padding: 0.3rem 0.5rem; min-width: 5.4rem; }
 }
 

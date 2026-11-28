@@ -9,6 +9,7 @@ import { Star, LogIn, Clock3, Globe } from '@app-foundation/icons/lucide';
 import type { Comp } from '@/lib/comp-search';
 import {
   buildRegView,
+  fetchCubingRegistrations,
   localDayDiff,
   type RegItem,
   type RegBucketKey,
@@ -20,7 +21,6 @@ import { type CompCardTone } from '@/components/CompCard';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import { tr } from '@/i18n/tr';
 import { useRetainedState } from '@/hooks/useRetainedState';
-import { apiUrl } from '@/lib/api-base';
 import { loadFlagData, personFlagIso2, countryToIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { ListSelect } from '@/components/ListSelect';
@@ -161,11 +161,8 @@ export function RegistrationView({ comps, isZh, lang, loggedIn, follows, toggle 
       if (pending || document.hidden) return;
       pending = true;
       try {
-        const res = await fetch(apiUrl('/v1/cubing-registration?v=1'), { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15_000)]) });
-        if (!res.ok) throw new Error('registration source');
-        const data = await res.json() as { registrations: CubingRegistrations };
-        if (!data.registrations || typeof data.registrations !== 'object') throw new Error('registration data');
-        if (active) { setCn(data.registrations); setSourceFailed(false); }
+        const registrations = await fetchCubingRegistrations(controller.signal);
+        if (active) { setCn(registrations); setSourceFailed(false); }
       } catch {
         if (active) { setCn({}); setSourceFailed(true); }
       } finally { pending = false; }

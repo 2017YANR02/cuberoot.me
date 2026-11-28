@@ -13,7 +13,7 @@ import { applyHomeSectionOrder } from '@/lib/home-section-order';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
@@ -156,6 +156,95 @@ function LandingOnboarding({ mounted, personalLoading, isHome, selectHome }: { m
   return <OnboardingGuideModal open={isHome && guideOpen && !personalLoading} onClose={closeGuide} />;
 }
 
+// Flip the color layer from the entry tile without moving its link or glass surface.
+function turnShortcutLayers(event: PointerEvent<HTMLDivElement>) {
+  const grid = event.currentTarget;
+  // Keep the first tile's turn until the pointer leaves the entire grid, including its gaps.
+  if (grid.hasAttribute('data-turning')) return;
+  if (event.pointerType !== 'mouse' || event.buttons || !(event.target instanceof Element)) return;
+  const card = event.target.closest('.landing-card');
+  if (!card) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const layers = Array.from(grid.querySelectorAll<HTMLElement>('.home-turn-mask > span'));
+  const source = layers.findIndex(layer => card.contains(layer));
+  if (layers.length !== 9 || source < 0) return;
+  const col = source % 3;
+  const row = Math.floor(source / 3);
+  const rect = card.getBoundingClientRect();
+  const entryX = Math.abs((event.clientX - rect.left) / rect.width - 0.5);
+  const entryY = Math.abs((event.clientY - rect.top) / rect.height - 0.5);
+  const columns = source === 4 || (col !== 1 && (row === 1 || entryX > entryY));
+  grid.dataset.turning = '';
+  layers.forEach((layer, index) => {
+    const dx = index % 3 - col;
+    const dy = Math.floor(index / 3) - row;
+    const primary = columns ? dx : dy;
+    const secondary = columns ? dy : dx;
+    const direction = Math.sign(primary) || ((columns ? col : row) === 2 ? -1 : 1);
+    layer.style.transformOrigin = columns
+      ? (direction > 0 ? 'left' : 'right')
+      : (direction > 0 ? 'top' : 'bottom');
+    const axis = columns ? 'Y' : 'X';
+    const angle = direction * (columns ? -88 : 88);
+    layer.getAnimations().forEach(animation => animation.cancel());
+    layer.animate([
+      { transform: `perspective(360px) rotate${axis}(${angle}deg)`, opacity: 0.18 },
+      { transform: `perspective(360px) rotate${axis}(0deg)`, opacity: 1 },
+    ], {
+      delay: Math.abs(primary) * 110 + Math.abs(secondary) * 45,
+      duration: 360, easing: 'cubic-bezier(.2,.68,.25,1)', fill: 'backwards',
+    });
+  });
+}
+
+function useShortcutScrollColor(enabled: boolean) {
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!enabled || !grid) return;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const rows = ['--home-logo-row-1', '--home-logo-row-2', '--home-logo-row-3'];
+    const previous = [0, 0, 0];
+    let frame: number | null = null;
+
+    const update = () => {
+      frame = null;
+      const scroll = Math.max(0, window.scrollY - 8);
+      // Start after the page moves and the grid approaches the visible area.
+      const distance = motion.matches || scroll === 0
+        ? 0
+        : Math.min(scroll, window.innerHeight * 0.9 - grid.getBoundingClientRect().top);
+      rows.forEach((property, index) => {
+        const phase = Math.max(0, Math.min(1, (distance - index * 34) / 96));
+        const percent = Math.round(phase * phase * (3 - 2 * phase) * 1000) / 10;
+        if (percent === previous[index]) return;
+        previous[index] = percent;
+        grid.style.setProperty(property, `${percent}%`);
+      });
+    };
+    const schedule = () => { frame ??= window.requestAnimationFrame(update); };
+    const resize = new ResizeObserver(schedule);
+    resize.observe(grid);
+    resize.observe(document.body);
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    motion.addEventListener('change', schedule);
+    schedule();
+    return () => {
+      if (frame !== null) window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      motion.removeEventListener('change', schedule);
+      resize.disconnect();
+      rows.forEach(property => grid.style.removeProperty(property));
+    };
+  }, [enabled]);
+
+  return gridRef;
+}
+
 export default function LandingPage({ initialLayout = null }: { initialLayout?: HomeLayoutSnapshot | null }) {
   const douyin = useDouyinToolSurface();
   const communityDisabled = useInstalledCommunityDisabled();
@@ -188,6 +277,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
   const activeSection = selectedSection === 'admin' && !isAdmin ? 'home' : selectedSection;
   useHomeScrollRestoration(activeSection !== 'home' || !personalLoading, activeSection);
+  const shortcutGridRef = useShortcutScrollColor(activeSection === 'home' && !douyin);
   const selectSection = (section: string) => {
     if (section === 'admin' && !isAdmin) return;
     setSelectedSection(section);
@@ -346,7 +436,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const isCardLocked = (card: CardConfig) => Boolean(card.adminOnly)
     || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
 
-  const renderCard = (card: CardConfig, editable: boolean) => {
+  const renderCard = (card: CardConfig, editable: boolean, shortcut: boolean) => {
     const locked = isCardLocked(card);
     const isLocked = locked && !isAdmin;
     const isDevelopment = locked && !card.adminOnly;
@@ -355,6 +445,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       : t('comingSoon');
     const content = (
       <>
+        {shortcut && <span className="home-turn-mask" aria-hidden="true"><span /></span>}
         <LandingCardContent
           label={t(card.nameKey)}
           Icon={card.Icon}
@@ -423,6 +514,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
   const renderCardGrid = (groupId: string, cards: CardConfig[], className: string, adminArea = false) => {
     const { orderedCards, visibleCards } = getCardGroup(groupId, cards, adminArea);
     if (visibleCards.length === 0) return null;
+    const shortcut = !adminArea && !douyin && !canEditCards && (groupId === 'main' || groupId === 'wca');
     const handleDragEnd = (event: DragEndEvent) => {
       const { active, over } = event;
       if (!canEditCards || !over || active.id === over.id) return;
@@ -442,7 +534,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       <DndContext key={groupId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={visibleCards.map((card) => card.id)} strategy={rectSortingStrategy}>
           <div className={className} data-analytics-placement={groupId === 'calendar' ? 'header' : groupId}
-            data-analytics-disabled={adminArea || canEditCards ? 'true' : undefined}>{visibleCards.map(card => renderCard(card, canEditCards && groupId !== 'calendar'))}</div>
+            data-analytics-disabled={adminArea || canEditCards ? 'true' : undefined}>{visibleCards.map(card => renderCard(card, canEditCards && groupId !== 'calendar', shortcut))}</div>
         </SortableContext>
       </DndContext>
     );
@@ -453,8 +545,8 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       iconText={card.iconText} puzzleIcon={card.puzzleIcon} record={card.record} />;
     const style = { '--nav-item-index': index + offset } as CSSProperties;
     return card.internal
-      ? <Link key={card.id} href={card.href} className="home-navigation-card" style={style} prefetch={false}>{content}</Link>
-      : <a key={card.id} href={card.href} className="home-navigation-card" style={style} target="_blank" rel="noopener noreferrer">{content}</a>;
+      ? <Link key={card.id} href={card.href} className="home-navigation-card af-glass-surface" style={style} prefetch={false}>{content}</Link>
+      : <a key={card.id} href={card.href} className="home-navigation-card af-glass-surface" style={style} target="_blank" rel="noopener noreferrer">{content}</a>;
   });
   const navigationFlyouts: Record<string, React.ReactNode> = {
     home: renderNavigationCards([
@@ -465,7 +557,7 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       renderNavigationCards(getCardGroup(section.id, section.cards.filter(card => card.id !== 'calendar')).visibleCards),
     ])),
     ...(isAdmin ? { admin: <>
-      <Link href="/admin" className="home-navigation-card" prefetch={false}>
+      <Link href="/admin" className="home-navigation-card af-glass-surface" prefetch={false}>
         <LandingCardContent label={tr({ zh: '管理后台', en: 'Admin dashboard' })} Icon={LayoutDashboard} />
       </Link>
       {renderNavigationCards([
@@ -589,12 +681,9 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           </Link>
         )}
       </div>} />
-      <PageNoticeBar />
-      <LandingSearch cards={searchCards} lang={lang} workspaceEntry showChatLink />
-      <div className="landing-home-content" hidden={activeSection !== 'home'}>
-      <div className="landing-shortcuts-and-notices">
-        <RecentWorldRecords records={recentRecords} isZh={lang === 'zh'} />
-        <div className="landing-featured-notices">
+      <div className="landing-notice-row">
+        <PageNoticeBar />
+        {activeSection === 'home' && <div className="landing-featured-notices">
         {featuredNotices.map((featuredNotice) => {
           const { href } = featuredNotice;
           if (!href || dismissed[featuredNotice.id] === featuredNotice.updatedAt) return null;
@@ -632,16 +721,13 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
             </div>
           );
         })}
-        </div>
-        <div className="landing-personal-row">
-        {user && compFollows.loaded && <div className="landing-personal-comps">
-          <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
-            onReady={onPersonalReady}
-            compactDetails
-            hideHomeCountryFlag
-            title={null}
-            followedIds={compFollows.follows} />
         </div>}
+      </div>
+      <LandingSearch cards={searchCards} lang={lang} workspaceEntry showChatLink />
+      <div className="landing-home-content" hidden={activeSection !== 'home'}>
+      <div className="landing-shortcuts-and-notices">
+        <div className="landing-records-training-row">
+          <RecentWorldRecords records={recentRecords} isZh={lang === 'zh'} />
           <div className="landing-training-links">
             <Link href="/alg/3x3/zbll/run" className="landing-card af-glass-surface" prefetch={false}>
               <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} />
@@ -657,7 +743,8 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
       <div className="landing-home-hero">
         <TodayRecon lang={lang} pinnedRecons={pinnedRecons} isAdmin={isAdmin} canEditPins={canEditCards} savingPin={savingPin}
           pinError={pinError} onPin={onPin} emptyPin={<RecentScrambles lang={lang} />} />
-        <div className="hero-grids">
+        <div className="hero-grids" ref={shortcutGridRef} onPointerOver={turnShortcutLayers}
+          onPointerLeave={event => { delete event.currentTarget.dataset.turning; }}>
           {renderCardGrid('main', PRIMARY_CARDS, 'primary-hero-grid')}
           {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
         </div>
@@ -668,6 +755,15 @@ export default function LandingPage({ initialLayout = null }: { initialLayout?: 
           <RecentScrambles lang={lang} />
         </LazyVisible>
       )}
+
+      {user && compFollows.loaded && <div className="landing-personal-comps">
+        <PersonUpcomingComps key={personalKey} wcaId={user.wcaId || undefined} isZh={lang === 'zh'}
+          onReady={onPersonalReady}
+          compactDetails
+          hideHomeCountryFlag
+          title={null}
+          followedIds={compFollows.follows} />
+      </div>}
 
       <LazyVisible className="landing-widget landing-widget--comps" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.comps} onVisible={() => rememberWidget('comps')}>
         <OngoingComps lang={lang} compFollows={compFollows} records={recentRecords} />

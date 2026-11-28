@@ -8,6 +8,8 @@ body .landing-page.landing-page--navigation {
   --landing-inline-gutter: var(--home-inline-gutter);
   --home-navigation-top: var(--sat, 0px);
   --home-navigation-row-height: 48px;
+  /* Resolve the shared site lens before the flyout resets optics for its sheet. */
+  --home-nav-card-filter: var(--glass-filter);
   padding-top: var(--sat, 0px);
   padding-bottom: max(16px, var(--sab), var(--installed-chrome-bottom, 0px));
 }
@@ -30,8 +32,8 @@ body .landing-page.landing-page--navigation {
   margin-bottom: 20px;
   transition: top 220ms ease, width 220ms ease, padding-inline 220ms ease;
 }
-.home-navigation:has(+ .page-notice-wrap[data-home]) { margin-bottom: 8px; }
-.landing-page--navigation > .page-notice-wrap[data-home],
+.home-navigation:has(+ .landing-notice-row > .page-notice-wrap[data-home]) { margin-bottom: 8px; }
+.landing-page--navigation > .landing-notice-row,
 .landing-page--navigation .landing-shortcuts-and-notices { margin-bottom: 20px; }
 .home-navigation[data-floating] {
   width: min(calc(100% - 16px), calc(var(--landing-content-max) - 40px));
@@ -157,6 +159,8 @@ body .landing-page.landing-page--navigation {
   transition: opacity 320ms var(--home-nav-ease) 80ms, visibility 400ms step-end;
 }
 .home-navigation-flyout {
+  /* Diffuse the page behind the sheet independently of the card reflections. */
+  --af-glass-optics: initial;
   position: fixed;
   inset: var(--home-nav-bottom, 0px) 0 auto;
   z-index: 1;
@@ -169,9 +173,14 @@ body .landing-page.landing-page--navigation {
   visibility: hidden;
   transition: height 240ms var(--home-nav-ease) 120ms, visibility 360ms step-end;
 }
-.home-navigation-flyout,
-.settings-dialog .settings-dialog-panel.home-navigation-drawer {
+.home-navigation-flyout {
   --af-glass-inset: 0px;
+}
+.home-navigation-flyout::before {
+  --af-glass-filter: var(--af-glass-backdrop);
+  --af-glass-width: 0px;
+  --af-glass-border-image: none;
+  --af-glass-reflection: none;
 }
 .home-navigation-flyout::-webkit-scrollbar { display: none; }
 .home-navigation-flyout-content {
@@ -179,11 +188,16 @@ body .landing-page.landing-page--navigation {
   margin-inline: auto;
   padding-block: 24px 40px;
   box-sizing: border-box;
-  opacity: 0;
-  transition: opacity 160ms var(--home-nav-ease);
 }
 .home-navigation-flyout-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+/* Opening or selecting a section must not swap filters when its cards are measured. */
+.home-navigation .home-navigation-card,
+.landing-page--navigation .cards-sections .landing-card.af-glass-surface {
+  --af-glass-filter: var(--home-nav-card-filter);
+  --af-glass-reflection: none;
+}
 .home-navigation .home-navigation-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -191,16 +205,14 @@ body .landing-page.landing-page--navigation {
   gap: 10px;
   min-height: 104px;
   padding: 16px;
-  border: 1px solid var(--border-default);
+  border: 1px solid transparent;
   border-radius: 12px;
-  background: var(--card);
+  background: transparent;
   color: var(--foreground);
   text-decoration: none;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: opacity 160ms var(--home-nav-ease), transform 160ms var(--home-nav-ease), background-color 160ms, border-color 160ms;
+  transition: background-color 160ms, border-color 160ms;
 }
-.home-navigation .home-navigation-card:hover { background: var(--accent-soft); border-color: var(--accent); }
+.home-navigation .home-navigation-card:hover { background: var(--accent-soft); --af-glass-edge: var(--accent); }
 .home-navigation .home-navigation-card:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .home-navigation .home-navigation-card .landing-card-icon {
   display: flex; align-items: center; justify-content: center;
@@ -221,6 +233,9 @@ body .landing-page.landing-page--navigation {
 .home-navigation .home-navigation-card .landing-card-name {
   margin: 0; font-family: var(--font-sans); font-size: 16px; font-weight: 300; line-height: 1.4; text-align: center;
 }
+/* On overview selection, finish dismissal before the new grid is painted. */
+.home-navigation:not([data-flyout-section])::before,
+.home-navigation:not([data-flyout-section]) :is(.home-navigation-curtain, .home-navigation-flyout) { transition: none; }
 .home-navigation[data-flyout-open]:not([data-floating])::before { opacity: 1; }
 .home-navigation[data-flyout-open] .home-navigation-curtain {
   opacity: 1; visibility: visible; pointer-events: auto;
@@ -231,18 +246,16 @@ body .landing-page.landing-page--navigation {
   visibility: visible;
   transition: height 240ms var(--home-nav-ease), visibility 0ms;
 }
-.home-navigation[data-flyout-open] .home-navigation-flyout-content { opacity: 1; }
-.home-navigation[data-flyout-open] .home-navigation-card {
-  opacity: 1; transform: translateY(0);
-  transition: opacity 320ms var(--home-nav-ease) calc(80ms + var(--nav-item-index, 0) * 20ms),
-    transform 320ms var(--home-nav-ease) calc(80ms + var(--nav-item-index, 0) * 20ms), background-color 160ms, border-color 160ms;
-  animation: home-nav-item-in 320ms var(--home-nav-ease) both;
+/* Fade the foreground only. An opacity animation around a backdrop-filter
+   isolates its backdrop until the very last frame. */
+.home-navigation[data-flyout-open] .home-navigation-card > :is(.landing-card-icon, .landing-card-name) {
+  animation: home-nav-item-in 320ms var(--home-nav-ease) backwards;
   animation-delay: calc(80ms + var(--nav-item-index, 0) * 20ms);
 }
-@keyframes home-nav-item-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes home-nav-item-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .home-navigation::before, .home-navigation-curtain, .home-navigation-flyout,
-  .home-navigation-flyout-content, .home-navigation .home-navigation-card { transition: none !important; animation: none !important; }
+  .home-navigation .home-navigation-card, .home-navigation .home-navigation-card > :is(.landing-card-icon, .landing-card-name) { transition: none !important; animation: none !important; }
 }
 
 /* Reuse the site's modal focus, Escape, outside-click and motion contracts. */
@@ -266,7 +279,7 @@ body .landing-page.landing-page--navigation {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  background: transparent;
+  background: var(--background);
   overflow: hidden;
   padding: 0 0 max(12px, var(--sab), var(--installed-chrome-bottom, 0px));
   gap: 0;
@@ -340,6 +353,7 @@ body .landing-page.landing-page--navigation {
   .home-navigation-submenu-links { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 .home-navigation-submenu .home-navigation-card {
+  --af-glass-content: none; /* The compact drawer uses text links. */
   display: flex;
   align-items: center;
   min-width: 0;

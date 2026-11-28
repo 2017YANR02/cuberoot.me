@@ -4,7 +4,8 @@
 // Text rendering reuses the API's Bark formatter (id-cached).
 import { useEffect, useState, useMemo } from 'react';
 import Link from '@/components/AppLink';
-import { Copy, Check } from '@app-foundation/icons/lucide';
+import { CopySuccessIcon } from '@/components/CopySuccessIcon';
+import { Copy } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps, compRecordHref } from '@/lib/comp-link';
@@ -197,16 +198,17 @@ export function RecentWorldRecords({ records, isZh }: { records: RecentRecord[];
           return (
             <li key={record.id}>
               <Link {...compLinkProps(record.competitionId)}
-                href={compRecordHref({ ...record, eventId })} className="landing-world-record">
+                href={compRecordHref({ ...record, eventId })} className="rc-card rc-main landing-world-record af-glass-surface">
                 <span className="landing-world-record-result">
                   <strong>{formatWcaResult(record.attemptResult, eventId, kind)}</strong>
+                  <span className="landing-world-record-event">
+                    <span aria-hidden="true"><EventIcon event={eventId} /></span>
+                    <span className="sr-only">{eventDisplayName(eventId, isZh)}</span>
+                    <span>{kind === 'average'
+                      ? tr({ zh: '平均', en: 'Average' })
+                      : tr({ zh: '单次', en: 'Single' })}</span>
+                  </span>
                   <RecordBadge record={record.tag} />
-                </span>
-                <span className="landing-world-record-event">
-                  <EventIcon event={eventId} />
-                  <span>{eventDisplayName(eventId, isZh)} {kind === 'average'
-                    ? tr({ zh: '平均', en: 'Average' })
-                    : tr({ zh: '单次', en: 'Single' })}</span>
                 </span>
                 <WcaPersonIdentity linked={false} showTeam={false}
                   flag={record.countryIso2 && <Flag iso2={record.countryIso2} />}>
@@ -259,7 +261,7 @@ export function RecentRecordsList({ filled, isZh, showCopy = true }: {
               aria-label={tr({ zh: '复制', en: 'Copy'
             })}
             >
-              {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
+              {copied ? <CopySuccessIcon size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
             </button>}
             <Link {...compLinkProps(r.competitionId)} href={'href' in r ? r.href : compRecordHref({ ...r, eventId: toWcaEventId(r.eventId) })} className="recent-records-body">
               <EventIcon event={r.eventId} />{' '}

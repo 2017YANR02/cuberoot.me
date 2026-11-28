@@ -1,0 +1,49 @@
+.home-country-competitions {
+    min-width: 0;
+    margin-bottom: 1.25rem;
+}
+.home-country-competitions .home-competition-search {
+    margin-bottom: 0.6rem;
+}
+@media (max-width: 560px) {
+    .home-country-competitions .home-competition-search { flex-wrap: wrap; }
+    .home-country-competitions .home-competition-views { flex-basis: 100%; }
+}
+
+.home-country-competitions-scroll {
+    position: relative;
+    overflow: auto;
+    max-block-size: min(52vh, 24rem);
+}
+.home-country-competitions .event-chips-grid {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    min-width: 100%;
+    min-height: 2.4rem;
+    background: var(--card);
+    border-inline: 1px solid transparent;
+    border-bottom: 1px solid var(--border-default);
+    color: var(--muted-foreground);
+    font-size: 0.8rem;
+}
+.home-country-competitions .comp-list {
+    overflow: visible;
+}
+.home-country-competitions button.home-competition-icon-sort {
+    position: relative;
+    justify-self: stretch;
+    justify-content: center;
+    min-height: 1.5rem;
+}
+.home-country-competitions .home-competition-icon-sort .sort-arrow {
+    position: absolute;
+    inset-inline-start: calc(50% + 0.43rem);
+}
+@media (max-width: 768px) {
+    .home-country-competitions .home-competition-icon-sort .cubing-icon { font-size: 0.8rem; }
+    .home-country-competitions .home-competition-icon-sort .sort-arrow {
+        inset-inline-start: calc(50% + 0.36rem);
+        inline-size: 0.5rem;
+    }
+}

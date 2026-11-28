@@ -1,5 +1,29 @@
 import type { CalendarManifest, CalendarMonth } from '@cuberoot/shared/competition-calendar';
 import { statsUrl } from './stats-base';
+
+export const COMPETITION_VIEWS = ['calendar', 'card', 'list', 'globe'] as const;
+export type CompetitionView = (typeof COMPETITION_VIEWS)[number];
+
+export function competitionCalendarHref({
+  month, countries = [], view = 'calendar', query, cuber,
+}: {
+  month: Date;
+  countries?: string[];
+  view?: CompetitionView;
+  query?: string;
+  cuber?: string;
+}): string {
+  const params = new URLSearchParams({
+    year: String(month.getFullYear()),
+    month: String(month.getMonth() + 1),
+  });
+  if (countries.length) params.set('country', countries.join(','));
+  if (query) params.set('q', query);
+  if (cuber) params.set('cuber', cuber);
+  if (view !== 'calendar') params.set('view', view);
+  return '/wca/comp?' + params.toString();
+}
+
 let manifestPromise: Promise<CalendarManifest> | null = null;
 const monthCache = new Map<string, Promise<CalendarMonth>>();
 export function loadCalendarManifest(): Promise<CalendarManifest> {

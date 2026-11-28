@@ -85,89 +85,6 @@
   word-break: break-word;
 }
 
-.comp-recent {
-  max-width: 720px;
-}
-.comp-recent-title {
-  font-size: 1.05rem;
-  font-weight: 600;
-  margin: 0 0 12px;
-  color: var(--muted-foreground);
-}
-.comp-recent-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 8px;
-}
-.comp-recent-item {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--card, transparent);
-}
-.comp-recent-link {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  color: var(--foreground);
-  cursor: pointer;
-  text-align: left;
-  text-decoration: none;
-  font-size: inherit;
-}
-.comp-recent-link:hover {
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-}
-.comp-recent-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-/* 未登录时的登录入口(issue #33:最近浏览为登录用户专属) */
-.comp-recent-login {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--muted-foreground);
-}
-.comp-recent-login-btn {
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--accent);
-  font: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.comp-recent-remove {
-  padding: 8px 10px;
-  background: transparent;
-  border: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  border-radius: 0 7px 7px 0;
-}
-.comp-recent-remove:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  color: var(--destructive, var(--foreground));
-}
-
 /* ── Detail page ──────────────────────────────────────────────────────── */
 
 .comp-loading {
@@ -241,7 +158,7 @@
 }
 /* 复制比赛名按钮:复用 comp-title-icon-lucide(与 WCA / cubing.com 图标同款),复制成功转绿。 */
 /* 点击比赛名复制成功后名字右侧的对勾(复制图标按钮已移除) */
-.comp-title-name-check { color: var(--signal-success); flex: none; }
+.comp-title-name-check { flex: none; }
 .comp-title-icon {
   display: inline-flex;
   align-items: center;
@@ -376,31 +293,26 @@
 }
 .comp-info-link:hover { text-decoration: underline; }
 .comp-address-row { position: relative; max-width: 100%; }
-.comp-address-actions { position: relative; display: inline-block; }
 .comp-address-trigger {
-  display: inline;
-  color: inherit; font: inherit; text-align: start; cursor: pointer;
+  display: inline-block; max-width: 100%; padding: 0; border: 0; background: none;
+  color: inherit; font: inherit; text-align: start; text-decoration: none; cursor: pointer;
   white-space: normal; overflow-wrap: anywhere;
 }
-.comp-address-trigger:hover { text-decoration: underline; text-underline-offset: 3px; }
-.comp-address-copy {
+.comp-address-icon {
   display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
-  width: 24px; height: 24px; margin-left: 4px; padding: 0; border: 0; background: none;
-  color: var(--muted-foreground); cursor: pointer;
+  width: 24px; height: 24px; margin-inline-start: 4px;
 }
-.comp-address-copy:hover { color: var(--foreground); }
-.comp-address-trigger:focus-visible, .comp-address-copy:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.comp-address-trigger:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .compact-select-popup.comp-address-menu {
   /* anchored-panel: clamped (usePanelClamp in CompAddress) */
-  position: absolute; top: calc(100% + 6px); bottom: auto; left: 100%; right: auto;
-  transform: translateX(-100%); visibility: visible;
+  position: absolute; top: calc(100% + 6px); bottom: auto; left: auto; right: 0;
+  visibility: visible;
 }
 .compact-select-option.comp-address-option { display: flex; align-items: center; gap: 8px; text-decoration: none; white-space: nowrap; }
 .comp-address-option img { display: block; width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 @media (max-width: 640px) {
   .comp-info-row:has(.comp-address-row) { width: 100%; }
   .comp-info-row:has(.comp-address-row) > .comp-info-value { flex: 1; }
-  .comp-address-row .comp-address-actions { position: static; inset: auto; transform: none; }
 }
 .comp-info-past-popover {
   position: relative;

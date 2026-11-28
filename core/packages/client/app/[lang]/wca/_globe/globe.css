@@ -183,20 +183,23 @@
     --border: #2F3540;
     --accent: var(--user-accent, #E07752);
     --accent-soft: rgba(224, 119, 82, 0.20);
-
     flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 0.45rem;
     padding: 0.45rem 0.75rem;
-    background: var(--surface);
     color: var(--text);
     border-bottom: 1px solid var(--border);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
     z-index: 10;
     flex-wrap: wrap;
     position: relative;
+}
+.globe-page .globe-topbar::before {
+    --af-glass-fill: var(--bg);
+    --af-glass-tint: color-mix(in srgb, var(--bg) 52%, transparent);
+    --af-glass-width: 0px;
+    --af-glass-border-image: none;
+    --af-glass-reflection: none;
 }
 
 /* ── 右下角自定义地图控件（参考 Google Earth）── */

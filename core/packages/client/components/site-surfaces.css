@@ -36,7 +36,6 @@ body[data-site-scenery] :is(
   .vcs-card,
   .pets-roster-option,
   .pet-home,
-  .comp-recent-item,
   .vc-arrow-builder,
   .vc-api-doc,
   .ns-dist-card,
@@ -49,7 +48,8 @@ body[data-site-scenery] :is(
   .comp-gate-input,
   .comp-gate-rules
 ),
-body[data-site-scenery] .calendar-page :is(.calendar, .view-toggle, .mode-toggle) {
+body[data-site-scenery] .competition-view-toggle,
+body[data-site-scenery] .calendar-page :is(.calendar, .mode-toggle) {
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
@@ -500,13 +500,6 @@ body[data-site-scenery] .timer-shell:has(.shell-rail .solver-panel[data-open='tr
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
-}
-
-/* The drawer's shared surface paints behind its scroll container. */
-body[data-site-scenery] .home-navigation-drawer[data-site-surface='popover'] {
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
 }
 
 /* Keep toolbar glass on a sibling paint layer: filtering the toolbar itself

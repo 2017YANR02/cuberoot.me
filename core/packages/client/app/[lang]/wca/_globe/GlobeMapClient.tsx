@@ -52,7 +52,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { Flag, flagHtml } from '@/components/Flag';
-import { compHref, prefetchComp } from '@/lib/comp-link';
+import { compHref } from '@/lib/comp-link';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { exportTrailVideo, isVideoExportSupported } from './_lib/trail_video';
 import './globe.css';
@@ -2107,7 +2107,6 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, unknown>;
-        if (p.id) prefetchComp(String(p.id));
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
         const city = String(p.city ?? '');
@@ -2130,7 +2129,6 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         const f = e.features?.[0];
         if (!f) return;
         const p = f.properties as Record<string, string>;
-        if (p.id) prefetchComp(String(p.id));
         const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number];
         if (popupRef.current) popupRef.current.remove();
         const cuberLocalized = localizeCompNameRef.current(String(p.id ?? ''), String(p.name ?? '')).replace(/</g, '&lt;');
@@ -3000,7 +2998,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     <div className={`globe-page is-${theme}`}>
       <div className="starfield" aria-hidden="true" ref={starfieldRef} />
 
-      <div className={`globe-topbar ${mode === 'cuber' ? 'is-cuber' : ''}`}>
+      <div className={`globe-topbar af-glass-surface ${mode === 'cuber' ? 'is-cuber' : ''}`}>
         {mode === 'cuber' ? (
           <>
             <button className="cuber-back-btn" onClick={() => { setPlaying(false); setMode('upcoming'); }} title={tr({ zh: '返回工具栏', en: 'Back to toolbar'

@@ -1,0 +1,34 @@
+/* ── View toggle (Calendar / List) ── */
+.competition-view-toggle {
+    display: inline-flex;
+    background: var(--card);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+}
+.competition-view-toggle .competition-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: none;
+    background: transparent;
+    color: var(--muted-foreground);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.competition-view-toggle .competition-view-btn:hover { color: var(--foreground); }
+.competition-view-toggle .competition-view-btn.is-active {
+    background: var(--accent-soft, color-mix(in srgb, var(--accent) 10%, transparent));
+    color: var(--accent);
+}
+
+@media (max-width: 768px) {
+    .competition-view-toggle { height: 44px; box-sizing: border-box; }
+    .competition-view-toggle .competition-view-btn { min-width: 38px; justify-content: center; padding: 0 8px; }
+}
