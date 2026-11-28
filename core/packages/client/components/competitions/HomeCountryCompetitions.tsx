@@ -129,6 +129,27 @@ export function HomeCountryCompetitions({ comps, followedIds, isZh }: {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [country]);
 
+  const hasRows = rows.length > 0;
+  useEffect(() => {
+    const viewport = scrollRef.current;
+    if (!viewport || !hasRows) return;
+
+    // Trackpad swipes often carry deltas on both axes. Route predominantly
+    // horizontal gestures to the columns even when there are more rows below.
+    const panColumns = (event: WheelEvent) => {
+      if (event.ctrlKey || !event.cancelable || Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+      if (viewport.scrollWidth <= viewport.clientWidth) return;
+      let distance = event.deltaX;
+      if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) distance *= 16;
+      if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) distance *= viewport.clientWidth;
+      event.preventDefault();
+      viewport.scrollLeft += distance;
+    };
+
+    viewport.addEventListener('wheel', panColumns, { passive: false });
+    return () => viewport.removeEventListener('wheel', panColumns);
+  }, [hasRows]);
+
   const sortHeader = (
     col: SortCol,
     label: string,
