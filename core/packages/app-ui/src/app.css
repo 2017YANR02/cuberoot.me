@@ -1011,80 +1011,73 @@ button {
   height: 22px;
 }
 
-/* Paint the base separately so the moving lens can sample the backdrop. */
-.app-shell[data-floating-navigation] > .primary-nav[data-drag-lens] {
+/* Keep the shared glass behind the selection lens and its hit targets. */
+.app-shell[data-floating-navigation] > .primary-nav[data-glass-shell] {
   background: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   box-shadow: none;
+}
+.primary-nav > .primary-nav-surface {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.primary-nav[data-drag-lens] {
   touch-action: none;
   user-select: none;
 }
-.primary-nav[data-drag-lens]::after {
-  content: '';
+.app-shell[data-floating-navigation] > .primary-nav[data-drag-lens]::before,
+.primary-nav > .navigation-drag-lens {
   position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background-color: var(--glass-popover-bg);
-  background-image: var(--glass-capsule-glint, none);
-  -webkit-backdrop-filter: var(--glass-capsule-filter, var(--glass-filter));
-  backdrop-filter: var(--glass-capsule-filter, var(--glass-filter));
-  box-shadow: var(--glass-capsule-shadow, inset 0 0 0 1px var(--glass-edge));
-}
-.app-shell[data-floating-navigation] > .primary-nav[data-drag-lens]::before {
   z-index: 1;
+  inset-block-start: 4px;
   inset-inline-start: 4px;
-  transform: translateX(var(--app-nav-lens-travel, calc(var(--app-nav-highlight-index) * (100% + 8px))))
-    scale(var(--app-nav-lens-scale-x, 1), var(--app-nav-lens-scale-y, 1));
-  transition: transform 210ms cubic-bezier(.2, .75, .25, 1), background-color 150ms ease;
+  width: calc(100% / 3 - 8px);
+  height: calc(100% - 8px);
+  border-radius: 999px;
+  pointer-events: none;
+  transform: translateX(var(--app-nav-lens-travel, calc(var(--app-nav-highlight-index) * (100% + 8px))));
+  transition: transform 260ms cubic-bezier(.2, .75, .25, 1), opacity 320ms ease;
 }
 .app-shell[data-labeled-capsule] > .primary-nav[data-drag-lens]::before {
   background-color: var(--glass-nav-lens-tint, var(--shell-hover));
   background-image: var(--glass-nav-lens-glint, none);
   box-shadow: var(--glass-nav-lens-shadow, inset 0 0 0 1px var(--glass-edge));
-  transition-timing-function: cubic-bezier(.24, 1.18, .36, 1);
-  transition-duration: 350ms;
 }
-.primary-nav[data-drag-lens] > button { z-index: 2; }
-.primary-nav[data-lens-pressed]::after {
-  /* Keep the base shadow out of the moving lens's backdrop. */
-  box-shadow: none;
-}
-.app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-pressed]::before {
-  --app-nav-lens-scale-x: 1.36;
-  --app-nav-lens-scale-y: 1.20;
-  background-color: var(--glass-nav-lens-tint, var(--shell-hover));
+.primary-nav > .navigation-drag-lens {
+  /* Sample the composited buttons, glass shell and underlying page together. */
+  z-index: 3;
+  opacity: 0;
+  visibility: hidden;
+  background-color: var(--glass-nav-lens-tint, transparent);
   background-image: var(--glass-nav-lens-glint, none);
   box-shadow: var(--glass-nav-lens-shadow, inset 0 0 0 1px var(--glass-edge));
-  -webkit-backdrop-filter: var(--glass-nav-lens-filter, none);
-  backdrop-filter: var(--app-nav-lens-optics, var(--glass-nav-lens-filter, none));
+  transition: transform 260ms cubic-bezier(.2, .75, .25, 1), opacity 320ms ease, visibility 0s 320ms;
 }
-.app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-dragging]::before { transition: none; }
+.primary-nav[data-drag-lens] > button { z-index: 2; }
+.primary-nav[data-lens-pressed] > .navigation-drag-lens {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(var(--app-nav-lens-travel, 0px)) scale(1.36, 1.20);
+  transition-delay: 0s;
+}
+.app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-pressed]::before { opacity: 0; }
+.app-shell[data-floating-navigation] > .primary-nav[data-lens-dragging]::before,
+.primary-nav[data-lens-dragging] > .navigation-drag-lens { transition-property: opacity; }
 @media (prefers-reduced-motion: reduce) {
-  .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens]::before { transition: none; }
-  /* Windows remote sessions can request reduced motion. Keep tab selection
-     trackable with a short glide, without stretching or overshoot. */
+  .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens]::before,
+  .primary-nav > .navigation-drag-lens { transition: none; }
+  .primary-nav[data-lens-pressed] > .navigation-drag-lens { transform: translateX(var(--app-nav-lens-travel, 0px)); }
   .app-shell[data-labeled-capsule] > .primary-nav[data-drag-lens]:not([data-lens-dragging])::before {
     transition: transform 240ms ease-in-out;
   }
-  .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-pressed]::before {
-    --app-nav-lens-scale-x: 1;
-    --app-nav-lens-scale-y: 1;
-  }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .primary-nav[data-lens-pressed]::after {
-    box-shadow: var(--glass-capsule-shadow, inset 0 0 0 1px var(--glass-edge));
-  }
-  .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-pressed]::before {
-    background-color: var(--shell-hover);
-    background-image: none;
-    box-shadow: inset 0 0 0 1px var(--glass-edge);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
+  .primary-nav > .navigation-drag-lens { display: none; }
+  .app-shell[data-floating-navigation] > .primary-nav[data-drag-lens][data-lens-pressed]::before { opacity: 1; }
 }
 
 .app-shell[data-floating-navigation][data-side-navigation] > .primary-nav {

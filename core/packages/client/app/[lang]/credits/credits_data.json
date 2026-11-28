@@ -30,8 +30,8 @@
   {
     "name": "AndroidLiquidGlass / Kyant0",
     "url": "https://github.com/Kyant0/AndroidLiquidGlass/blob/kmp/app/src/commonMain/kotlin/com/kyant/backdrop/catalog/components/LiquidBottomTabs.kt",
-    "zh": "Android 悬浮导航栏参考该底栏示例中选中胶囊的按住放大、跟手拖动与松手切换交互。",
-    "en": "The Android floating navigation bar takes inspiration from this demo’s selection capsule, which enlarges on press, follows the finger during a drag, and switches tabs on release.",
+    "zh": "Android 和 Windows 悬浮导航栏参考该底栏的拖动交互、胶囊边缘折射，以及按压和松手时联动的折射与高光。",
+    "en": "The Android and Windows navigation capsules adapt this demo’s drag interaction, edge refraction, and coordinated refraction and highlights on press and release.",
     "section": "platform"
   },
   {

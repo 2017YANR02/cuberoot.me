@@ -19,6 +19,10 @@ interface NavigationDrag {
   travel: number;
 }
 
+function positionNavigationLens(nav: HTMLElement, travel: number) {
+  nav.style.setProperty('--app-nav-lens-travel', `${travel}px`);
+}
+
 function clearNavigationDrag({ nav, pointerId, holdTimer }: NavigationDrag) {
   window.clearTimeout(holdTimer);
   nav.removeAttribute('data-lens-pressed');
@@ -85,7 +89,7 @@ export function useDraggablePrimaryNavigation(
         // A tap should slide the settled lens without flashing the held glass.
         holdTimer: window.setTimeout(() => {
           if (drag.current !== active) return;
-          nav.style.setProperty('--app-nav-lens-travel', `${travel}px`);
+          positionNavigationLens(nav, travel);
           nav.setAttribute('data-lens-pressed', '');
         }, 120),
       };
@@ -102,7 +106,7 @@ export function useDraggablePrimaryNavigation(
         active.nav.setAttribute('data-lens-dragging', '');
       }
       const travel = Math.max(0, Math.min(active.maxTravel, active.travel + delta));
-      active.nav.style.setProperty('--app-nav-lens-travel', `${travel}px`);
+      positionNavigationLens(active.nav, travel);
     },
     onPointerUp: finish,
     onPointerCancel: finish,

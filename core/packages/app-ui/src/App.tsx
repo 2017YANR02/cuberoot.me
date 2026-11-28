@@ -366,6 +366,7 @@ import { startWebSurfaceHandshake } from './web-surface-handshake';
 import { LoadingBrandMark } from './LoadingBrandMark';
 import { installedWebEntryUrl } from './web-surface-url';
 import { useDraggablePrimaryNavigation, usePrimaryNavigation, useTimerNavigationAvoidance } from './use-primary-navigation';
+import { NavigationDragLens } from './NavigationDragLens';
 import { PrimaryNavigationOptics } from './PrimaryNavigationOptics';
 import {
   solveMobileRandomDifficultyCase,
@@ -4352,7 +4353,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (showToolsSearch) setToolsSearchOpen(open => !open);
     } else if (navVisible) selectPrimaryView(id);
   });
-  const draggableNavigation = (keepNavigationCentered || labeledCapsule) && !sideNavigation && !nativeNavigation;
+  const glassNavigation = (keepNavigationCentered || labeledCapsule) && !nativeNavigation;
+  const draggableNavigation = glassNavigation && !sideNavigation;
   const navigationDragHandlers = useDraggablePrimaryNavigation(draggableNavigation && navVisible, selectPrimaryView);
 
   const desktopCommand = useRef<(command: string) => void>(() => {});
@@ -5772,7 +5774,8 @@ children: <>
       />}
 
       <nav {...navigationDragHandlers} data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}
-        data-site-surface={floatingNavigation ? 'popover' : undefined}
+        data-site-surface={floatingNavigation && !glassNavigation ? 'popover' : undefined}
+        data-glass-shell={glassNavigation ? '' : undefined}
         data-drag-lens={draggableNavigation ? '' : undefined}
         data-selected={floatingNavigation ? primaryDestination : undefined}
         data-native-navigation={nativeNavigation ? '' : undefined}
@@ -5782,7 +5785,11 @@ children: <>
             ? { top: Math.min(hostViewport.bar.y + hostViewport.bar.height, viewportHeight) - 148 }
             : { top: hostViewport.bar.y, height: Math.min(hostViewport.bar.height, Math.max(0, viewportHeight - hostViewport.bar.y)) }) }
           : { '--app-nav-offset-x': `${navHorizontalOffset}px` } as CSSProperties}>
-        {draggableNavigation && <PrimaryNavigationOptics navigation={primaryNavRef} />}
+        {glassNavigation && <>
+          <PrimaryNavigationOptics siteWide />
+          <span className="primary-nav-surface af-glass-surface" data-af-glass-optics="lens" data-af-glass-role="popover" aria-hidden="true" />
+        </>}
+        {draggableNavigation && <NavigationDragLens />}
         <button
           data-destination="timer"
           aria-label={copy.timer}
