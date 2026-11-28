@@ -41,6 +41,12 @@ describe('mobile embed navigation contract', () => {
     expect(decodeMobileEmbedExternal(external)).toEqual(external);
   });
 
+  it('supports native detail navigation only for an Account frame', () => {
+    const init = mobileEmbedInitMessage('account', { accountDetailNavigation: true });
+    expect(decodeMobileEmbedInit(init)).toEqual(init);
+    expect(decodeMobileEmbedInit({ ...init, surface: 'tools' })).toBeNull();
+  });
+
   it('round-trips account auth and one-time web-session messages', () => {
     const auth = mobileEmbedAuthRequestMessage('wechat');
     expect(decodeMobileEmbedAuthRequest(auth)).toEqual(auth);

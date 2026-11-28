@@ -8,7 +8,7 @@ import AppearanceToggle from '@/components/AppearanceToggle';
 import PageBackLink from '@/components/PageBackLink';
 import { ClientLoadStatus } from '@/components/StartupStatus';
 import { useT } from '@/hooks/useT';
-import { openInstalledAppearance, useInlineInstalledAccountSettings, useInstalledShellNavigation, useInstalledShellSurface } from '@/lib/installed-shell-navigation';
+import { openInstalledAppearance, useInlineInstalledAccountSettings, useInstalledAccountDetailNavigation, useInstalledShellNavigation, useInstalledShellSurface } from '@/lib/installed-shell-navigation';
 import '@cuberoot/timer-ui/timer-settings-panel.css';
 import './settings-panel.css';
 
@@ -29,7 +29,10 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
   const shellNavigation = useInstalledShellNavigation();
   const accountShell = useInstalledShellSurface() === 'account';
   const inlineSettings = useInlineInstalledAccountSettings();
-  const delegateSettings = shellNavigation && !inlineSettings;
+  const detailNavigation = useInstalledAccountDetailNavigation();
+  const accountDetail = !embedded && detailNavigation;
+  const showHeader = !accountDetail && (!accountShell || inlineSettings);
+  const delegateSettings = shellNavigation && (accountDetail || !inlineSettings);
   useEffect(() => {
     if (general && delegateSettings) openInstalledAppearance();
   }, [general, delegateSettings]);
@@ -49,8 +52,9 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
     }
   };
 
-  return <section className={`settings-panel${embedded ? ' settings-panel-embedded' : ' settings-panel-page'}`} data-site-surface="panel" aria-labelledby={accountShell && !inlineSettings ? undefined : titleId} aria-label={accountShell && !inlineSettings ? t('设置', 'Settings') : undefined}>
-    {(!accountShell || inlineSettings) && <header className="settings-panel-header">
+  return <section className={`settings-panel${embedded ? ' settings-panel-embedded' : ' settings-panel-page'}${accountDetail ? ' settings-panel-account-detail' : ''}`} data-site-surface="panel" aria-labelledby={showHeader ? titleId : undefined} aria-label={showHeader ? undefined : accountDetail && !general
+      ? (security ? t('账号与安全', 'Account & security') : t('我的空间', 'My space')) : t('设置', 'Settings')}>
+    {showHeader && <header className="settings-panel-header">
       <div className="settings-panel-heading">
         {!embedded && !accountShell && <PageBackLink className="settings-panel-back" label={t('返回', 'Back')} miniProgramTarget="account"
           onClick={event => {
@@ -64,11 +68,11 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
       </div>
       {onClose && <button type="button" className="settings-panel-close" aria-label={t('关闭设置', 'Close settings')} onClick={onClose}><X size={20} aria-hidden="true" /></button>}
     </header>}
-    <nav className="settings-panel-nav" aria-label={t('设置分类', 'Settings categories')}>
+    {!accountDetail && <nav className="settings-panel-nav" aria-label={t('设置分类', 'Settings categories')}>
       {(!accountShell || inlineSettings) && <button type="button" data-mobile-open-settings={inlineSettings ? undefined : 'appearance'} className="settings-panel-nav-item" aria-current={general ? 'page' : undefined} onClick={() => select('general')}><Settings size={18} aria-hidden="true" /><span>{t('设置', 'Settings')}</span></button>}
       <button type="button" className="settings-panel-nav-item" aria-current={!general && !security ? 'page' : undefined} onClick={() => select('space')}><UserRound size={18} aria-hidden="true" /><span>{t('我的空间', 'My space')}</span></button>
       <button type="button" className="settings-panel-nav-item" aria-current={security ? 'page' : undefined} onClick={() => select('security')}><ShieldCheck size={18} aria-hidden="true" /><span>{t('账号与安全', 'Account & security')}</span></button>
-    </nav>
+    </nav>}
     <div className="settings-panel-content" ref={contentRef}>
       {general && !delegateSettings && <section aria-label={t('设置', 'Settings')} className="settings-general settings-modal">
         <h2>{t('设置', 'Settings')}</h2>

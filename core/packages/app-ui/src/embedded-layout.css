@@ -224,3 +224,19 @@
 }
 /* Give the search composer and its results exclusive use of this space while open. */
 :root[data-embedded-search-open] .mem-reminder { visibility: hidden; }
+
+/* The App detail screen provides its own title and back action. */
+:root .settings-panel-page.settings-panel-account-detail,
+:root[data-native-account-detail-frame] .settings-panel-page {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+:root[data-native-account-detail-frame] .settings-panel-page > :is(.settings-panel-header, .settings-panel-nav) {
+  display: none;
+}
+
+:root .settings-panel-page.settings-panel-account-detail > .settings-panel-content,
+:root[data-native-account-detail-frame] .settings-panel-page > .settings-panel-content {
+  grid-area: 1 / 1;
+}

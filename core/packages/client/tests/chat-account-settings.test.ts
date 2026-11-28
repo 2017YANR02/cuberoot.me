@@ -151,3 +151,11 @@ it('keeps all three Account categories in one panel for the installed shell', as
   expect(host.querySelector('input')).toBe(draft);
   expect(draft.value).toBe('保留草稿');
 });
+
+it.each(['', '?view=signin'])('lets the installed detail screen own account navigation (%s)', async query => {
+  setInstalledShellNavigation(vi.fn(), 'account', true, true);
+  await render(query);
+  expect(host.querySelector('.settings-panel-account-detail')).not.toBeNull();
+  expect(host.querySelector('.settings-panel-header, .settings-panel-nav')).toBeNull();
+  expect(host.querySelector('.settings-panel-content input')).not.toBeNull();
+});

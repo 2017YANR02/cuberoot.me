@@ -38,6 +38,7 @@ export interface MobileEmbedInitMessage {
   bluetooth?: boolean;
   shellNavigation?: boolean;
   inlineAccountSettings?: boolean;
+  accountDetailNavigation?: true;
   appearance?: AppearancePreferences;
   chrome?: MobileEmbedChrome;
 }
@@ -194,7 +195,7 @@ export function mobileEmbedBackMessage(surface: MobileEmbedSurface): MobileEmbed
 
 export function mobileEmbedInitMessage(
   surface: MobileEmbedSurface,
-  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership' | 'webMembership' | 'bluetooth' | 'shellNavigation' | 'appearance' | 'chrome' | 'inlineAccountSettings'>,
+  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership' | 'webMembership' | 'bluetooth' | 'shellNavigation' | 'appearance' | 'chrome' | 'inlineAccountSettings' | 'accountDetailNavigation'>,
 ): MobileEmbedInitMessage {
   return { surface, type: 'cuberoot:mobile:init', ...capabilities };
 }
@@ -304,6 +305,7 @@ export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | 
     || (candidate.bluetooth !== undefined && typeof candidate.bluetooth !== 'boolean')
     || (candidate.shellNavigation !== undefined && typeof candidate.shellNavigation !== 'boolean')
     || (candidate.inlineAccountSettings !== undefined && (candidate.surface !== 'account' || typeof candidate.inlineAccountSettings !== 'boolean'))
+    || (candidate.accountDetailNavigation !== undefined && (candidate.surface !== 'account' || candidate.accountDetailNavigation !== true))
     || (candidate.appearance !== undefined && !decodeAppearancePreferences(candidate.appearance))
     || (candidate.chrome !== undefined && !isMobileEmbedChrome(candidate.chrome))
     || (candidate.accountManagement !== undefined && typeof candidate.accountManagement !== 'boolean')) {

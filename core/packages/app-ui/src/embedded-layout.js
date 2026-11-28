@@ -57,6 +57,7 @@ window.addEventListener('message', ({ source, origin, data }) => {
     if (!expanded && wasExpanded && document.activeElement?.matches(searchField)) document.activeElement.blur();
   } else {
     root.toggleAttribute('data-native-account-frame', supportedPage);
+    root.toggleAttribute('data-native-account-detail-frame', supportedPage && data.accountDetailNavigation === true);
   }
 
   const usesTop = supportedPage && isInset(top?.left) && isInset(top?.right);

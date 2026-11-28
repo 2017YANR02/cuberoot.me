@@ -1905,6 +1905,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
         // Older websites use this flag to hide the Account Settings tab.
         shellNavigation: surface === 'tools',
         inlineAccountSettings: surface === 'account' ? true : undefined,
+        accountDetailNavigation: surface === 'account' ? true : undefined,
         appearance: surface === 'tools' || accountInlineSettingsRef.current ? appearanceRef.current ?? undefined : undefined,
         appleMembership: Boolean(host.appleMembership),
         googleMembership: Boolean(host.googleMembership),

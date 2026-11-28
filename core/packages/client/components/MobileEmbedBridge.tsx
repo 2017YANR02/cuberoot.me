@@ -320,8 +320,8 @@ export default function MobileEmbedBridge() {
         hostOwnsSafeTop = true;
         parentOrigin = event.origin;
         capabilities = init;
-        setInstalledShellNavigation(init.shellNavigation === true || inlineAccount()
-          ? () => postToParent(mobileEmbedOpenSettingsMessage(surface)) : null, surface, inlineAccount());
+        setInstalledShellNavigation(init.shellNavigation === true || inlineAccount() || init.accountDetailNavigation === true
+          ? () => postToParent(mobileEmbedOpenSettingsMessage(surface)) : null, surface, inlineAccount(), init.accountDetailNavigation === true);
         if (init.appearance) applyHostAppearance(init.appearance);
         setInstalledBleBridge(surface === 'tools' && init.bluetooth === true ? event.origin : null);
         setAppleMembershipBridge(init.appleMembership === true, postToParent);
