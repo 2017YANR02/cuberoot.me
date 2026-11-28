@@ -1158,8 +1158,8 @@
 }
 
 @font-face {
-  font-family: CaptionSilkscreen;
-  src: url('./fonts/silkscreen-latin-700.woff2') format('woff2');
+  font-family: CaptionPixter;
+  src: url('/fonts/pixter-granular-bold.ttf') format('truetype');
   font-weight: 700;
   font-display: swap;
 }

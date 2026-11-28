@@ -388,7 +388,7 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
   }
   function downloadAss() {
     const families: Record<string, string> = {
-      CaptionSilkscreen: 'Silkscreen', 'system-ui': 'Arial', monospace: 'Courier New', serif: 'Georgia',
+      CaptionPixter: 'Pixter-Granular Bold', 'system-ui': 'Arial', monospace: 'Courier New', serif: 'Georgia',
     };
     const family = customFont && style.font === customFont.family ? customFont.installedFamily : families[style.font] ?? 'Arial';
     const content = captionAss(prepared, style, family, media.width, media.height);
@@ -425,7 +425,7 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
     }
   }
   const fontItems = [
-    { value: 'CaptionSilkscreen', label: 'Silkscreen' },
+    { value: 'CaptionPixter', label: 'Pixter Granular Bold' },
     { value: 'system-ui', label: t('系统字体', 'System sans') },
     { value: 'monospace', label: t('等宽', 'Monospace') },
     { value: 'serif', label: t('衬线', 'Serif') },

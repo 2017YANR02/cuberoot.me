@@ -15,7 +15,7 @@ export function captionCubeRect(width: number, height: number, position?: CubePo
 }
 export interface CaptionStyle { cubePosition?: CubePosition; cubeScale?: number; font: string; size: number; stroke: number; x: number; y: number; comments: boolean }
 export const initialCaptionStyle: CaptionStyle = {
-  font: 'CaptionSilkscreen', size: 64, stroke: 6, x: .5, y: .30, comments: false,
+  font: 'CaptionPixter', size: 64, stroke: 6, x: .5, y: .30, comments: false,
 };
 
 export function solutionCues(solution: string, start: number): CaptionCue[] {
@@ -154,11 +154,13 @@ export function captionAss(cues: PreparedCaptions, style: CaptionStyle, font: st
   const scale = height / 1080;
   const outline = (style.stroke * scale).toFixed(2);
   const safeFont = font.replace(/[,\r\n]/g, ' ').trim() || 'Arial';
+  // Pixter's named bold face is registered as Regular in its own font family.
+  const bold = style.font === 'CaptionPixter' ? 0 : -1;
   const lines = [
     '[Script Info]', 'ScriptType: v4.00+', 'ScaledBorderAndShadow: yes', 'WrapStyle: 0',
     'PlayResX: ' + width, 'PlayResY: ' + height, '', '[V4+ Styles]',
     'Format: Name,Fontname,Fontsize,PrimaryColour,SecondaryColour,OutlineColour,BackColour,Bold,Italic,Underline,StrikeOut,ScaleX,ScaleY,Spacing,Angle,BorderStyle,Outline,Shadow,Alignment,MarginL,MarginR,MarginV,Encoding',
-    `Style: Turns,${safeFont},${(style.size * scale).toFixed(2)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,${outline},0,5,0,0,0,1`,
+    `Style: Turns,${safeFont},${(style.size * scale).toFixed(2)},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,${bold},0,0,0,100,100,0,0,1,${outline},0,5,0,0,0,1`,
     '', '[Events]', 'Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text',
   ];
   const escape = (text: string) => text.replaceAll('\\', '＼').replaceAll('{', '｛').replaceAll('}', '｝');

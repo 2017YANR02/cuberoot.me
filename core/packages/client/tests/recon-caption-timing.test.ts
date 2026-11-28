@@ -18,7 +18,8 @@ describe('caption source timestamps', () => {
     }], 2);
     const timeline = prepareCaptions(adjusted);
     expect(timeline[0].turns.map(t => [t.from, t.to])).toEqual([[.74, .8], [.9, 1.12], [NaN, NaN]]);
-    const events = captionAss(timeline, initialCaptionStyle, 'Silkscreen', 1920, 1080);
+    const events = captionAss(timeline, initialCaptionStyle, 'Pixter-Granular Bold', 1920, 1080);
+    expect(events).toContain('Style: Turns,Pixter-Granular Bold,64.00,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,');
     expect(events).toContain('Dialogue: 1,0:00:00.80,0:00:00.90,');
     expect(events.split('\n').find(s => s.startsWith('Dialogue: 1,0:00:00.80'))).not.toContain('\\1c');
     expect(events).not.toContain('NaN');
