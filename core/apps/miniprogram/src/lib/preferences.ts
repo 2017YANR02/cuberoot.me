@@ -1,4 +1,4 @@
-import { decodeNativeAppearance, decodeMiniProgramPreferences, MINI_PROGRAM_PREFERENCES_QUERY } from '@cuberoot/shared/appearance';
+import { decodeNativeAppearance, decodeMiniProgramPreferences, findAccentColor, MINI_PROGRAM_PREFERENCES_QUERY } from '@cuberoot/shared/appearance';
 import { miniProgramApi } from './platform';
 import { receiveNativeAppearance } from './appearance';
 import { getMiniProgramLocale, receiveNativeLocale } from './i18n';
@@ -11,10 +11,24 @@ export function readNativePreferences() {
 export function receiveNativePreferences(value: unknown, source?: object): boolean {
   if (!value || typeof value !== 'object') return false;
   const message = value as { preferences?: unknown; appearance?: unknown };
-  const preferences = decodeMiniProgramPreferences(message.preferences);
+  const incoming = decodeMiniProgramPreferences(message.preferences);
   const appearance = decodeNativeAppearance(message.appearance);
-  if (!preferences || !appearance) return false;
-  const changed = JSON.stringify(readNativePreferences()) !== JSON.stringify(preferences);
+  if (!incoming || !appearance) return false;
+  const previous = readNativePreferences();
+  // Older web deployments do not know about this field. An explicit null
+  // clears the accent, while an omitted value must keep the native choice.
+  const preferences = incoming.accent === undefined && previous?.accent !== undefined
+    ? { ...incoming, accent: previous.accent }
+    : incoming;
+  const retainedAccent = incoming.accent === undefined ? findAccentColor(preferences.accent) : null;
+  if (retainedAccent) {
+    appearance.colors['--cr-accent'] = retainedAccent[appearance.scheme];
+    if (appearance.systemColors) {
+      appearance.systemColors.light['--cr-accent'] = retainedAccent.light;
+      appearance.systemColors.dark['--cr-accent'] = retainedAccent.dark;
+    }
+  }
+  const changed = JSON.stringify(previous) !== JSON.stringify(preferences);
   try { miniProgramApi().setStorageSync(KEY, preferences); } catch { return false; }
   if (source && 'acceptPreferences' in source && typeof source.acceptPreferences === 'function') source.acceptPreferences();
   receiveNativeLocale({ type: 'cuberoot:locale', locale: preferences.locale });

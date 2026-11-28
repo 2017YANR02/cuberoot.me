@@ -35,6 +35,14 @@ it('persists a validated snapshot atomically and sends it to a newly opened WebV
   expect(receiveNativePreferences({ preferences, appearance: {} })).toBe(false);
   expect(readNativePreferences()).toEqual(preferences);
 });
+it('retains a native accent when an older website saves another preference', () => {
+  expect(receiveNativePreferences({ preferences: { ...preferences, accent: 'blue' }, appearance })).toBe(true);
+  expect(receiveNativePreferences({ preferences: { ...preferences, locale: 'zh' }, appearance })).toBe(true);
+  expect(readNativePreferences()).toMatchObject({ locale: 'zh', accent: 'blue' });
+  expect(stored.get('cuberoot.appearance.v1')).toMatchObject({ colors: { '--cr-accent': '#7EA2FF' } });
+  expect(receiveNativePreferences({ preferences: { ...preferences, accent: null }, appearance })).toBe(true);
+  expect(readNativePreferences()?.accent).toBeNull();
+});
 it('refreshes a cached tab omitted from getCurrentPages and retains the source WebView', async () => {
   const options = createWebViewPageOptions('timer') as any;
   const page = { ...options, data: { ...options.data }, setData(next: object) { Object.assign(this.data, next); } };

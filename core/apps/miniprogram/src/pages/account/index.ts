@@ -1,4 +1,5 @@
-import { createContactView } from '../../lib/native-contact';
+import { findAccentColor, HOME_BACKGROUNDS, type AppearancePreferences } from '@cuberoot/shared/appearance';
+import { appearanceOptionPatch, localAppearanceView, readLocalAppearanceSettings, saveLocalAppearanceSettings } from '../../lib/local-appearance-settings';
 import { ACCOUNT_PROVIDER_LABELS, visibleAccountIdentities, isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
 import { applyNativeAppearance, nativeAppearanceScheme, nativeAppearanceStyle } from '../../lib/appearance';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
@@ -22,12 +23,8 @@ import {
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
 import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 import { resolveAccountPageShare } from '../../lib/web-routes';
-import { getMiniProgramLocale, receiveNativeLocale, tr } from '../../lib/i18n';
+import { tr } from '../../lib/i18n';
 import { isDouyinMiniProgram, isExternalHttpsUrl, miniProgramApi, openExternalUrl } from '../../lib/platform';
-import {
-  getMiniProgramReleaseView,
-  type MiniProgramReleaseView,
-} from '../../lib/release-info';
 import { SITE_ORIGIN } from '../../lib/runtime-config';
 import { resumeRequiredSessionDestination } from '../../lib/required-session';
 
@@ -40,10 +37,14 @@ function createAccountCopy() {
     spaceLabel: tr({ en: 'My space', zh: '我的空间' }),
     securityLabel: tr({ en: 'Account & security', zh: '账号与安全' }),
     settingsLabel: tr({ en: 'Settings', zh: '设置' }),
-    aboutLabel: tr({ en: 'About', zh: '关于' }),
-    backToSettingsLabel: tr({ en: 'Back to Settings', zh: '返回设置' }),
-    appearanceLabel: tr({ en: 'Appearance and language', zh: '外观与语言' }),
+    appearanceLabel: tr({ en: 'Appearance', zh: '外观' }),
     languageLabel: tr({ en: 'Language', zh: '语言' }),
+    accentLabel: tr({ en: 'Accent color', zh: '强调色' }),
+    backdropLabel: tr({ en: 'Backdrop', zh: '底图' }),
+    contrastLabel: tr({ en: 'Low contrast', zh: '低对比度' }),
+    hexLabel: tr({ en: 'HEX color', zh: 'HEX 色值' }),
+    hexError: tr({ en: 'Enter a six-digit HEX color.', zh: '请输入六位 HEX 色值。' }),
+    settingsFailure: tr({ en: 'Could not save appearance settings. Try again.', zh: '外观设置未能保存，请重试。' }),
     backLabel: tr({ en: 'Back to Me', zh: '返回「我的」' }),
     payouts: isDouyinMiniProgram() ? null : tr({ en: 'Commission payouts', zh: '佣金提现' }),
     editName: tr({ en: 'Edit display name', zh: '修改展示名' }),
@@ -75,15 +76,6 @@ function createAccountCopy() {
       en: 'The account linking page is temporarily unavailable. Try again later.',
       zh: '账号绑定页面暂时无法打开，请稍后重试',
     }),
-    contactCopyFailure: tr({
-      en: 'Unable to copy this contact detail. Try again.',
-      zh: '暂时无法复制这项联系信息，请重试',
-    }),
-    contactPageFailure: tr({
-      en: 'The contact page is temporarily unavailable. Try again later.',
-      zh: '联系页面暂时无法打开，请稍后重试',
-    }),
-    copiedLabel: tr({ en: 'Copied', zh: '已复制' }),
     createAccountLabel: tr({ en: 'Create a new account', zh: '创建新账号' }),
     accountChoiceTitle: tr({ en: 'Do you have a CubeRoot account?', zh: '你有 CubeRoot 账号吗？' }),
     accountChoiceNote: tr({ en: 'Keep your existing membership and profile.', zh: '保留原账号的会员和资料。' }),
@@ -176,23 +168,13 @@ function createAccountCopy() {
   };
 }
 let ACCOUNT_COPY = createAccountCopy();
-const CONTACT_VIEW = createContactView();
-
-interface ContactCopyEvent {
-  currentTarget: {
-    dataset: {
-      value?: unknown;
-    };
-  };
-}
-
-type AccountSection = 'home' | 'space' | 'security' | 'settings' | 'about';
+type AccountSection = 'home' | 'space' | 'security' | 'settings';
 
 interface AccountPageData {
   appearanceStyle: string;
   appearanceScheme: 'light' | 'dark';
-  hasWebsiteSettings: boolean;
-  languageIndex: number;
+  hasWebsiteAccount: boolean;
+  appearanceSettings: ReturnType<typeof localAppearanceView> | null;
   accountSection: AccountSection;
   accountError: string;
   accountLinkPending: boolean;
@@ -207,7 +189,6 @@ interface AccountPageData {
   accountLinkTargetId: number | null;
   accountLinkTargetName: string;
   agreementAccepted: boolean;
-  contact: typeof CONTACT_VIEW;
   copy: typeof ACCOUNT_COPY;
   displayName: string;
   profileInitial: string;
@@ -230,7 +211,6 @@ interface AccountPageData {
   loginButtonLabel: string;
   loginIntro: string;
   loginNote: string;
-  release: MiniProgramReleaseView;
   requiresAgreement: boolean;
   uidText: string;
   wcaId: string;
@@ -533,8 +513,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
     appearanceStyle: '',
     appearanceScheme: 'light',
-    hasWebsiteSettings: !isDouyinMiniProgram(),
-    languageIndex: getMiniProgramLocale() === 'en' ? 1 : 0,
+    hasWebsiteAccount: !isDouyinMiniProgram(),
+    appearanceSettings: null,
     accountSection: 'home',
     accountError: '',
     accountLinkPending: false,
@@ -547,7 +527,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     existingOnly: false,
     ...EMPTY_LINK_CODE,
     agreementAccepted: false,
-    contact: CONTACT_VIEW,
     copy: ACCOUNT_COPY,
     displayName: '',
     profileInitial: '',
@@ -566,7 +545,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     loginButtonLabel: ACCOUNT_COPY.loginButtonLabel,
     loginIntro: ACCOUNT_COPY.loginIntro,
     loginNote: ACCOUNT_COPY.loginNote,
-    release: getMiniProgramReleaseView(getMiniProgramLocale()),
     requiresAgreement: isDouyinMiniProgram(),
     uidText: '',
     wcaId: '',
@@ -620,12 +598,12 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   refreshLocale() {
     if (this.data.isTimelineEntry) return;
     ACCOUNT_COPY = createAccountCopy();
-    this.setData({ copy: ACCOUNT_COPY, contact: createContactView(), languageIndex: getMiniProgramLocale() === 'en' ? 1 : 0,
+    this.setData({ copy: ACCOUNT_COPY,
       loginButtonBusyLabel: ACCOUNT_COPY.loginButtonBusyLabel,
       loginButtonLabel: ACCOUNT_COPY.loginButtonLabel,
       loginIntro: ACCOUNT_COPY.loginIntro, loginNote: ACCOUNT_COPY.loginNote,
-      release: getMiniProgramReleaseView(getMiniProgramLocale()),
     });
+    this.refreshAppearanceSettings();
     const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [this];
     if (pages[pages.length - 1] === this) setNormalNavigationTitle();
   },
@@ -644,10 +622,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     refreshStoredSession(this as unknown as AccountPageInstance);
     if (this.wcaLinkTicket && this.data.wcaLinkPending) void refreshWcaLink(this as unknown as AccountPageInstance);
     currentPendingIdentity(this as unknown as AccountPageInstance);
-    this.setData({
-      accountLinkPending: false,
-      release: getMiniProgramReleaseView(getMiniProgramLocale()),
-    });
+    this.setData({ accountLinkPending: false });
     if (shouldRetryAccountLink) {
       void completeMiniProgramLogin(this as unknown as AccountPageInstance);
 }
@@ -802,14 +777,11 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   openPolicy() {
-    const fromSettings = this.data.accountSection === 'settings';
-    if (this.data.isTimelineEntry || this.data.loginBusy
-      || (!fromSettings && !this.data.requiresAgreement && !this.data.wechatPhoneRequired)) return;
-    const errorField = fromSettings ? 'accountError' : 'loginError';
-    this.setData({ [errorField]: '' });
+    if ((!this.data.requiresAgreement && !this.data.wechatPhoneRequired) || this.data.loginBusy) return;
+    this.setData({ loginError: '' });
     openWebsitePageOnce(this, 'privacy', {
       failureMessage: ACCOUNT_COPY.policyFailure,
-      onFailure: (message) => this.setData({ [errorField]: message }),
+      onFailure: (message) => this.setData({ loginError: message }),
     });
   },
 
@@ -978,28 +950,48 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   selectAccountSection(event: WechatMiniprogram.TouchEvent) {
     const section: unknown = event.currentTarget.dataset.section;
-    if (section !== 'home' && section !== 'space' && section !== 'security' && section !== 'settings' && section !== 'about') return;
+    if (section !== 'home' && section !== 'space' && section !== 'security' && section !== 'settings') return;
     if (this.data.isTimelineEntry || this.data.nameBusy || this.data.identityMutationBusy) return;
     if (this.data.loginRequired && (section === 'space' || section === 'security')) return;
     this.setData({ accountSection: section, accountError: '', editingName: false, nameDraft: '' });
+    this.refreshAppearanceSettings();
   },
 
   hideUnavailableAvatar() { this.setData({ avatarUrl: '' }); },
 
-  changeSettingsLanguage(event: WechatMiniprogram.PickerChange) {
-    const index = Number(event.detail.value);
-    if (!this.data.hasWebsiteSettings && this.data.accountSection === 'settings' && (index === 0 || index === 1)) {
-      receiveNativeLocale({ type: 'cuberoot:locale', locale: index === 0 ? 'zh' : 'en' });
-      this.refreshLocale();
-    }
+  refreshAppearanceSettings(scheme?: 'light' | 'dark') {
+    if (this.data.accountSection === 'settings') this.setData({ appearanceSettings: localAppearanceView(scheme) });
   },
 
-  openAppearanceSettings() {
-    if (!this.data.hasWebsiteSettings || this.data.isTimelineEntry || this.data.accountSection !== 'settings') return;
-    openWebsitePageOnce(this, 'appearance-settings', {
-      failureMessage: ACCOUNT_COPY.accountFailure,
-      onFailure: (message) => this.setData({ accountError: message }),
-    });
+  commitAppearanceSettings(patch: Partial<AppearancePreferences>) {
+    if (this.data.isTimelineEntry || this.data.accountSection !== 'settings') return;
+    const saved = saveLocalAppearanceSettings({ ...readLocalAppearanceSettings(), ...patch });
+    this.setData({ accountError: saved ? '' : ACCOUNT_COPY.settingsFailure });
+    if (saved) this.refreshLocale();
+  },
+
+  changeAppearanceOption(event: WechatMiniprogram.PickerChange) {
+    const patch = appearanceOptionPatch(event.currentTarget.dataset.field, Number(event.detail.value));
+    if (patch) this.commitAppearanceSettings(patch);
+  },
+
+  changeAppearanceContrast(event: WechatMiniprogram.SwitchChange) {
+    this.commitAppearanceSettings({ contrast: event.detail.value ? 'soft' : 'normal' });
+  },
+
+  changeAppearanceHex(event: WechatMiniprogram.InputBlur) {
+    const color = findAccentColor(event.detail.value.trim());
+    if (!color?.id.startsWith('#')) {
+      this.setData({ accountError: ACCOUNT_COPY.hexError });
+      return;
+    }
+    if (color.id !== readLocalAppearanceSettings().accent) this.commitAppearanceSettings({ accent: color.id });
+    else this.setData({ accountError: '' });
+  },
+
+  changeAppearanceBackground(event: WechatMiniprogram.TouchEvent) {
+    const scene = HOME_BACKGROUNDS.find(item => item.id === event.currentTarget.dataset.id);
+    if (scene) this.commitAppearanceSettings({ [nativeAppearanceScheme() === 'dark' ? 'darkBackground' : 'lightBackground']: scene.id });
   },
 
   openPayouts() { miniProgramApi().navigateTo({ url: '/pages/payouts/index' }); },
@@ -1021,54 +1013,5 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       failureMessage: ACCOUNT_COPY.accountFailure,
       onFailure: (message) => this.setData({ accountError: message }),
     });
-  },
-
-  openContactWebsite() {
-    if (this.data.isTimelineEntry || (this.data.loginRequired && this.data.accountSection !== 'about')) return;
-    this.setData({ accountError: '' });
-    openWebsitePageOnce(this, 'contact', {
-      failureMessage: ACCOUNT_COPY.contactPageFailure,
-      onFailure: (message) => this.setData({ accountError: message }),
-    });
-  },
-
-  previewWechatQr() {
-    if (this.data.contact.platformFeedback) return;
-    if (this.data.isTimelineEntry || (this.data.loginRequired && this.data.accountSection !== 'about')) return;
-    const path = CONTACT_VIEW.qrPath;
-    try {
-      const api = miniProgramApi();
-      if (typeof api.previewImage === 'function') {
-        api.previewImage({ current: path, urls: [path] });
-      }
-    } catch {
-      // QR preview is optional; copying the WeChat ID remains available.
-    }
-  },
-
-  copyContactValue(event: ContactCopyEvent) {
-    if (this.data.contact.platformFeedback) return;
-    const value = event.currentTarget.dataset.value;
-    if (typeof value !== 'string' || value.length === 0) return;
-
-    const copyFailed = () => {
-      this.setData({ accountError: ACCOUNT_COPY.contactCopyFailure });
-    };
-
-    this.setData({ accountError: '' });
-    try {
-      const api = miniProgramApi();
-      api.setClipboardData({
-        data: value,
-        fail: copyFailed,
-        success: () => {
-          if (typeof api.showToast === 'function') {
-            api.showToast({ icon: 'none', title: ACCOUNT_COPY.copiedLabel });
-          }
-        },
-      });
-    } catch {
-      copyFailed();
-    }
   },
 });

@@ -216,8 +216,9 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toContain('aria-busy="{{loginBusy}}"');
     expect(accountTemplate).toContain('aria-label="{{copy.retrySessionAria}}"');
     expect(accountTemplate).toContain('aria-role="status"');
-    expect(accountTemplate).toContain('{{release.version}}');
-    expect(accountTemplate).toContain('{{release.notesTitle}}');
+    expect(accountTemplate).not.toContain('{{release.version}}');
+    expect(accountTemplate).not.toContain('native-contact.wxml');
+    expect(accountTemplate).toContain('bindchange="changeAppearanceContrast"');
     expect(timerStyles).toContain('.native-timer');
     expect(toolsStyles).toContain('.tools-sections');
     expect(accountStyles).toContain('var(--cr-muted)');

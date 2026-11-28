@@ -46,7 +46,7 @@ export async function buildTabIcons(outputRoot, tabBar, suffix = '') {
 
 export async function buildAccountIcons(outputRoot) {
   const directory = join(outputRoot, 'assets', 'tabbar');
-  for (const icon of ['user-round', 'shield', 'settings', 'log-out', 'chevron-left', 'chevron-right']) {
+  for (const icon of ['user-round', 'shield', 'settings', 'log-out', 'chevron-left', 'chevron-right', 'arrow-left', 'monitor', 'moon', 'sun', 'check']) {
     const svg = await readFile(require.resolve(`lucide-static/icons/${icon}.svg`), 'utf8');
     for (const [scheme, color] of [['light', '#171717'], ['dark', '#f5f5f5']]) {
       await sharp(Buffer.from(svg.replaceAll('currentColor', color)), { density: 243 })
@@ -66,8 +66,8 @@ export async function buildDouyinTimerIcons(outputRoot, selectedColor) {
     await sharp(Buffer.from(tinted)).resize(81, 81).png().toFile(join(directory, `project-${name}.png`));
   }));
   const toolbarColors = { bluetooth: '#0082fc', 'chevron-left': selectedColor, 'chevron-right': selectedColor };
-  for (const icon of ['lightbulb', 'video', 'layout-template', 'grip-horizontal', 'move-diagonal-2', 'rotate-ccw', 'check',
-    'layout-dashboard', 'calendar-days', 'bar-chart-3', 'layers', 'x', 'chevron-down', 'bluetooth', 'timer', 'mic', 'arrow-left', 'arrow-right', 'pencil', 'sliders-horizontal', 'skip-back', 'skip-forward', 'play', 'pause',
+  for (const icon of ['lightbulb', 'video', 'layout-template', 'grip-horizontal', 'move-diagonal-2', 'rotate-ccw',
+    'layout-dashboard', 'calendar-days', 'bar-chart-3', 'layers', 'x', 'chevron-down', 'bluetooth', 'timer', 'mic', 'arrow-right', 'pencil', 'sliders-horizontal', 'skip-back', 'skip-forward', 'play', 'pause',
     'dices', 'trophy', 'palette', 'volume-2', 'database', 'keyboard', 'download', 'info', 'circle-help', 'copy', 'target', 'circle-check', 'flame', 'arrow-right-left',
     'search', 'ellipsis', 'refresh-cw', 'loader-circle']) {
     toolbarColors[`${icon}-light`] = '#171717';

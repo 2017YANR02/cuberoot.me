@@ -28,7 +28,7 @@
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
 
-<view wx:elif="{{loginRequired && accountSection !== 'settings' && accountSection !== 'about'}}" class="page account-login-page">
+<view wx:elif="{{loginRequired && accountSection !== 'settings'}}" class="page account-login-page">
   <text class="page-title">{{wechatPhoneRequired ? copy.phoneTitle : accountLinkCodeMode ? copy.linkExistingAccountLabel : phoneAccountFound ? copy.phoneFoundTitle : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
   <text class="page-intro">{{wechatPhoneRequired ? copy.phoneHint : accountLinkCodeMode ? copy.linkCodeHint : phoneAccountFound ? copy.phoneFoundHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
@@ -143,10 +143,10 @@
     </button>
   </block>
   <view wx:else class="account-detail-header">
-    <button class="account-back" hover-class="press-feedback" aria-label="{{accountSection === 'about' ? copy.backToSettingsLabel : copy.backLabel}}" data-section="{{accountSection === 'about' ? 'settings' : 'home'}}" bindtap="selectAccountSection">
-      <template is="account-icon" data="{{icon: 'chevron-left', scheme: appearanceScheme}}" />
+    <button class="account-back" hover-class="press-feedback" aria-label="{{copy.backLabel}}" data-section="home" bindtap="selectAccountSection">
+      <template is="account-icon" data="{{icon: accountSection === 'settings' ? 'arrow-left' : 'chevron-left', scheme: appearanceScheme}}" />
     </button>
-    <text class="page-title">{{accountSection === 'space' ? copy.spaceLabel : accountSection === 'security' ? copy.securityLabel : accountSection === 'about' ? copy.aboutLabel : copy.settingsLabel}}</text>
+    <text class="page-title">{{accountSection === 'space' ? copy.spaceLabel : accountSection === 'security' ? copy.securityLabel : copy.appearanceLabel}}</text>
   </view>
   <block wx:if="{{accountSection === 'space'}}">
     <template is="account-profile" data="{{avatarUrl: avatarUrl, profileInitial: profileInitial, displayName: displayName, uidText: uidText, wcaId: wcaId}}" />
@@ -161,7 +161,7 @@
       </view>
     </view>
     <button hover-class="press-feedback" wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
-    <button wx:if="{{hasWebsiteSettings}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openAccount">{{copy.accountButtonLabel}}</button>
+    <button wx:if="{{hasWebsiteAccount}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openAccount">{{copy.accountButtonLabel}}</button>
     <button wx:if="{{copy.payouts}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openPayouts">{{copy.payouts}}</button>
   </block>
   <view wx:if="{{accountSection === 'security'}}" class="account-security">
@@ -190,46 +190,52 @@
     aria-live="polite"
     aria-atomic="true"
   >{{accountError}}</text>
-  <block wx:if="{{accountSection === 'settings'}}">
-    <button wx:if="{{hasWebsiteSettings}}" class="account-settings-row" hover-class="press-feedback" bindtap="openAppearanceSettings">
+  <block wx:if="{{accountSection === 'settings' && appearanceSettings}}">
+    <view class="account-appearance-row">
+      <text>{{copy.languageLabel}}</text>
+      <picker range="{{appearanceSettings.list.locale}}" range-key="label" value="{{appearanceSettings.localeIndex}}" data-field="locale" bindchange="changeAppearanceOption" aria-label="{{copy.languageLabel}}">
+        <view class="account-appearance-control">{{appearanceSettings.list.locale[appearanceSettings.localeIndex].label}}</view>
+      </picker>
+    </view>
+    <view class="account-appearance-row">
       <text>{{copy.appearanceLabel}}</text>
-      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
-    </button>
-    <picker wx:else range="{{['简体中文', 'English']}}" value="{{languageIndex}}" bindchange="changeSettingsLanguage" aria-label="{{copy.languageLabel}}">
-      <view class="account-language">
-        <text>{{copy.languageLabel}}</text>
-        <text>{{languageIndex === 1 ? 'English' : '简体中文'}}</text>
-      </view>
-    </picker>
-    <button class="account-settings-row" hover-class="press-feedback" bindtap="openPolicy">
-      <text>{{copy.privacyLabel}}</text>
-      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
-    </button>
-    <button class="account-settings-row" hover-class="press-feedback" data-section="about" bindtap="selectAccountSection">
-      <text>{{copy.aboutLabel}}</text>
-      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
-    </button>
-  </block>
-  <block wx:if="{{accountSection === 'about'}}">
-    <view class="account-release">
-      <view class="account-release-version">
-        <text class="account-release-label">{{release.versionLabel}}</text>
-        <text class="account-release-value">{{release.version}}</text>
-        <text wx:if="{{release.channel}}" class="account-release-channel">{{release.channel}}</text>
-      </view>
-      <text class="account-release-title">{{release.notesTitle}}</text>
-      <view class="account-release-notes">
-        <view
-          wx:for="{{release.notes}}"
-          wx:key="*this"
-          class="account-release-note"
-        >
-          <view class="account-release-dot" />
-          <text>{{item}}</text>
+      <picker range="{{appearanceSettings.list.theme}}" range-key="label" value="{{appearanceSettings.themeIndex}}" data-field="theme" bindchange="changeAppearanceOption" aria-label="{{copy.appearanceLabel}}">
+        <view class="account-appearance-control">
+          <template wx:if="{{appearanceSettings.theme.icon}}" is="account-icon" data="{{icon: appearanceSettings.theme.icon, scheme: appearanceScheme}}" />
+          <view wx:else class="account-appearance-swatch" style="background:{{appearanceSettings.theme.swatch}}" />
+          <text>{{appearanceSettings.theme.label}}</text>
         </view>
+      </picker>
+    </view>
+    <view class="account-appearance-row">
+      <text>{{copy.accentLabel}}</text>
+      <view class="account-appearance-choices">
+        <picker range="{{appearanceSettings.list.accent}}" range-key="label" value="{{appearanceSettings.accentIndex}}" data-field="accent" bindchange="changeAppearanceOption" aria-label="{{copy.accentLabel}}">
+          <view class="account-appearance-control">
+            <view class="account-appearance-swatch" style="background:{{appearanceSettings.accent.swatch}}" />
+            <text>{{appearanceSettings.accent.label}}</text>
+          </view>
+        </picker>
+        <input wx:if="{{appearanceSettings.custom}}" class="account-appearance-control account-appearance-hex" value="{{appearanceSettings.hex}}" maxlength="7" aria-label="{{copy.hexLabel}}" bindblur="changeAppearanceHex" />
       </view>
     </view>
-    <include src="../../templates/native-contact.wxml" />
+    <view class="account-appearance-row">
+      <text>{{copy.backdropLabel}}</text>
+      <picker range="{{appearanceSettings.list.backdrop}}" range-key="label" value="{{appearanceSettings.backdropIndex}}" data-field="backdrop" bindchange="changeAppearanceOption" aria-label="{{copy.backdropLabel}}">
+        <view class="account-appearance-control">{{appearanceSettings.list.backdrop[appearanceSettings.backdropIndex].label}}</view>
+      </picker>
+    </view>
+    <view class="account-appearance-row account-appearance-row--last">
+      <text>{{copy.contrastLabel}}</text>
+      <switch checked="{{appearanceSettings.contrast}}" aria-label="{{copy.contrastLabel}}" bindchange="changeAppearanceContrast" />
+    </view>
+    <view wx:if="{{appearanceSettings.scenes.length}}" class="account-appearance-scenes">
+      <button wx:for="{{appearanceSettings.scenes}}" wx:key="id" class="account-appearance-scene" data-id="{{item.id}}" aria-pressed="{{item.selected}}" hover-class="press-feedback" bindtap="changeAppearanceBackground">
+        <image src="{{item.image}}" mode="aspectFill" lazy-load="{{true}}" />
+        <text>{{item.label}}</text>
+        <template wx:if="{{item.selected}}" is="account-icon" data="{{icon: 'check', scheme: appearanceScheme}}" />
+      </button>
+    </view>
   </block>
 </view>
 </scroll-view>

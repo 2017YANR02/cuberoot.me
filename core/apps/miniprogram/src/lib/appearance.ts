@@ -74,6 +74,7 @@ export function applyNativeAppearance(): void {
       page.setData(page.data?.nativeTimerPage || (page.data && 'appearanceScheme' in page.data)
         ? { appearanceStyle, appearanceScheme: scheme }
         : { appearanceStyle });
+      page.refreshAppearanceSettings?.(scheme);
     }
   }
   try { api.setNavigationBarColor({ backgroundColor, frontColor: dark ? '#ffffff' : '#000000' }); } catch { /* optional host API */ }

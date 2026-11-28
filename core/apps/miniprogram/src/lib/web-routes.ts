@@ -14,7 +14,7 @@ import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/pag
 import { nativeWebDestination } from './native-web-destination';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'appearance-settings' | 'privacy' | 'renewal-terms' | 'logout' | 'wca-records';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'renewal-terms' | 'logout' | 'wca-records';
 
 interface WebRouteDefinition {
   title: string;
@@ -137,13 +137,6 @@ function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
       description: tr({ en: 'Manage your WCA account and sign-in methods', zh: '管理 WCA 账号与登录方式' }),
       path: localizedWebsitePath('/account'),
       publicEntry: false,
-    },
-    'appearance-settings': {
-      title: tr({ en: 'Settings', zh: '设置' }),
-      description: tr({ en: 'Appearance and language', zh: '外观与语言' }),
-      path: `${localizedWebsitePath('/account')}?settings=general`,
-      publicEntry: false,
-      sessionHandoff: false,
     },
     'account-link': {
       title: tr({ en: 'Sign in to CubeRoot', zh: '登录 CubeRoot' }),
