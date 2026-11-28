@@ -1,7 +1,7 @@
 import { tr } from '@/i18n/tr';
 import type { Zippable } from 'fflate';
 import type { VaultAccount, VaultEntry, VaultField } from './vault-crypto';
-import { hasVaultPrimaryAccount, isVaultSensitiveField, orderVaultAccounts, readVaultAccount, vaultAccountSlots, vaultAccountStatusLabels } from './vault-account';
+import { hasVaultPrimaryAccount, isVaultSensitiveField, orderVaultGroups, readVaultAccount, vaultAccountSlots, vaultAccountStatusLabels } from './vault-account';
 
 interface SavedVaultEntry {
   serverId: string;
@@ -66,7 +66,7 @@ export async function buildVaultExport(
       if (notes) lines.push(`## ${tr({ zh: '备注', en: 'Notes' })}`, '', markdownBlock(notes), '');
     }
     const primary: VaultAccount | null = hasPrimaryAccount ? { id: entry.id, name: entry.accountName ?? '', fields, notes, privateNotes, accountStatus } : null;
-    orderVaultAccounts(accounts ?? [], primary, entry.primaryAccountIndex).forEach((account, index) => {
+    orderVaultGroups(accounts ?? [], primary, entry.primaryAccountIndex).forEach((account, index) => {
       const number = index + 1;
       appendAccount(account.name || tr({ zh: `账号 ${number}`, en: `Account ${number}` }), account);
     });

@@ -977,6 +977,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'vault', m: 'GET', p: '/v1/vault', g: 'login', c: 'no-store', zh: '读取本人密钥包、管理权限、可访问的资料密文及本人回收站内的密文', en: 'Read the user key envelope, management entitlement, accessible ciphertext, and owned ciphertext in Trash' },
   { d: 'vault', m: 'GET', p: '/v1/vault/availability', g: 'login', c: 'no-store', zh: '检查本人是否可以管理资料库或已有可访问的资料', en: 'Check whether the signed-in user can manage their vault or has accessible items' },
   { d: 'vault', m: 'GET', p: '/v1/vault/backup-revision', g: 'login', c: 'no-store', zh: '检查本人资料是否有变动，供本机备份自动同步', en: 'Check whether owned vault items have changed for automatic local backups' },
+  { d: 'vault', m: 'PUT', p: '/v1/vault/order', g: 'login', c: 'no-store', zh: '按版本保存本人资料库的条目顺序', en: 'Save personal vault item order with a revision check' },
   { d: 'vault', m: 'PUT', p: '/v1/vault/key', g: 'login', c: 'no-store', zh: '登记接收分享所需的公钥和双重加密私钥；恢复时仅重设口令密钥包', en: 'Register the public key and dual-encrypted private key needed to receive shares; recovery only resets the passphrase envelope' },
   { d: 'vault', m: 'GET', p: '/v1/vault/users', g: 'login', c: 'no-store', zh: '会员或管理员列出或搜索已接受的好友及其资料库公钥', en: 'Members or administrators list or search accepted friends and their vault public keys' },
   { d: 'vault', m: 'POST', p: '/v1/vault/items', g: 'login', c: 'no-store', zh: '会员或管理员创建自有密文，并为本人和指定好友分别封装内容密钥', en: 'Members or administrators create owned ciphertext with content keys separately wrapped for the owner and selected friends' },

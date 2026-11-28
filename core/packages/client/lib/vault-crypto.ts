@@ -13,6 +13,7 @@ export const MAX_VAULT_ADDITIONAL_ACCOUNTS = 50;
 export const MAX_VAULT_INFORMATION_GROUPS = 50;
 
 export interface VaultImage {
+  status?: VaultStatus;
   id: string;
   name: string;
   dataUrl: string;
@@ -21,13 +22,14 @@ export interface VaultImage {
 export const isValidVaultPassphrase = (value: string): boolean => /^[0-9]{6}$/.test(value);
 
 export interface VaultField {
+  status?: VaultStatus;
   id: string;
   label: string;
   value: string;
   secret: boolean;
 }
 
-export type VaultAccountStatus = 'verified' | 'problem' | 'untested';
+export type VaultStatus = 'verified' | 'problem' | 'untested';
 
 export interface VaultAccount {
   id: string;
@@ -35,10 +37,12 @@ export interface VaultAccount {
   fields: VaultField[];
   notes?: string;
   privateNotes?: string;
-  accountStatus?: VaultAccountStatus;
+  accountStatus?: VaultStatus;
 }
 
 export interface VaultInformation {
+  manualFieldOrder?: boolean;
+  status?: VaultStatus;
   fields: VaultField[];
   notes: string;
   images?: VaultImage[];
@@ -53,12 +57,15 @@ export interface VaultEntry extends VaultInformation {
   id: string;
   title: string;
   privateNotes?: string;
+  itemStatus?: VaultStatus;
+  primaryInformationIndex?: number;
+  primaryInformationRemoved?: true;
   informationName?: string;
   informationGroups?: VaultInformationGroup[];
   category?: 'personal' | 'accounts' | 'business' | 'other';
   mergedInto?: { id: string; title: string };
   accountName?: string;
-  accountStatus?: VaultAccountStatus;
+  accountStatus?: VaultStatus;
   accounts?: VaultAccount[];
   /** Position of the account stored directly on the entry among all account groups. */
   primaryAccountIndex?: number;
@@ -128,7 +135,7 @@ export function validateVaultImages(images: unknown): images is VaultImage[] {
   const ids = new Set<string>();
   let total = 0;
   for (const image of images) {
-    if (!image || typeof image.id !== 'string' || !image.id || image.id.length > 100 || ids.has(image.id)
+    if (!image || !isOptionalVaultStatus(image.status) || typeof image.id !== 'string' || !image.id || image.id.length > 100 || ids.has(image.id)
       || typeof image.name !== 'string' || !image.name.trim() || image.name.length > 200) return false;
     ids.add(image.id);
     const size = vaultImageBytes(image.dataUrl);
@@ -302,11 +309,11 @@ function isVaultFields(value: unknown): value is VaultField[] {
     return typeof item.id === 'string' && item.id.length <= 100
       && typeof item.label === 'string' && item.label.length <= 100
       && typeof item.value === 'string' && item.value.length <= 100_000
-      && typeof item.secret === 'boolean';
+      && typeof item.secret === 'boolean' && isOptionalVaultStatus(item.status);
   });
 }
 
-function isOptionalVaultAccountStatus(value: unknown): boolean {
+function isOptionalVaultStatus(value: unknown): boolean {
   return value === undefined || value === 'verified' || value === 'problem' || value === 'untested';
 }
 
@@ -318,7 +325,7 @@ function isVaultAccounts(value: unknown): value is VaultAccount[] {
     const { id, name, fields, notes, privateNotes, accountStatus } = account as Record<string, unknown>;
     if (typeof id !== 'string' || !id || id.length > 100 || ids.has(id)
       || typeof name !== 'string' || name.length > 200 || !isVaultFields(fields)
-      || !isOptionalVaultAccountStatus(accountStatus)
+      || !isOptionalVaultStatus(accountStatus)
       || (notes !== undefined && (typeof notes !== 'string' || notes.length > 500_000))
       || (privateNotes !== undefined && (typeof privateNotes !== 'string' || privateNotes.length > 500_000))) return false;
     ids.add(id);
@@ -331,10 +338,11 @@ function isVaultInformationGroups(value: unknown): value is VaultInformationGrou
   const ids = new Set<string>();
   return value.every((group) => {
     if (!group || typeof group !== 'object') return false;
-    const { id, name, fields, notes, images } = group as Record<string, unknown>;
+    const { id, name, fields, notes, images, status, manualFieldOrder } = group as Record<string, unknown>;
     if (typeof id !== 'string' || !id || id.length > 100 || ids.has(id)
       || typeof name !== 'string' || name.length > 200
-      || !isVaultFields(fields) || typeof notes !== 'string' || notes.length > 500_000
+      || (manualFieldOrder !== undefined && typeof manualFieldOrder !== 'boolean')
+      || !isOptionalVaultStatus(status) || !isVaultFields(fields) || typeof notes !== 'string' || notes.length > 500_000
       || (images !== undefined && !Array.isArray(images))) return false;
     ids.add(id);
     return true;
@@ -354,12 +362,18 @@ export function isVaultEntry(value: unknown): value is VaultEntry {
     || typeof entry.notes !== 'string' || entry.notes.length > 500_000
     || (entry.privateNotes !== undefined && (typeof entry.privateNotes !== 'string' || entry.privateNotes.length > 500_000))
     || (entry.images !== undefined && !Array.isArray(entry.images))
+    || (entry.primaryInformationRemoved !== undefined && entry.primaryInformationRemoved !== true)
+    || (entry.manualFieldOrder !== undefined && typeof entry.manualFieldOrder !== 'boolean')
     || (entry.informationName !== undefined && (typeof entry.informationName !== 'string' || entry.informationName.length > 200))
     || (entry.informationGroups !== undefined && !isVaultInformationGroups(entry.informationGroups))
     || (entry.category !== undefined && !['personal', 'accounts', 'business', 'other'].includes(entry.category as string))
     || (entry.accountName !== undefined && (typeof entry.accountName !== 'string' || entry.accountName.length > 200))
-    || !isOptionalVaultAccountStatus(entry.accountStatus)
+    || !isOptionalVaultStatus(entry.accountStatus)
     || (entry.accounts !== undefined && !isVaultAccounts(entry.accounts))) return false;
+  if (!isOptionalVaultStatus(entry.status) || !isOptionalVaultStatus(entry.itemStatus)) return false;
+  const infoIndex = entry.primaryInformationIndex;
+  if (infoIndex !== undefined && (typeof infoIndex !== 'number' || !Number.isInteger(infoIndex)
+    || infoIndex < 0 || infoIndex > (Array.isArray(entry.informationGroups) ? entry.informationGroups.length : 0))) return false;
   const index = entry.primaryAccountIndex;
   if (index !== undefined && (typeof index !== 'number' || !Number.isInteger(index)
     || index < 0 || index > (Array.isArray(entry.accounts) ? entry.accounts.length : 0))) return false;

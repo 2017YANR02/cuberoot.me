@@ -835,6 +835,8 @@ CREATE TRIGGER user_friendships_updated_at
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 CREATE TABLE vault_user_keys (
+  item_order            UUID[]      NOT NULL DEFAULT '{}',
+  item_order_version    INTEGER     NOT NULL DEFAULT 0,
   user_id               BIGINT      PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
   public_key            JSONB       NOT NULL,
   encrypted_private_key JSONB       NOT NULL,

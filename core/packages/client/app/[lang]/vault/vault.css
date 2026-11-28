@@ -124,33 +124,36 @@
 .vault-editor-head > .vault-actions { flex: 0 0 auto; flex-wrap: nowrap; }
 .vault-editor-title { display: flex; flex: 1; align-items: center; gap: 10px; min-inline-size: 0; }
 .vault-title-tag-input { field-sizing: content; background: transparent; font-family: inherit; }
+.vault-title-text { margin: 0; overflow-wrap: anywhere; }
+.vault-title-text,
 .vault-title-input { flex: 1; min-width: 0; width: 0; padding: 4px 0 8px; border: 0; border-radius: 0; background: transparent; font-size: 25px; font-weight: 650; }
 .vault-actions { flex-wrap: wrap; }
 .vault-fields { display: flex; flex-direction: column; align-items: flex-start; gap: 22px; }
+.vault-fields > div { width: 100%; }
 .vault-account-sortable { margin-top: 28px; }
 .vault-account-sortable + .vault-account-sortable { margin-top: 14px; }
 .vault-account,
 .vault-information-group {
+  position: relative;
   padding: clamp(10px, 2vw, 16px);
-  border: 1px solid var(--border-default);
   border-radius: 12px;
 }
 .vault-information-groups { display: grid; gap: 14px; margin-top: 20px; }
 .vault-information-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
-.vault-information-heading > .vault-input { min-width: 0; }
+.vault-information-heading > .vault-input { min-width: 0; flex: 1; }
+.vault-field.vault-value-line { align-items: center; }
 .vault-account-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .vault-account-heading > .vault-value-line { flex: 1; min-inline-size: 0; align-items: center; }
-.vault-account-heading > .sortable-card-drag-handle { position: static; padding: 7px; flex: none; }
-.vault-account-status { display: inline-flex; flex: none; align-items: center; gap: 2px; }
-.vault-account-status-options:not([hidden]) { display: inline-flex; gap: 2px; }
-.vault-account-status .vault-icon-button { padding: 6px; border-radius: 50%; }
-.vault-account-status .vault-icon-button:hover { background: transparent; }
-.vault-account-status .vault-icon-button:disabled { cursor: default; }
+.vault-page .sortable-card-drag-handle { position: static; padding: 7px; flex: none; margin-inline-start: auto; }
+.vault-status { display: inline-flex; flex: none; align-items: center; gap: 2px; }
+.vault-status-options:not([hidden]) { display: inline-flex; gap: 2px; }
+.vault-status .vault-icon-button { padding: 6px; border-radius: 50%; }
+.vault-status .vault-icon-button:hover { background: transparent; }
+.vault-status .vault-icon-button:disabled { cursor: default; }
 .vault-account-fields { display: grid; gap: 14px; }
 .vault-account-fields > div { min-width: 0; }
 .vault-field-row { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 12px; }
 .vault-field-row > .vault-field-label { margin: 0; }
-.vault-field-row--notes { align-items: first baseline; }
 .vault-add-account,
 .vault-add-content { margin-top: 16px; }
 .vault-field { width: 100%; }
@@ -188,7 +191,6 @@
   overflow-wrap: break-word;
 }
 .vault-grow-textarea > [data-vault-text-measure] { visibility: hidden; }
-.vault-grow-textarea[data-readonly] > * { border: 0; background: transparent; padding-inline: 0; min-height: 0; }
 
 .vault-editor-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
 .vault-toolbar { margin-bottom: 24px; }
@@ -284,8 +286,29 @@
 .vault-image-preview img { display: block; width: 100%; height: 180px; object-fit: contain; }
 .vault-image.is-expanded .vault-image-preview { cursor: zoom-out; }
 .vault-image.is-expanded img { height: auto; }
-.vault-image .vault-input { padding: 8px; }
+.vault-value-line.vault-image-caption { align-items: center; flex-wrap: nowrap; }
+.vault-image-name { overflow-wrap: anywhere; }
+.vault-image-name,
+.vault-image-caption .vault-input { min-width: 0; flex: 1; padding: 8px; text-align: center; }
 .vault-image a { text-decoration: none; }
+
+.vault-information-group[data-readonly] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding-block: 8px;
+}
+.vault-information-group[data-readonly] > :is(.vault-information-heading, .vault-entry-notes, .vault-images) { margin-block: 0; }
+.vault-information-group[data-readonly] .vault-fields { gap: 6px; }
+.vault-information-group[data-readonly] .vault-image { gap: 3px; }
+.vault-information-group[data-readonly] :is(.vault-image-name, .vault-copy-value) { padding-block: 0; }
+.vault-information-group[data-readonly] .vault-image:not(.is-expanded) img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 180px;
+  margin-inline: auto;
+}
 
 .vault-sharing { margin-top: 38px; }
 .vault-sharing h2 { margin: 0; font-size: 17px; }
@@ -317,6 +340,7 @@
 .vault-unlock { display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(420px, 100%); margin-top: 22px; }
 .vault-unlock label { margin-top: 6px; font-size: 13px; font-weight: 600; }
 .vault-unlock-input { width: 100%; padding: 10px; text-align: center; }
+.vault-recovery-code { max-width: 100%; overflow-wrap: anywhere; font-family: var(--font-mono); }
 .vault-password-field { position: relative; width: 100%; }
 .vault-password-field .vault-unlock-input { padding-inline: 42px; }
 .vault-unlock .vault-actions { justify-content: center; }
@@ -331,7 +355,7 @@
   .vault-workspace { grid-template-columns: 1fr; gap: 28px; }
   .vault-sidebar { position: static; }
   .vault-list { display: flex; max-height: none; overflow-x: auto; }
-  .vault-list-row { flex: 0 0 160px; border-right: 1px solid var(--border-default); }
+  .vault-list-row { flex: 0 0 auto; min-width: 160px; max-width: 100%; border-right: 1px solid var(--border-default); }
 }
 
 @media (max-width: 480px) {
@@ -340,4 +364,9 @@
   .vault-editor-title { flex: none; width: 100%; }
   .vault-value-line { flex-wrap: wrap; }
   .vault-value-line > .vault-grow-textarea { flex-basis: calc(100% - 96px); }
+}
+
+@media (max-width: 480px) {
+  .vault-field.vault-value-line { flex-wrap: nowrap; }
+  .vault-field.vault-value-line > .vault-grow-textarea { flex: 1; }
 }

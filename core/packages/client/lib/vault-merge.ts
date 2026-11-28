@@ -1,8 +1,8 @@
 import { isVaultEntry, vaultEntryImages, type VaultAccount, type VaultEntry, type VaultInformationGroup } from './vault-crypto';
-import { hasVaultAccountMetadata, orderVaultAccounts } from './vault-account';
+import { hasVaultAccountMetadata, orderVaultGroups } from './vault-account';
 
-const informationContent = ({ name, fields, notes, images }: VaultInformationGroup) => JSON.stringify([
-  name, fields, notes, (images ?? []).map(({ name: imageName, dataUrl }) => [imageName, dataUrl]),
+const informationContent = ({ name, fields, notes, images, status }: VaultInformationGroup) => JSON.stringify([
+  name, fields, notes, status, (images ?? []).map(({ name: imageName, dataUrl, status }) => [imageName, dataUrl, status]),
 ]);
 
 /** Combine decrypted content locally; the caller persists only encrypted envelopes. */
@@ -12,7 +12,7 @@ export function mergeVaultEntries(target: VaultEntry, source: VaultEntry): Vault
   const targetHasAccounts = target.category === 'accounts' || hasVaultAccountMetadata(target) || Boolean(target.accounts?.length);
   const keepSourcePrimary = hasVaultAccountMetadata(source) || (source.category === 'accounts' && (targetHasAccounts || hasAdditionalAccounts));
   const keepSourceInformation = source.category !== 'accounts' && !keepSourcePrimary
-    && Boolean(source.informationName || source.informationGroups?.length || target.informationGroups?.length);
+    && Boolean(source.status || source.informationName || source.informationGroups?.length || target.informationGroups?.length);
   for (const field of keepSourcePrimary || keepSourceInformation ? [] : source.fields) {
     const duplicate = merged.fields.find((candidate) => candidate.label === field.label && candidate.value === field.value);
     if (duplicate) duplicate.secret ||= field.secret;
@@ -39,7 +39,7 @@ export function mergeVaultEntries(target: VaultEntry, source: VaultEntry): Vault
       ? { id: source.id || 'account', name: source.accountName || source.title, fields: source.fields,
         notes: source.notes, privateNotes: source.privateNotes, accountStatus: source.accountStatus }
       : null;
-    for (const account of orderVaultAccounts(source.accounts ?? [], primary, source.primaryAccountIndex)) append(account);
+    for (const account of orderVaultGroups(source.accounts ?? [], primary, source.primaryAccountIndex)) append(account);
   }
   const images = merged.images ?? [];
   const imageIds = new Set(vaultEntryImages(merged).map(({ id }) => id));
@@ -52,10 +52,10 @@ export function mergeVaultEntries(target: VaultEntry, source: VaultEntry): Vault
   }
   if (images.length) merged.images = images;
   const sourceGroups = [...(source.informationGroups ?? [])];
-  if (keepSourceInformation && (source.informationName || source.fields.length || source.notes || source.images?.length)) {
-    sourceGroups.unshift({
+  if (keepSourceInformation && (source.status || source.informationName || source.fields.length || source.notes || source.images?.length)) {
+    sourceGroups.splice(source.primaryInformationIndex ?? 0, 0, {
       id: source.id || 'information', name: source.informationName || source.title,
-      fields: source.fields, notes: source.notes, images: source.images,
+      fields: source.fields, notes: source.notes, images: source.images, status: source.status, manualFieldOrder: source.manualFieldOrder,
     });
   }
   for (const group of sourceGroups) {

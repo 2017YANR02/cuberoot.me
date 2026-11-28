@@ -3,15 +3,15 @@
 import { sessionFetch } from '@/lib/session-fetch';
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentPropsWithoutRef, type FormEvent, type ReactNode } from 'react';
 import { CopySuccessIcon } from '@/components/CopySuccessIcon';
-import { Copy, Download, Ellipsis, KeyRound, Loader2, Pencil, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
+import { Copy, Download, KeyRound, Loader2, Pencil, Plus, RotateCcw, Save, Trash2, X } from '@app-foundation/icons/lucide';
 import { FilledStatusMark } from '@cuberoot/app-ui/filled-status-mark';
-import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { arrayMove } from '@dnd-kit/sortable';
 import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
 import { PasswordInput } from '@/components/PasswordInput';
 import { SearchInput } from '@/components/SearchInput';
-import SortableCard from '@/components/SortableCard';
+import VaultSortList from './VaultSortList';
+import { displayedVaultFields, removeVaultInformation, setVaultInformationOrder, vaultInformationGroups, vaultStatusLabels } from '@/lib/vault-information';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ListSelect } from '@/components/ListSelect';
 import { Tooltip } from '@/components/Tooltip';
@@ -44,7 +44,7 @@ import {
   vaultEntryImages,
   type EncryptedPrivateKey,
   type VaultAccount,
-  type VaultAccountStatus,
+  type VaultStatus,
   type VaultEntry,
   type VaultField,
   type VaultInformation,
@@ -61,6 +61,7 @@ interface VaultItemPayload {
 interface VaultPayload {
   userId: number;
   canManage: boolean;
+  orderVersion?: number;
   backupRevision?: string;
   keyProfile: { publicKey: JsonWebKey; encryptedPrivateKey: EncryptedPrivateKey } | null;
   items: VaultItemPayload[];
@@ -74,7 +75,7 @@ interface OpenItem {
 interface UserResult { userId: number; name: string; wcaId: string | null; publicKey: JsonWebKey | null; }
 type ShareFriend = Omit<UserResult, 'publicKey'> & { publicKey?: JsonWebKey | null };
 
-const accountStatusVariants = { verified: 'success', problem: 'error', untested: 'unknown' } as const;
+const statusVariants = { verified: 'success', problem: 'error', untested: 'unknown' } as const;
 const accountGroupId = (group: VaultAccount | 'primary') => group === 'primary' ? 'primary' : `account:${group.id}`;
 
 function VaultListTitle({ title }: { title: string }) {
@@ -86,11 +87,12 @@ function VaultListTitle({ title }: { title: string }) {
   </strong>;
 }
 
-function VaultAccountStatusPicker({ status, disabled, onChange, removeAction }: {
-  status: VaultAccountStatus;
+function VaultStatusPicker({ status = 'untested', disabled, onChange, removeAction, account = false }: {
+  status?: VaultStatus;
+  account?: boolean;
   disabled: boolean;
-  onChange: (status: VaultAccountStatus) => void;
-  removeAction: ReactNode;
+  onChange: (status: VaultStatus) => void;
+  removeAction?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const optionsId = useId();
@@ -98,11 +100,12 @@ function VaultAccountStatusPicker({ status, disabled, onChange, removeAction }: 
   const trigger = useRef<HTMLButtonElement>(null);
   const options = useRef<HTMLDivElement>(null);
   const expanded = open && !disabled;
-  const label = tr(vaultAccountStatusLabels[status]);
+  const labels = account ? vaultAccountStatusLabels : vaultStatusLabels;
+  const label = tr(labels[status]);
   usePopoverDismiss(expanded, () => setOpen(false), actions, trigger);
   useEffect(() => { if (disabled) setOpen(false); }, [disabled]);
 
-  return <div ref={actions} className="vault-account-status"
+  return <div ref={actions} className={`vault-status${account ? ' vault-account-status' : ''}`}
     onPointerLeave={(event) => {
       if (event.pointerType === 'mouse' && !options.current?.contains(document.activeElement)) setOpen(false);
     }}
@@ -111,21 +114,21 @@ function VaultAccountStatusPicker({ status, disabled, onChange, removeAction }: 
     }}>
     <button ref={trigger} type="button" className="vault-icon-button" data-status={status} disabled={disabled}
       aria-expanded={expanded} aria-controls={optionsId} aria-label={label} title={label}
-      aria-description={disabled ? undefined : tr({ zh: '更改账号状态', en: 'Change account status' })}
+      aria-description={disabled ? undefined : tr({ zh: '更改状态', en: 'Change status' })}
       onPointerEnter={(event) => {
         if (!disabled && event.pointerType === 'mouse') setOpen(true);
       }}
-      onClick={() => setOpen((current) => !current)}><FilledStatusMark variant={accountStatusVariants[status]} /></button>
-    <div ref={options} id={optionsId} className="vault-account-status-options" hidden={!expanded}
-      role="group" aria-label={tr({ zh: '账号操作', en: 'Account actions' })}>
-      {expanded && (Object.keys(accountStatusVariants) as VaultAccountStatus[]).filter((value) => value !== status).map((value) => {
-        const optionLabel = tr(vaultAccountStatusLabels[value]);
+      onClick={() => setOpen((current) => !current)}><FilledStatusMark variant={statusVariants[status]} /></button>
+    <div ref={options} id={optionsId} className="vault-status-options" hidden={!expanded}
+      role="group" aria-label={tr({ zh: '选择状态', en: 'Select status' })}>
+      {expanded && (Object.keys(statusVariants) as VaultStatus[]).filter((value) => value !== status).map((value) => {
+        const optionLabel = tr(labels[value]);
         return <button key={value} type="button" className="vault-icon-button" data-status={value} aria-label={optionLabel} title={optionLabel}
           onClick={() => {
             onChange(value);
             setOpen(false);
             trigger.current?.focus({ preventScroll: true });
-          }}><FilledStatusMark variant={accountStatusVariants[value]} /></button>;
+          }}><FilledStatusMark variant={statusVariants[value]} /></button>;
       })}
     </div>
     {removeAction}
@@ -149,22 +152,10 @@ const decryptOpenItem = async (item: VaultItemPayload, key: CryptoKey): Promise<
     entry, pendingEntryUpdate: entry !== original,
   };
 };
-const passwordFieldAliases = ['密码', 'Password'];
-const emailFieldLabels = new Set(['邮箱', '电子邮箱', '邮箱地址', '电子邮件', '电子邮件地址', 'email', 'e-mail', 'email address', 'e-mail address']);
-const isEmailField = (field: VaultField) => emailFieldLabels.has(field.label.trim().toLowerCase());
 const credentialFields = (loginLabel: string): VaultField[] => [
   { id: crypto.randomUUID(), label: loginLabel, value: '', secret: false },
   { id: crypto.randomUUID(), label: tr({ zh: '密码', en: 'Password' }), value: '', secret: true },
 ];
-
-function orderVaultFields(fields: VaultField[]) {
-  const passwordIndex = fields.findIndex(({ label }) =>
-    passwordFieldAliases.some((alias) => alias.toLowerCase() === label.trim().toLowerCase()));
-  if (passwordIndex < 0) return fields;
-  const fieldsFromPassword = fields.slice(passwordIndex);
-  return [...fields.slice(0, passwordIndex), ...fieldsFromPassword.filter(isEmailField),
-    ...fieldsFromPassword.filter((field) => !isEmailField(field))];
-}
 
 function emptyEntry(category: Exclude<VaultCategoryFilter, ''>): VaultEntry {
   const tag = isVaultTagCategory(category) ? category.slice(4)
@@ -182,11 +173,11 @@ const informationAt = (entry: VaultEntry, groupId?: string): VaultInformation | 
 
 type VaultTextAreaProps = ComponentPropsWithoutRef<'textarea'> & { value: string };
 
-function VaultTextArea({ className, value, readOnly, ...props }: VaultTextAreaProps) {
+function VaultTextArea({ className, value, ...props }: VaultTextAreaProps) {
   return (
-    <div className="vault-grow-textarea" data-readonly={readOnly || undefined}>
+    <div className="vault-grow-textarea">
       <div className={className} data-vault-text-measure aria-hidden="true">{value}{'\u200b'}</div>
-      <textarea {...props} className={`vault-grow-input ${className ?? ''}`} value={value} readOnly={readOnly} rows={readOnly ? 1 : props.rows} />
+      <textarea {...props} className={`vault-grow-input ${className ?? ''}`} value={value} />
     </div>
   );
 }
@@ -198,10 +189,6 @@ export default function VaultPage() {
   const authWcaId = user?.wcaId;
   const login = authActions.login;
   const { copiedKey, copy } = useCopy();
-  const accountSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
   const [mounted, setMounted] = useState(false);
   const [payload, setPayload] = useState<VaultPayload | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -210,6 +197,12 @@ export default function VaultPage() {
   const privateKey = unlockedVault && unlockedVault.userId === payload?.userId
     && (user?.uid === undefined || user.uid === payload.userId) ? unlockedVault.key : null;
   const [items, setItems] = useState<OpenItem[]>([]);
+  const [pendingOrder, setPendingOrder] = useState<string[] | null>(null);
+  const listedItems = useMemo(() => {
+    if (!pendingOrder) return items;
+    const positions = new Map(pendingOrder.map((id, index) => [id, index]));
+    return [...items].sort((a, b) => (positions.get(a.localId) ?? -1) - (positions.get(b.localId) ?? -1));
+  }, [items, pendingOrder]);
   const [draft, setDraft] = useState<OpenItem | null>(null);
   const [dirty, setDirty] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -315,8 +308,8 @@ export default function VaultPage() {
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty, busy]);
 
-  const categorizedItems = useMemo(() => items.filter(({ trashedAt }) => Boolean(trashedAt) === showTrash)
-    .map((item) => ({ item, category: vaultEntryCategory(item.entry) })), [items, showTrash]);
+  const categorizedItems = useMemo(() => listedItems.filter(({ trashedAt }) => Boolean(trashedAt) === showTrash)
+    .map((item) => ({ item, category: vaultEntryCategory(item.entry) })), [listedItems, showTrash]);
   const visibleItems = useMemo(() => {
     const q = filter.trim().toLocaleLowerCase();
     const matches = (value: string) => value.toLocaleLowerCase().includes(q);
@@ -337,6 +330,7 @@ export default function VaultPage() {
     const active = opened.filter((item) => !item.trashedAt);
     setUnlockedVault({ userId: data.userId, key });
     setItems(opened);
+    setPendingOrder(null);
     const first = active.find((item) => !item.entry.mergedInto) ?? active[0];
     setDraft(first ? cloneItem(first) : null);
     setFailedCount(data.items.length - active.length);
@@ -430,27 +424,31 @@ export default function VaultPage() {
 
   const confirmDiscard = () => !dirty || window.confirm(tr({ zh: '放弃尚未保存的修改？', en: 'Discard unsaved changes?' }));
   const discardUnsavedNew = () => {
+    setPendingOrder(null);
     if (draft && !draft.serverId) setItems((current) => current.filter((item) => item.localId !== draft.localId));
   };
   const showItem = (item: OpenItem | null) => {
+    setPendingOrder(null);
     setDraft(item ? cloneItem(item) : null);
     setDirty(false);
     setExpandedImage(null);
   };
+  const cancelEditing = () => {
+    if (!editMode || busy) return;
+    discardUnsavedNew();
+    const saved = draft && (draft.serverId ? items.find(item => item.localId === draft.localId)
+      : visibleItems.find(item => item.serverId));
+    showItem(saved ?? null);
+    setError(null);
+    setEditMode(false);
+  };
   const toggleEditMode = () => {
     if (!payload?.canManage || busy) return;
-    if (editMode) {
-      if (!confirmDiscard()) return;
-      if (dirty) {
-        discardUnsavedNew();
-        showItem(draft?.serverId ? items.find((item) => item.localId === draft.localId) ?? null : null);
-      }
-      setError(null);
-    }
-    setEditMode(!editMode);
+    if (!editMode) setEditMode(true);
+    else if (confirmDiscard()) cancelEditing();
   };
   const selectItem = (item: OpenItem) => {
-    if (!confirmDiscard()) return;
+    if ((!item.serverId && item.localId === draft?.localId) || !confirmDiscard()) return;
     discardUnsavedNew();
     showItem(item);
   };
@@ -500,10 +498,14 @@ export default function VaultPage() {
       { userId: payload.userId, publicKey: payload.keyProfile.publicKey },
       ...item.shares.map(({ userId, publicKey }) => ({ userId, publicKey })),
     ]);
-    const response = await handleApi<{ id?: string; version: number; updatedAt: string }>(await sessionFetch(
+    const order = !item.serverId && pendingOrder ? {
+      ids: pendingOrder.map(id => id === item.localId ? null : id), expectedVersion: payload.orderVersion ?? 0,
+    } : undefined;
+    const response = await handleApi<{ id?: string; version: number; updatedAt: string; orderVersion?: number }>(await sessionFetch(
       apiUrl(item.serverId ? `/v1/vault/items/${item.serverId}` : '/v1/vault/items'),
-      { method: item.serverId ? 'PUT' : 'POST', headers: authHeaders(), body: JSON.stringify({ ...encrypted, expectedVersion: item.serverId ? item.version : null }) },
+      { method: item.serverId ? 'PUT' : 'POST', headers: authHeaders(), body: JSON.stringify({ ...encrypted, order, expectedVersion: item.serverId ? item.version : null }) },
     ));
+    if (response.orderVersion !== undefined) setPayload(current => current && { ...current, orderVersion: response.orderVersion });
     return { ...cloneItem(item), serverId: item.serverId ?? response.id ?? null, localId: item.serverId ?? response.id ?? item.localId,
       version: response.version, updatedAt: response.updatedAt, pendingEntryUpdate: false };
   };
@@ -534,16 +536,55 @@ export default function VaultPage() {
     setError(null);
     try {
       const saved = await persistItem(draft);
-      setItems((current) => current.map((item) => item.localId === draft.localId ? saved : item));
+      setItems(listedItems.map(item => item.localId === draft.localId ? saved : item));
+      setPendingOrder(null);
       setDraft(saved);
       setDirty(false);
       setEditMode(false);
     } catch (saveError) {
-      setError((saveError as Error).message === 'item changed in another tab'
+      setError((saveError as Error).message === 'vault order changed'
+        ? tr({ zh: '资料顺序已在其他页面更改，请刷新后重试。', en: 'The order changed in another session. Refresh and try again.' })
+        : (saveError as Error).message === 'item changed in another tab'
         ? tr({ zh: '这条内容已在其他页面修改，请刷新后重试。', en: 'This item changed in another tab. Refresh and try again.' })
         : (saveError as Error).message === 'vault_entry_limit'
           ? tr({ zh: '这条内容过大，请将部分图片或文字分到另一条内容。', en: 'This item is too large. Move some images or text to another item.' })
           : tr({ zh: '保存失败，请稍后重试。', en: 'Could not save. Try again later.' }));
+    } finally { setBusy(false); }
+  };
+
+  const moveListItem = async (from: number, to: number) => {
+    if (!canEditVault || showTrash || busy || !payload) return;
+    const reordered = arrayMove(visibleItems, from, to);
+    const visible = new Set(visibleItems.map(item => item.localId));
+    let index = 0;
+    const next = listedItems.map(item => visible.has(item.localId) ? reordered[index++] : item);
+    // Preserve the slots of entries which this device could not decrypt.
+    const opened = new Set(items.map(item => item.localId));
+    const snapshot = [...payload.items, ...(payload.trash ?? [])];
+    const ids = next.map(item => item.localId);
+    for (const [position, item] of snapshot.entries()) {
+      if (!opened.has(item.id) && (item.trashedAt ? failedTrashCount : failedCount)) ids.splice(position, 0, item.id);
+    }
+    if (draft && !draft.serverId) {
+      setPendingOrder(ids);
+      setDirty(true);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await sessionFetch(apiUrl('/v1/vault/order'), {
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids, expectedVersion: payload.orderVersion ?? 0 }),
+      });
+      if (response.status === 409) {
+        setError(tr({ zh: '资料顺序已在其他页面更改，请刷新后重试。', en: 'The order changed in another session. Refresh and try again.' }));
+        return;
+      }
+      const { orderVersion } = await handleApi<{ orderVersion: number }>(response);
+      setPayload(current => current && { ...current, orderVersion });
+      setItems(next);
+    } catch {
+      setError(tr({ zh: '条目顺序保存失败，请重试。', en: 'Could not save the item order. Try again.' }));
     } finally { setBusy(false); }
   };
 
@@ -707,7 +748,7 @@ export default function VaultPage() {
       <p>{tr({ zh: '忘记资料库口令时，只能用这枚密钥重设。它只显示这一次，请保存到安全位置。', en: 'This key is the only way to reset a forgotten vault passphrase. It is shown once, so store it somewhere safe.' })}</p>
       <div className="vault-unlock">
         <label htmlFor="vault-recovery-display">{tr({ zh: '恢复密钥', en: 'Recovery key' })}</label>
-        <input id="vault-recovery-display" className="vault-unlock-input" value={recoveryCode} readOnly />
+        <output id="vault-recovery-display" className="vault-recovery-code">{recoveryCode}</output>
         <div className="vault-actions">
           <button type="button" className="vault-button" onClick={() => copy(recoveryCode, 'vault-recovery')}>{copiedKey === 'vault-recovery' ? <CopySuccessIcon size={24} /> : <Copy />}{tr({ zh: '复制', en: 'Copy' })}</button>
           <button type="button" className="vault-button" onClick={downloadRecoveryCode}><Download />{tr({ zh: '下载', en: 'Download' })}</button>
@@ -752,8 +793,7 @@ export default function VaultPage() {
   const accounts = draft?.entry.accounts ?? [];
   const informationGroups = draft?.entry.informationGroups ?? [];
   const accountGroups = draft ? vaultAccountGroups(draft.entry) : [];
-  const accountGroupIds = accountGroups.map(accountGroupId);
-  const canReorderAccounts = editable && accountGroups.length > 1;
+  const orderedInformation = draft ? vaultInformationGroups(draft.entry) : [];
   const hasPrimaryAccount = draft ? hasVaultPrimaryAccount(draft.entry) : false;
   const titleParts = draft ? splitVaultTitle(draft.entry.title) : null;
   const titleTag = titleParts ? vaultTitleTagText(titleParts.tag) : '';
@@ -767,7 +807,8 @@ export default function VaultPage() {
     copyKey?: string;
     copyLabel: string;
   }) => {
-    if (canEditVault || !props.value) return <VaultTextArea id={id} {...props} />;
+    if (editable) return <VaultTextArea id={id} {...props} />;
+    if (!props.value) return props.title ? <span id={id}>{props.title}</span> : null;
     const { className, title, value } = props;
     const key = `${draft?.localId}:${copyKey}`;
     const copied = copiedKey === key;
@@ -789,72 +830,87 @@ export default function VaultPage() {
     entryNotes?: boolean;
   }) => {
     if (!editable && !value.trim()) return null;
-    return <div className={`vault-field-row vault-field-row--notes${entryNotes ? ' vault-entry-notes' : ''}`}>
-      <label className="vault-field-label" htmlFor={id}>{tr(notesSlot.label)}</label>
+    return <div className={`vault-field-row--notes${entryNotes ? ' vault-entry-notes' : ''}`}>
+      <label className="sr-only" htmlFor={id}>{tr(notesSlot.label)}</label>
       <div className="vault-value-line">
         {renderValueControl({
           id, copyKey, copyLabel: tr({ zh: '复制备注', en: 'Copy notes' }),
-          className: 'vault-value-input vault-notes', value, readOnly: !editable,
+          className: 'vault-value-input vault-notes', value,
           maxLength: 500_000, rows: 1, onChange: (event) => update(event.target.value),
         })}
       </div>
     </div>;
   };
-  const renderFields = (fields: VaultField[], groupId?: string) => {
-    return <div className="vault-fields">{orderVaultFields(fields).map((field, index) => {
-      const id = groupId ? `vault-field-${groupId}-${field.id}` : `vault-field-${field.id}`;
-      const fieldLabel = tr({ zh: `内容 ${index + 1}`, en: `Value ${index + 1}` });
-      return <div className="vault-field" key={field.id}>
-        <div className="vault-value-line">
+  const renderFields = (information: VaultInformation, groupId?: string) => {
+    const ordered = displayedVaultFields(information);
+    const fields = editable ? ordered : ordered.filter(field => field.value.trim());
+    if (!fields.length) return null;
+    // Older records may have empty or duplicate field IDs.
+    const fieldKey = (field: VaultField) => fields.filter(other => other.id === field.id).length === 1 && field.id
+      ? `field:${field.id}` : `position:${information.fields.indexOf(field)}`;
+    return <div className="vault-fields"><VaultSortList items={fields} getId={fieldKey}
+      enabled={editable} busy={busy} label={(_, i) => tr({ zh: `拖动调整内容 ${i + 1} 顺序`, en: `Drag to reorder value ${i + 1}` })}
+      onMove={(from, to) => updateInformation(groupId, info => {
+        info.fields = arrayMove(displayedVaultFields(info), from, to);
+        info.manualFieldOrder = true;
+      })}>
+      {(field, index, handle) => {
+        const storageIndex = information.fields.indexOf(field);
+        const id = `vault-field-${groupId ? groupId + '-' : ''}${fieldKey(field)}`;
+        const fieldLabel = tr({ zh: `内容 ${index + 1}`, en: `Value ${index + 1}` });
+        return <div className="vault-field vault-value-line">
           {renderValueControl({
             id, copyLabel: tr({ zh: '复制', en: 'Copy' }), className: 'vault-value-input',
-            'aria-label': fieldLabel, value: field.value, readOnly: !editable, maxLength: 100_000, rows: 1,
+            'aria-label': fieldLabel, value: field.value, maxLength: 100_000, rows: 1,
             placeholder: tr({ zh: '内容', en: 'Value' }), onChange: (event) => {
               const value = event.target.value;
-              updateInformation(groupId, (information) => {
-                const existing = information.fields.find((candidate) => candidate.id === field.id);
-                if (existing) existing.value = value;
-              });
+              updateInformation(groupId, info => { info.fields[storageIndex].value = value; });
             },
           })}
-          {editable && <Tooltip content={tr({ zh: '删除字段', en: 'Remove field' })}>{(tip) => <button {...tip} type="button" className="vault-icon-button is-danger" aria-label={tr({ zh: `删除第 ${index + 1} 项内容`, en: `Remove value ${index + 1}` })} onClick={() => updateInformation(groupId, (information) => {
-            information.fields = information.fields.filter((candidate) => candidate.id !== field.id);
-          })}><Trash2 /></button>}</Tooltip>}
-        </div>
-      </div>;
-    })}</div>;
+          {handle}
+        </div>;
+      }}
+    </VaultSortList></div>;
   };
-  const renderImages = ({ images }: VaultInformation, groupId?: string) => {
+  const renderImages = ({ images = [] }: VaultInformation, groupId?: string) => {
     if (!editable && !images?.length) return null;
     const inputId = groupId ? `vault-image-file-${groupId}` : 'vault-image-file';
     return <section className="vault-images" aria-label={tr({ zh: '图片附件', en: 'Image attachments' })}>
-      {editable && <div className="vault-image-actions">
+      {editable && <div className="vault-actions vault-image-actions">
         <input id={inputId} type="file" hidden multiple accept="image/jpeg,image/png,image/webp" aria-label={tr({ zh: '选择图片', en: 'Choose images' })} onChange={(event) => {
           const files = Array.from(event.target.files ?? []);
           event.target.value = '';
           void addImages(files, groupId);
         }} />
         <button type="button" className="vault-button" onClick={() => document.getElementById(inputId)?.click()}><Plus aria-hidden="true" />{tr({ zh: '添加图片', en: 'Add images' })}</button>
+        {images.length > 0 && <CompactSelect variant="plain" showArrow keyboardListNavigation disabled={busy}
+          label={tr({ zh: '移除图片', en: 'Remove image' })} ariaLabel={tr({ zh: '移除图片', en: 'Remove image' })}
+          items={images.map((image, i) => ({ value: image.id, label: `${i + 1}. ${image.name}` }))}
+          onChange={id => updateInformation(groupId, info => { info.images = info.images?.filter(image => image.id !== id); })} />}
       </div>}
-      <div className="vault-image-grid">{images?.map((image, index) => <div key={image.id} className={`vault-image${expandedImage === image.id ? ' is-expanded' : ''}`}>
-        <button type="button" className="vault-image-preview" aria-expanded={expandedImage === image.id} aria-label={tr({ zh: `查看图片：${image.name}`, en: `View image: ${image.name}` })} onClick={() => setExpandedImage((current) => current === image.id ? null : image.id)}>
-          {/* Original image is decrypted locally; never send it through an image optimizer. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image.dataUrl} alt={image.name} />
-        </button>
-        <input className="vault-input" aria-label={tr({ zh: `图片名称 ${index + 1}`, en: `Image name ${index + 1}` })} value={image.name} readOnly={!editable} maxLength={200} onChange={(event) => updateInformation(groupId, (information) => { information.images![index].name = event.target.value; })} />
-        {canEditVault && <div className="vault-actions">
-          <Tooltip content={tr({ zh: '下载原图', en: 'Download original' })}>{(tip) => (
-            <a {...tip} className="vault-button" href={image.dataUrl} download={image.name} aria-label={tr({ zh: `下载原图：${image.name}`, en: `Download original: ${image.name}` })}><Download aria-hidden="true" /></a>
-          )}</Tooltip>
-          {editable && <Tooltip content={tr({ zh: '移除图片', en: 'Remove image' })}>{(tip) => (
-            <button {...tip} type="button" className="vault-button is-danger" aria-label={tr({ zh: `移除图片：${image.name}`, en: `Remove image: ${image.name}` })} onClick={() => updateInformation(groupId, (information) => { information.images!.splice(index, 1); })}><X aria-hidden="true" /></button>
-          )}</Tooltip>}
-        </div>}
-      </div>)}</div>
+      <div className="vault-image-grid"><VaultSortList items={images} getId={image => image.id} enabled={editable} busy={busy}
+        rowClass={image => `vault-image${expandedImage === image.id ? ' is-expanded' : ''}`}
+        label={(_, i) => tr({ zh: `拖动调整图片 ${i + 1} 顺序`, en: `Drag to reorder image ${i + 1}` })}
+        onMove={(from, to) => updateInformation(groupId, info => { info.images = arrayMove(info.images ?? [], from, to); })}>
+        {(image, index, handle) => <>
+          <button type="button" className="vault-image-preview" aria-expanded={expandedImage === image.id} aria-label={tr({ zh: `查看图片：${image.name}`, en: `View image: ${image.name}` })} onClick={() => setExpandedImage((current) => current === image.id ? null : image.id)}>
+            {/* Original image is decrypted locally; never send it through an image optimizer. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={image.dataUrl} alt={image.name} />
+          </button>
+          <div className="vault-value-line vault-image-caption">
+            {editable ? <input className="vault-input" aria-label={tr({ zh: `图片名称 ${index + 1}`, en: `Image name ${index + 1}` })} value={image.name} maxLength={200} onChange={(event) => updateInformation(groupId, (information) => { information.images![index].name = event.target.value; })} />
+              : <span className="vault-image-name">{image.name}</span>}
+            {canEditVault && <Tooltip content={tr({ zh: '下载原图', en: 'Download original' })}>{(tip) => (
+              <a {...tip} className="vault-button" href={image.dataUrl} download={image.name} aria-label={tr({ zh: `下载原图：${image.name}`, en: `Download original: ${image.name}` })}><Download aria-hidden="true" /></a>
+            )}</Tooltip>}
+            {handle}
+          </div>
+        </>}
+      </VaultSortList></div>
     </section>;
   };
-  const renderInformation = (information: VaultInformation, number: number, group?: VaultInformationGroup) => {
+  const renderInformation = (information: VaultInformation, number: number, handle: ReactNode, group?: VaultInformationGroup) => {
     const groupId = group?.id;
     const name = group?.name ?? draft?.entry.informationName ?? '';
     const groupLabel = tr({ zh: `第 ${number} 组`, en: `Group ${number}` });
@@ -862,8 +918,17 @@ export default function VaultPage() {
       id: groupId ? `vault-notes-${groupId}` : 'vault-notes', value: information.notes, entryNotes: true,
       update: (notes) => updateInformation(groupId, (current) => { current.notes = notes; }),
     });
-    return <section key={groupId ?? 'primary'} className="vault-information-group" aria-label={name || groupLabel}>
-      {(name || informationGroups.length > 0) && <div className="vault-information-heading">
+    return <section key={groupId ?? 'primary'} className="vault-information-group af-glass-surface" data-site-surface="panel" data-readonly={!editable || undefined} aria-label={name || groupLabel}>
+      {(editable || information.status || name || informationGroups.length > 0) && <div className="vault-information-heading">
+        {(editable || information.status) && <VaultStatusPicker status={information.status} disabled={!editable || busy}
+          onChange={status => updateInformation(groupId, info => { info.status = status; })}
+          removeAction={editable && <button type="button" className="vault-icon-button is-danger"
+            aria-label={tr({ zh: `删除第 ${number} 组`, en: `Remove group ${number}` })}
+            onClick={() => {
+              if (window.confirm(tr({ zh: '删除这一组的内容、备注和图片？', en: 'Remove the content, notes and images in this group?' }))) {
+                updateDraft(({ entry }) => removeVaultInformation(entry, groupId));
+              }
+            }}><Trash2 aria-hidden="true" /></button>} />}
         {editable ? <input className="vault-input" aria-label={tr({ zh: `第 ${number} 组名称`, en: `Name of group ${number}` })}
           placeholder={groupLabel} maxLength={200} value={name} onChange={(event) => {
             const nextName = event.target.value;
@@ -876,25 +941,28 @@ export default function VaultPage() {
               if (current) current.name = nextName;
             });
           }} /> : <strong>{name || groupLabel}</strong>}
-        {editable && group && <button type="button" className="vault-icon-button vault-icon-button--plain is-danger"
-          aria-label={tr({ zh: `删除第 ${number} 组`, en: `Remove group ${number}` })}
-          onClick={() => {
-            if (!window.confirm(tr({ zh: '删除这一组的内容、备注和图片？', en: 'Remove the content, notes and images in this group?' }))) return;
-            updateDraft(({ entry }) => { entry.informationGroups = entry.informationGroups?.filter(({ id }) => id !== groupId); });
-          }}><Trash2 aria-hidden="true" /></button>}
+        {handle}
       </div>}
-      {renderFields(information.fields, groupId)}
-      {editable && <button type="button" className="vault-button vault-add-content"
+      {renderFields(information, groupId)}
+      {editable && <div className="vault-actions vault-add-content">
+        <button type="button" className="vault-button"
         disabled={information.fields.length >= MAX_VAULT_FIELDS} onClick={() => {
           const field = { id: crypto.randomUUID(), label: '', value: '', secret: false };
           updateInformation(groupId, (current) => { if (current.fields.length < MAX_VAULT_FIELDS) current.fields.push(field); });
-        }}><Plus aria-hidden="true" />{tr({ zh: '添加内容', en: 'Add content' })}</button>}
+        }}><Plus aria-hidden="true" />{tr({ zh: '添加内容', en: 'Add content' })}</button>
+        {information.fields.length > 0 && <CompactSelect variant="plain" showArrow keyboardListNavigation disabled={busy}
+          label={tr({ zh: '移除内容', en: 'Remove value' })} ariaLabel={tr({ zh: '移除内容', en: 'Remove value' })}
+          items={displayedVaultFields(information).map((field, i) => ({
+            value: information.fields.indexOf(field), label: tr({ zh: `内容 ${i + 1}`, en: `Value ${i + 1}` }),
+          }))}
+          onChange={index => updateInformation(groupId, info => { info.fields.splice(index, 1); })} />}
+      </div>}
       {!groupedLicense && notesRow}
       {renderImages(information, groupId)}
       {groupedLicense && notesRow}
     </section>;
   };
-  const renderAccount = (content: VaultEntry | VaultAccount, number: number, extra?: VaultAccount) => {
+  const renderAccount = (content: VaultEntry | VaultAccount, number: number, dragHandle: ReactNode, extra?: VaultAccount) => {
     const nickname = extra?.name || ('accountName' in content ? content.accountName : '');
     const values = readVaultAccount(content);
     const accountLabel = tr({ zh: `账号 ${number}`, en: `Account ${number}` });
@@ -916,17 +984,14 @@ export default function VaultPage() {
           className: 'vault-value-input', 'aria-label': key === 'login' ? text : undefined,
           placeholder: key === 'login' ? (nickname || (editable ? tr({ zh: '输入账号', en: 'Enter account login' }) : undefined)) : undefined,
           title: key === 'login' && nickname ? nickname : undefined,
-          value: values[key], readOnly: !editable, maxLength: 100_000, rows: 1,
+          value: values[key], maxLength: 100_000, rows: 1,
           onChange: (event) => updateValue(slot, event.target.value),
         })}
       </div>;
     };
-    return <SortableCard key={accountKey} id={accountKey} className="vault-account-sortable" stretch={false}
-      draggable={canReorderAccounts} disabled={busy} dragIcon={<Ellipsis size={16} aria-hidden="true" />}
-      dragLabel={tr({ zh: `拖动调整账号 ${number} 顺序`, en: `Drag to reorder account ${number}` })}>
-      {(dragHandle) => <section id={`vault-account-${number}`} className="vault-account" aria-label={nickname ? `${accountLabel} · ${nickname}` : accountLabel}>
+    return <section id={`vault-account-${number}`} className="vault-account af-glass-surface" data-site-surface="panel" aria-label={nickname ? `${accountLabel} · ${nickname}` : accountLabel}>
         <div className="vault-account-heading">
-          <VaultAccountStatusPicker key={draft?.localId} status={content.accountStatus ?? 'untested'} disabled={!editable || busy}
+          <VaultStatusPicker account key={draft?.localId} status={content.accountStatus ?? 'untested'} disabled={!editable || busy}
             onChange={(status) => updateDraft((item) => {
               const account = extra ? item.entry.accounts?.find(({ id }) => id === extra.id) : item.entry;
               if (account) account.accountStatus = status;
@@ -965,8 +1030,7 @@ export default function VaultPage() {
             update: (value) => updateValue(notesSlot, value),
           })}
         </div>
-      </section>}
-    </SortableCard>;
+      </section>;
   };
   const tagCategories = new Set(categorizedItems.map(({ category }) => category).filter(isVaultTagCategory));
   if (isVaultTagCategory(categoryFilter)) tagCategories.add(categoryFilter);
@@ -1012,28 +1076,49 @@ export default function VaultPage() {
         <aside className="vault-sidebar">
           <SearchInput value={filter} onChange={setFilter} placeholder={tr({ zh: '搜索资料', en: 'Search items' })} className="vault-filter" inputClassName="vault-input" autoComplete="off" spellCheck={false} autoCapitalize="off" />
           <CompactSelect items={categoryOptions} value={categoryFilter} onChange={setCategoryFilter} label={categoryOptions.find(({ value }) => value === categoryFilter)?.label ?? categoryOptions[0].label} ariaLabel={tr({ zh: '筛选分类', en: 'Filter category' })} className="vault-category-filter" showArrow />
-          <div className="vault-list">{visibleItems.map((item) => {
-            const title = item.entry.title || tr({ zh: '未命名', en: 'Untitled' });
-            const metadata = [
-              item.ownerUserId !== payload.userId ? item.ownerName : '',
-              item.entry.mergedInto ? tr({ zh: '已合并', en: 'Merged' }) : '',
-            ].filter(Boolean).join(' · ');
-            return <div key={item.localId} className={`vault-list-row${draft?.localId === item.localId ? ' is-active' : ''}`}>
-              <button type="button" disabled={busy} className="vault-list-item" onClick={() => selectItem(item)}>
-                <VaultListTitle title={title} />
-                {metadata && <span>{metadata}</span>}
-              </button>
-              {canEditVault && !showTrash && item.serverId && item.ownerUserId === payload.userId
-                && <button type="button" className="vault-icon-button vault-icon-button--plain is-danger" disabled={busy}
-                  aria-label={tr({ zh: `将「${title}」移入回收站`, en: `Move “${title}” to Trash` })}
-                  onClick={() => void changeTrash(true, item)}><Trash2 aria-hidden="true" /></button>}
-            </div>;
-          })}{!visibleItems.length && <p className="vault-muted">{tr(showTrash && !hasTrash
+          <div className="vault-list"><VaultSortList items={visibleItems} getId={item => item.localId}
+            enabled={canEditVault && !showTrash} busy={busy}
+            label={item => tr({ zh: `拖动调整「${item.entry.title}」顺序`, en: `Drag to reorder “${item.entry.title}”` })}
+            rowClass={item => `vault-list-row${draft?.localId === item.localId ? ' is-active' : ''}`}
+            onMove={(from, to) => void moveListItem(from, to)}>
+            {(item, _, handle) => {
+              const selected = draft?.localId === item.localId;
+              const entry = selected ? draft.entry : item.entry;
+              const title = (item.serverId ? item.entry.title : entry.title) || tr({ zh: '未命名', en: 'Untitled' });
+              const metadata = [
+                item.ownerUserId !== payload.userId ? item.ownerName : '',
+                item.entry.mergedInto ? tr({ zh: '已合并', en: 'Merged' }) : '',
+              ].filter(Boolean).join(' · ');
+              const status = entry.itemStatus;
+              const canSetStatus = canEditVault && !showTrash && !item.entry.mergedInto && item.ownerUserId === payload.userId;
+              return <>
+                {(canSetStatus || status) && <VaultStatusPicker status={status} disabled={!canSetStatus || busy} onChange={value => {
+                  if (selected) updateDraft(({ entry }) => { entry.itemStatus = value; });
+                  else if (confirmDiscard()) {
+                    discardUnsavedNew();
+                    const next = cloneItem(item);
+                    next.entry.itemStatus = value;
+                    showItem(next);
+                    setDirty(true);
+                  }
+                }} />}
+                <button type="button" disabled={busy} className="vault-list-item" onClick={() => selectItem(item)}>
+                  <VaultListTitle title={title} />
+                  {metadata && <span>{metadata}</span>}
+                </button>
+                {canEditVault && !showTrash && item.ownerUserId === payload.userId
+                  && <button type="button" className="vault-icon-button vault-icon-button--plain is-danger" disabled={busy}
+                    aria-label={item.serverId ? tr({ zh: `将「${title}」移入回收站`, en: `Move “${title}” to Trash` }) : tr({ zh: '丢弃新资料', en: 'Discard new item' })}
+                    onClick={() => void changeTrash(true, item)}><Trash2 aria-hidden="true" /></button>}
+                {handle}
+              </>;
+            }}
+          </VaultSortList>{!visibleItems.length && <p className="vault-muted">{tr(showTrash && !hasTrash
             ? { zh: '回收站为空。', en: 'Trash is empty.' }
             : { zh: '没有内容。', en: 'No items.' })}</p>}</div>
         </aside>
 
-        <section className="vault-editor">{draft && <fieldset className="vault-editor-fields" disabled={busy}>
+        <section className="vault-editor">{draft && <fieldset key={draft.localId} className="vault-editor-fields" disabled={busy}>
           <div className="vault-editor-head">
             <div className="vault-editor-title">
               {titleParts && (editable ? <input className="vault-title-tag vault-title-tag-input"
@@ -1043,19 +1128,19 @@ export default function VaultPage() {
                   const tag = event.target.value.replace(/[|｜│]/g, '');
                   item.entry.title = tag.trim() ? `${tag}${titleParts.suffix}` : titleParts.name;
                 })} /> : <span className="vault-title-tag">{titleTag.trim()}</span>)}
-              <input className="vault-title-input" value={titleParts?.name ?? draft.entry.title} readOnly={!editable}
+              {editable ? <input className="vault-title-input" value={titleParts?.name ?? draft.entry.title}
                 maxLength={200 - (titleParts?.prefix.length ?? 0)} placeholder={tr({ zh: '标题', en: 'Title' })}
                 onChange={(event) => updateDraft((item) => { item.entry.title = `${titleParts?.prefix ?? ''}${event.target.value}`; })} />
+                : <h2 className="vault-title-text">{(titleParts?.name ?? draft.entry.title) || tr({ zh: '未命名', en: 'Untitled' })}</h2>}
             </div>
             {canEditVault && manageable && <div className="vault-actions">
               {editable && <button type="button" className="vault-button is-primary" disabled={busy || (!dirty && !draft.pendingEntryUpdate)} aria-busy={saving} onClick={() => void save()}>
                 {saving ? <Loader2 className="vault-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
                 {tr({ zh: '保存', en: 'Save' })}
               </button>}
+              {editable && <button type="button" className="vault-button" disabled={busy} onClick={cancelEditing}>{tr({ zh: '取消', en: 'Cancel' })}</button>}
               {showTrash && <button type="button" className="vault-button" onClick={() => void changeTrash(false)}><RotateCcw aria-hidden="true" />{tr({ zh: '恢复', en: 'Restore' })}</button>}
-              {!showTrash && (draft.serverId
-                ? <button type="button" className="vault-icon-button vault-icon-button--plain is-danger" aria-label={moveToTrashLabel} onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" /></button>
-                : <button type="button" className="vault-button is-danger" onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" />{tr({ zh: '丢弃', en: 'Discard' })}</button>)}
+              {!showTrash && draft.serverId && <button type="button" className="vault-icon-button vault-icon-button--plain is-danger" aria-label={moveToTrashLabel} onClick={() => void changeTrash(true)}><Trash2 aria-hidden="true" /></button>}
             </div>}
           </div>
           {manageable && draft.entry.mergedInto && <div className="vault-actions">
@@ -1064,28 +1149,29 @@ export default function VaultPage() {
           </div>}
 
           {(!isAccountEntry || informationGroups.length > 0) && <div className="vault-information-groups">
-            {!isAccountEntry && renderInformation(draft.entry, 1)}
-            {informationGroups.map((group, index) => renderInformation(group, index + (isAccountEntry ? 1 : 2), group))}
+            <VaultSortList items={orderedInformation} getId={group => group === 'primary' ? 'primary' : `group:${group.id}`}
+              enabled={editable} busy={busy} label={(_, i) => tr({ zh: `拖动调整第 ${i + 1} 组顺序`, en: `Drag to reorder group ${i + 1}` })}
+              onMove={(from, to) => updateDraft(({ entry }) => setVaultInformationOrder(entry, arrayMove(vaultInformationGroups(entry), from, to)))}>
+              {(group, index, handle) => group === 'primary' ? renderInformation(draft.entry, index + 1, handle)
+                : renderInformation(group, index + 1, handle, group)}
+            </VaultSortList>
           </div>}
           {editable && (!isAccountEntry || informationGroups.length > 0) && <button type="button" className="vault-button vault-add-content"
             disabled={informationGroups.length >= MAX_VAULT_INFORMATION_GROUPS} onClick={() => {
               const group = { id: crypto.randomUUID(), name: '', fields: [], notes: '' };
-              updateDraft(({ entry }) => { (entry.informationGroups ??= []).push(group); });
+              updateDraft(({ entry }) => {
+                if (entry.primaryInformationRemoved && !orderedInformation.length && !isAccountEntry) delete entry.primaryInformationRemoved;
+                else (entry.informationGroups ??= []).push(group);
+              });
             }}><Plus aria-hidden="true" />{tr({ zh: '添加一组', en: 'Add group' })}</button>}
 
-          <DndContext key={`account-order:${draft.localId}`} sensors={accountSensors} collisionDetection={closestCenter} onDragEnd={({ active, over }) => {
-            if (!canReorderAccounts || busy || !over || active.id === over.id) return;
-            const from = accountGroupIds.findIndex((id) => id === active.id);
-            const to = accountGroupIds.findIndex((id) => id === over.id);
-            if (from < 0 || to < 0) return;
-            updateDraft(({ entry }) => setVaultAccountOrder(entry, arrayMove(vaultAccountGroups(entry), from, to)));
-          }}>
-            <SortableContext items={accountGroupIds} strategy={verticalListSortingStrategy}>
-              {accountGroups.map((account, index) => account === 'primary'
-                ? renderAccount(draft.entry, index + 1)
-                : renderAccount(account, index + 1, account))}
-            </SortableContext>
-          </DndContext>
+          <VaultSortList items={accountGroups} getId={accountGroupId} enabled={editable} busy={busy}
+            rowClass={() => 'vault-account-sortable'}
+            label={(_, i) => tr({ zh: `拖动调整账号 ${i + 1} 顺序`, en: `Drag to reorder account ${i + 1}` })}
+            onMove={(from, to) => updateDraft(({ entry }) => setVaultAccountOrder(entry, arrayMove(vaultAccountGroups(entry), from, to)))}>
+            {(account, index, handle) => account === 'primary' ? renderAccount(draft.entry, index + 1, handle)
+              : renderAccount(account, index + 1, handle, account)}
+          </VaultSortList>
           {editable && (isAccountEntry || accounts.length > 0) && <button type="button" className="vault-button vault-add-account"
             disabled={accounts.length >= MAX_VAULT_ADDITIONAL_ACCOUNTS}
             onClick={() => {

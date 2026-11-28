@@ -1,10 +1,10 @@
-import type { VaultAccount, VaultAccountStatus, VaultEntry, VaultField } from './vault-crypto';
+import type { VaultAccount, VaultStatus, VaultEntry, VaultField } from './vault-crypto';
 
 export const vaultAccountStatusLabels = {
   verified: { zh: '账号密码已确认', en: 'Credentials verified' },
   problem: { zh: '账号密码有问题', en: 'Credentials have a problem' },
   untested: { zh: '账号密码未测试', en: 'Credentials untested' },
-} satisfies Record<VaultAccountStatus, { zh: string; en: string }>;
+} satisfies Record<VaultStatus, { zh: string; en: string }>;
 
 export function hasVaultAccountMetadata(entry: VaultEntry): boolean {
   return entry.accountName !== undefined || entry.privateNotes !== undefined || entry.accountStatus !== undefined;
@@ -14,8 +14,8 @@ export function hasVaultPrimaryAccount(entry: VaultEntry): boolean {
   return hasVaultAccountMetadata(entry) || (entry.category === 'accounts' && (entry.fields.length > 0 || Boolean(entry.notes)));
 }
 
-export function orderVaultAccounts<T>(accounts: readonly T[], primary: T | null, primaryIndex = 0): T[] {
-  const ordered = [...accounts];
+export function orderVaultGroups<T>(groups: readonly T[], primary: T | null, primaryIndex = 0): T[] {
+  const ordered = [...groups];
   if (primary !== null) ordered.splice(primaryIndex, 0, primary);
   return ordered;
 }
@@ -23,7 +23,7 @@ export function orderVaultAccounts<T>(accounts: readonly T[], primary: T | null,
 type AccountGroup = VaultAccount | 'primary';
 
 export function vaultAccountGroups(entry: VaultEntry): AccountGroup[] {
-  return orderVaultAccounts<AccountGroup>(entry.accounts ?? [], hasVaultPrimaryAccount(entry) ? 'primary' : null, entry.primaryAccountIndex);
+  return orderVaultGroups<AccountGroup>(entry.accounts ?? [], hasVaultPrimaryAccount(entry) ? 'primary' : null, entry.primaryAccountIndex);
 }
 
 export function setVaultAccountOrder(entry: VaultEntry, groups: readonly AccountGroup[]): void {

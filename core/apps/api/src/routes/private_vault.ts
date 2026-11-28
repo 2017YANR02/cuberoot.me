@@ -26,6 +26,8 @@ interface KeyRow {
   user_id: number | string;
   public_key: JsonWebKey;
   encrypted_private_key: PrivateEnvelopeInput;
+  item_order: string[];
+  item_order_version: number;
 }
 
 interface ItemRow {
@@ -67,9 +69,9 @@ interface PrivateEnvelopeInput {
 
 type BackupRevisionRow = Pick<ItemRow, 'id' | 'version' | 'updated_at' | 'trashed_at'>;
 
-function backupRevision(recoveryIv: string | null, items: BackupRevisionRow[]): string {
+function backupRevision(recoveryIv: string | null, items: BackupRevisionRow[], orderVersion = 0): string {
   return createHash('sha256').update(JSON.stringify([
-    recoveryIv, items.map(({ id, version, updated_at, trashed_at }) => [id, Number(version), updated_at, trashed_at]),
+    recoveryIv, orderVersion, items.map(({ id, version, updated_at, trashed_at }) => [id, Number(version), updated_at, trashed_at]),
   ])).digest('hex');
 }
 
@@ -213,7 +215,7 @@ privateVaultRoutes.get('/vault', async (c) => {
   const { userId, canManage } = await vaultIdentity(c);
   const [keyRows, itemRows, shareRows] = await Promise.all([
     sql<KeyRow[]>`
-      SELECT user_id, public_key, encrypted_private_key
+      SELECT user_id, public_key, encrypted_private_key, item_order, item_order_version
         FROM vault_user_keys
        WHERE user_id = ${userId}`,
     sql<ItemRow[]>`
@@ -259,11 +261,15 @@ privateVaultRoutes.get('/vault', async (c) => {
     wrappedKey: row.wrapped_key,
     shares: row.trashed_at ? [] : shares.get(row.id) ?? [],
   }));
+  const orderVersion = keyRows[0]?.item_order_version ?? 0;
+  const positions = new Map(keyRows[0]?.item_order?.map((id, index) => [id, index]));
+  items.sort((a, b) => (positions.get(a.id) ?? -1) - (positions.get(b.id) ?? -1));
   return c.json({
+    orderVersion,
     userId,
     canManage,
     backupRevision: backupRevision(keyRows[0]?.encrypted_private_key.recovery?.iv ?? null,
-      itemRows.filter((item) => Number(item.owner_user_id) === userId)),
+      itemRows.filter((item) => Number(item.owner_user_id) === userId), orderVersion),
     keyProfile: keyRows[0] ? {
       publicKey: keyRows[0].public_key,
       encryptedPrivateKey: keyRows[0].encrypted_private_key,
@@ -278,8 +284,8 @@ privateVaultRoutes.get('/vault/backup-revision', async (c) => {
   checkRateLimit(getIp(c), { bucket: 'private-vault-backup-check', max: 120 });
   const userId = await requireAppUserId(c);
   const [keyRows, items] = await Promise.all([
-    sql<{ iv: string | null }[]>`
-      SELECT encrypted_private_key #>> '{recovery,iv}' AS iv
+    sql<{ iv: string | null; item_order_version: number }[]>`
+      SELECT encrypted_private_key #>> '{recovery,iv}' AS iv, item_order_version
         FROM vault_user_keys
        WHERE user_id = ${userId}`,
     sql<BackupRevisionRow[]>`
@@ -289,7 +295,36 @@ privateVaultRoutes.get('/vault/backup-revision', async (c) => {
        WHERE item.owner_user_id = ${userId} AND access.recipient_user_id = ${userId}
        ORDER BY item.updated_at DESC, item.id`,
   ]);
-  return c.json({ userId, revision: backupRevision(keyRows[0]?.iv ?? null, items) });
+  return c.json({ userId, revision: backupRevision(keyRows[0]?.iv ?? null, items, keyRows[0]?.item_order_version) });
+});
+
+async function saveItemOrder(db: typeof sql | Tx, userId: number, ids: string[], version: number) {
+  const rows = await db<{ item_order_version: number }[]>`
+    UPDATE vault_user_keys SET
+      item_order = ARRAY(
+        SELECT ordered.id FROM unnest(${sql.array(ids, 2950)}::uuid[]) WITH ORDINALITY AS ordered(id, pos)
+        JOIN vault_item_access access ON access.item_id = ordered.id AND access.recipient_user_id = ${userId}
+        ORDER BY ordered.pos
+      ),
+      item_order_version = item_order_version + 1
+    WHERE user_id = ${userId} AND item_order_version = ${version}
+    RETURNING item_order_version`;
+  return rows[0]?.item_order_version;
+}
+
+privateVaultRoutes.put('/vault/order', vaultBodyLimit, async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'private-vault-order', max: 120 });
+  const userId = await requireVaultManager(c);
+  const body = await c.req.json().catch(() => null);
+  const ids: unknown = body?.ids;
+  const version = body?.expectedVersion;
+  if (!Number.isSafeInteger(version) || version < 0 || !Array.isArray(ids)
+    || !ids.every((id) => typeof id === 'string' && UUID_RE.test(id))
+    || new Set(ids).size !== ids.length) return c.json({ error: 'invalid vault order' }, 400);
+  const orderVersion = await saveItemOrder(sql, userId, ids, version);
+  if (orderVersion === undefined) return c.json({ error: 'vault order changed' }, 409);
+  return c.json({ orderVersion });
 });
 
 privateVaultRoutes.put('/vault/key', vaultBodyLimit, async (c) => {
@@ -361,7 +396,14 @@ privateVaultRoutes.post('/vault/items', vaultBodyLimit, async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-write', max: 30 });
   const ownerUserId = await requireVaultManager(c);
-  const input = parseItemBody(await c.req.json<unknown>().catch(() => null), ownerUserId);
+  const body = await c.req.json().catch(() => null);
+  const input = parseItemBody(body, ownerUserId);
+  const order = body?.order as { ids: (string | null)[]; expectedVersion: number } | undefined;
+  if (order !== undefined && (!order || !Array.isArray(order.ids) || !Number.isSafeInteger(order.expectedVersion)
+    || order.expectedVersion < 0 || !order.ids.includes(null) || new Set(order.ids).size !== order.ids.length
+    || !order.ids.every(id => id === null || (typeof id === 'string' && UUID_RE.test(id))))) {
+    return c.json({ error: 'invalid vault order' }, 400);
+  }
   if (!input || input.expectedVersion != null) return c.json({ error: 'invalid encrypted item' }, 400);
   const result = await sql.begin(async (tx) => {
     if (!await recipientsEligible(tx, ownerUserId, input.accesses)) return null;
@@ -374,10 +416,19 @@ privateVaultRoutes.post('/vault/items', vaultBodyLimit, async (c) => {
         INSERT INTO vault_item_access (item_id, recipient_user_id, wrapped_key)
         VALUES (${rows[0].id}, ${access.userId}, ${access.wrappedKey})`;
     }
-    return rows[0];
+    let orderVersion: number | undefined;
+    if (order) {
+      orderVersion = await saveItemOrder(tx, ownerUserId, order.ids.map(id => id ?? rows[0].id), order.expectedVersion);
+      if (orderVersion === undefined) throw new Error('vault order changed');
+    }
+    return { ...rows[0], orderVersion };
+  }).catch(error => {
+    if (error instanceof Error && error.message === 'vault order changed') return 'conflict' as const;
+    throw error;
   });
+  if (result === 'conflict') return c.json({ error: 'vault order changed' }, 409);
   if (!result) return c.json({ error: 'recipient is unavailable' }, 409);
-  return c.json({ id: result.id, version: Number(result.version), updatedAt: result.updated_at }, 201);
+  return c.json({ id: result.id, version: Number(result.version), updatedAt: result.updated_at, orderVersion: result.orderVersion }, 201);
 });
 
 privateVaultRoutes.put('/vault/items/:id', vaultBodyLimit, async (c) => {

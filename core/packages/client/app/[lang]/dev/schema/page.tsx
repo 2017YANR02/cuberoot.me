@@ -250,7 +250,7 @@ const TABLES: Table[] = [
   { name: 'friend_chat_messages', domain: 'account', origin: '0249', purpose: { zh: '按会话递增序号保存文字和图片表情包消息，以发送者和客户端消息 ID 保证重试幂等；随会话删除', en: 'Text and sticker messages ordered by conversation sequence, with sender and client message ID ensuring idempotent retries; deleted with the conversation' }, cols: [{ name: 'conversation_id, sequence' }, { name: 'sender_user_id, client_message_id' }, { name: 'body, sticker_id, created_at' }] },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
-  { name: 'vault_user_keys', domain: 'storage', origin: '0192', purpose: { zh: '资料库公钥与由用户口令加密的私钥；服务端无法解密私钥', en: 'Vault public keys and passphrase-encrypted private keys that the server cannot decrypt' } },
+  { name: 'vault_user_keys', domain: 'storage', origin: '0192', evolved: [370], purpose: { zh: '资料库公钥与由用户口令加密的私钥；服务端无法解密私钥', en: 'Vault public keys and passphrase-encrypted private keys that the server cannot decrypt' } },
   { name: 'vault_items', domain: 'storage', origin: '0192', evolved: [322, 347], purpose: { zh: '私密资料的端到端加密内容、乐观并发版本和移入回收站的时间', en: 'End-to-end encrypted vault contents, optimistic-concurrency versions, and Trash timestamps' } },
   { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对所有者及指定好友分别封装的内容密钥。解除好友或移入回收站时撤销好友授权', en: 'Per-item keys wrapped for the owner and selected friends. Friend access is revoked when the friendship ends or the item moves to Trash' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
@@ -618,6 +618,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 370, slug: 'vault_item_order', desc: { zh: '保存每位用户的资料库条目顺序及排序版本。', en: 'Store each user’s vault item order and its revision.' } },
   { n: 369, slug: 'competition_duel_seats', desc: { zh: '记录对局报到时间、弃权原因和监考房版本。', en: 'Track duel readiness deadlines, forfeits and supervision room generations.' } },
   { n: 368, slug: 'competition_checkin_gate', desc: { zh: '记录同步赛场就绪状态，扩大双败实况通知范围。', en: 'Persist arena readiness and notify live duel clients of more phase changes.' } },
   { n: 367, slug: 'smart_cube_last_device', desc: { zh: '保存账号上次成功连接的智能魔方浏览器设备 ID。', en: 'Save the browser device ID of the last smart cube successfully connected for an account.' } },

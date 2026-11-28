@@ -26,6 +26,7 @@ describe('private vault access contract', () => {
     expect(vault).toContain('canManage: user.isAdmin || await hasActiveMembership(user.wcaId)');
     const managerRoutes = [
       "get('/vault/users'",
+      "put('/vault/order'",
       "post('/vault/items'",
       "put('/vault/items/:id'",
       "put('/vault/items/:id/trash'",
@@ -40,6 +41,20 @@ describe('private vault access contract', () => {
     expect(vault).toContain('FOR SHARE');
     expect(friends).toContain('async function revokeVaultAccess');
     expect(friends.match(/await revokeVaultAccess\(tx, userId, targetUserId\)/g)).toHaveLength(2);
+  });
+
+  it('returns personal order on reopen, leaving newly received items first', async () => {
+    const rows = ['second', 'new', 'first'].map(id => ({ id, owner_user_id: 7, version: 1 }));
+    sql.mockImplementation(async (parts: TemplateStringsArray) => {
+      const query = parts.join('?');
+      if (query.includes('FROM vault_user_keys')) return [{
+        item_order: ['first', 'second'], item_order_version: 2, encrypted_private_key: {},
+      }];
+      return query.includes('SELECT item.id, item.owner_user_id') ? rows : [];
+    });
+    const { orderVersion, items } = await (await privateVaultRoutes.request('/vault')).json();
+    expect(orderVersion).toBe(2);
+    expect(items.map((item: { id: string }) => item.id)).toEqual(['new', 'first', 'second']);
   });
 
   it('matches the full backup revision using only the signed-in owner’s metadata', async () => {

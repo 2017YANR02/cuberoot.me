@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement, type ReactNode } from 'react';
+import { act, createElement, type ReactElement, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import VaultPage from '@/app/[lang]/vault/page';
@@ -8,11 +8,14 @@ import type { VaultEntry } from '@/lib/vault-crypto';
 import { splitVaultLicenses } from '@/lib/vault-license';
 
 const { user } = vi.hoisted(() => ({ user: { uid: 1, name: 'Test owner' } }));
-const drag = vi.hoisted(() => ({ end: null as null | ((event: { active: { id: string }; over: { id: string } | null }) => void) }));
+type DropHandler = (event: { active: { id: string }; over: { id: string } | null }) => void;
+const drag = vi.hoisted(() => ({ end: null as DropHandler | null, byId: new Map<string, DropHandler>() }));
 vi.mock('@dnd-kit/core', async (importOriginal) => ({
   ...await importOriginal<typeof import('@dnd-kit/core')>(),
   DndContext: ({ children, onDragEnd }: { children: ReactNode; onDragEnd: typeof drag.end }) => {
     drag.end = onDragEnd;
+    const { items } = (children as ReactElement<{ items: string[] }>).props;
+    if (onDragEnd) for (const id of items) drag.byId.set(id, onDragEnd);
     return children;
   },
 }));
@@ -64,6 +67,7 @@ const unlockAndEdit = async () => {
 };
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  drag.byId.clear();
   vi.useFakeTimers(); writes.length = 0; updates.length = 0;
   vi.mocked(writeClipboardText).mockReset().mockResolvedValue(undefined);
   vi.stubGlobal('fetch', vi.fn((path: string, options?: RequestInit) => {
@@ -124,12 +128,30 @@ it('returns to read-only only after confirming how to handle unsaved edits', asy
   await toggleEditing();
   expect(confirm).toHaveBeenCalledTimes(2);
   expect(editButton().getAttribute('aria-pressed')).toBe('false');
-  expect(title().readOnly).toBe(true);
-  expect(title().value).toBe('Test entry');
+  expect(title()).toBeNull();
+  expect(host.querySelector('.vault-title-text')?.textContent).toBe('Test entry');
   expect(host.querySelector('.vault-entry-notes')).toBeNull();
   expect(host.querySelector('[aria-label="移入回收站"]')).toBeNull();
   expect(host.querySelector('button[aria-label="分享给好友"]')).toBeNull();
   expect(host.textContent).not.toContain('新建');
+  expect(updates).toHaveLength(0);
+});
+
+it('cancels changes to existing and new entries without saving', async () => {
+  const title = () => host.querySelector<HTMLInputElement>('.vault-title-input')!;
+  const save = host.querySelector('.vault-editor-head .is-primary')!;
+  expect(save.nextElementSibling?.textContent).toBe('取消');
+  await fill(title(), 'Unsaved title');
+  await clickText('取消');
+  expect(host.querySelector('.vault-title-text')?.textContent).toBe('Test entry');
+  expect(title()).toBeNull();
+  await toggleEditing();
+  await clickText('新建');
+  await fill(title(), 'Unsaved new entry');
+  await clickText('取消');
+  expect(host.querySelector('.vault-list')?.textContent).not.toContain('Unsaved new entry');
+  expect(host.querySelector('.vault-title-text')?.textContent).toBe('Test entry');
+  expect(writes).toHaveLength(0);
   expect(updates).toHaveLength(0);
 });
 
@@ -193,7 +215,7 @@ it('creates an owner-only encrypted account entry through the simplified editor'
   const fields = host.querySelectorAll<HTMLTextAreaElement>('textarea.vault-value-input');
   expect(fields).toHaveLength(3);
   expect([...host.querySelectorAll('.vault-account .vault-field-label')].map((label) => label.textContent))
-    .toEqual(['密码', '备注']);
+    .toEqual(['密码']);
   await fill(fields[0], 'test-owner@example.com');
   await fill(fields[1], 'test-secret');
   let rejectSave!: (error: Error) => void;
@@ -217,7 +239,7 @@ it('creates an owner-only encrypted account entry through the simplified editor'
   });
   expect(editButton().getAttribute('aria-pressed')).toBe('false');
   expect(host.querySelector('.vault-editor-head .is-primary, .vault-spin')).toBeNull();
-  expect(host.querySelector<HTMLInputElement>('.vault-title-input')?.readOnly).toBe(true);
+  expect(host.querySelector('.vault-editor input, .vault-editor textarea')).toBeNull();
   const search = host.querySelector<HTMLInputElement>('[placeholder="搜索资料"]')!;
   const requestCount = vi.mocked(fetch).mock.calls.length;
   await fill(search, 'TEST-OWNER@example.com');
@@ -256,10 +278,10 @@ it('keeps the generic field editor without showing stored field names', async ()
   expect(host.querySelector('.vault-fields')?.textContent).not.toMatch(/身份证号码|统一社会信用代码/);
   expect(host.querySelector('textarea[aria-label="内容 2"]')?.getAttribute('placeholder')).toBe('内容');
   const notesRow = host.querySelector('.vault-entry-notes')!;
-  expect(notesRow.firstElementChild?.textContent).toBe('备注');
+  expect(notesRow.querySelector('label.sr-only')?.textContent).toBe('备注');
   expect(notesRow.querySelector('textarea')?.value).toBe(notes);
   const remainingFieldId = host.querySelector<HTMLTextAreaElement>('.vault-fields textarea.vault-value-input')!.id;
-  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="删除第 2 项内容"]')!.click());
+  await choose('移除内容', '内容 2');
   expect(updates).toHaveLength(0);
   expect(host.querySelectorAll('.vault-fields textarea.vault-value-input')).toHaveLength(1);
   expect(host.querySelector<HTMLTextAreaElement>('.vault-fields textarea.vault-value-input')!.id).toBe(remainingFieldId);
@@ -394,7 +416,7 @@ it('pairs legacy business licenses by the evidence in their notes and image name
   for (const [index, notes] of [firstNotes, secondNotes].entries()) {
     const row = groups[index].querySelector('.vault-field-row--notes')!;
     expect(row.closest('details')).toBeNull();
-    expect(row.querySelector('label')?.textContent).toBe('备注');
+    expect(row.querySelector('label.sr-only')?.textContent).toBe('备注');
     expect(row.querySelector('textarea')?.value).toBe(notes);
   }
   expect(updates).toHaveLength(0);
@@ -404,6 +426,9 @@ it('pairs legacy business licenses by the evidence in their notes and image name
     informationGroups: [{ name: secondName, fields: [{ value: secondCode }], notes: secondNotes, images: [secondImage] }],
   });
   expect(editButton().getAttribute('aria-pressed')).toBe('false');
+  expect(host.querySelector('.vault-editor input, .vault-editor textarea')).toBeNull();
+  expect([...host.querySelectorAll('.vault-image-name')].map(el => el.textContent)).toEqual([firstImage.name, secondImage.name]);
+  expect(host.querySelectorAll('.vault-information-group.af-glass-surface[data-site-surface="panel"]')).toHaveLength(2);
   const readOnlyNotes = [...host.querySelectorAll('.vault-information-group button.vault-notes [id$="-copy-text"]')];
   expect(readOnlyNotes.map((note) => note.textContent)).toEqual([firstNotes, secondNotes]);
 });
@@ -569,7 +594,7 @@ it('drags whole account groups and retains their order after saving', async () =
   await openPlatform();
   await toggleEditing();
   expect(host.querySelector('.sortable-card-drag-handle')).toBeNull();
-  expect(host.querySelector<HTMLInputElement>('.vault-title-input')?.value).toBe('Platform');
+  expect(host.querySelector('.vault-title-text')?.textContent).toBe('Platform');
   expect(host.querySelector('.vault-editor-title span.vault-title-tag')?.textContent).toBe('账号');
   const firstAccount = host.querySelector('#vault-account-1')!;
   const firstAccountValues = [...firstAccount.querySelectorAll<HTMLButtonElement>('.vault-copy-value')];
@@ -618,6 +643,97 @@ it('drags whole account groups and retains their order after saving', async () =
   await fill(host.querySelector<HTMLInputElement>('.vault-title-input')!, 'New Platform');
   await clickText('保存');
   expect(JSON.parse(updates[1].ciphertext).title).toBe('账号 ｜ New Platform');
+});
+
+const moveRow = async (id: string, over: string) => {
+  const drop = drag.byId.get(id);
+  expect(drop).toBeTypeOf('function');
+  await act(async () => drop!({ active: { id }, over: { id: over } }));
+};
+
+it('edits legacy information, fields and images using the same controls and restores the saved order', async () => {
+  const image = (id: string) => ({ id, name: id, dataUrl: 'data:image/jpeg;base64,/9j/2Q==' });
+  writes.push({ accesses: [], ciphertext: JSON.stringify({
+    id: 'document', title: '营业执照', category: 'business', notes: 'First notes',
+    fields: [{ id: 'p', label: 'Password', value: 'sample pass', secret: true },
+      { id: 'e', label: 'Email', value: 'sample login', secret: false, status: 'verified' }],
+    images: [{ ...image('front'), status: 'problem' }, image('back')],
+    informationGroups: [{ id: 'g', name: 'Second', fields: [], notes: 'Extra notes' }],
+  }) });
+  const reopen = async () => {
+    await act(async () => root.unmount());
+    root = createRoot(host);
+    await act(async () => root.render(createElement(VaultPage)));
+    await unlockAndEdit();
+    await clickText('营业执照');
+  };
+  await reopen();
+  const chooseStatus = async (selector: string, value: string) => {
+    const picker = host.querySelector(selector)!;
+    await act(async () => picker.querySelector<HTMLButtonElement>('button[aria-expanded]')!.click());
+    await act(async () => picker.querySelector<HTMLButtonElement>(`[data-status="${value}"]`)!.click());
+  };
+  expect(host.querySelector('.vault-field .vault-status, .vault-image .vault-status, .vault-image .is-danger')).toBeNull();
+  await choose('移除图片', '1. front');
+  expect(host.querySelectorAll('.vault-image img')).toHaveLength(1);
+  await clickText('取消');
+  await toggleEditing();
+  expect(host.querySelectorAll('.vault-image img')).toHaveLength(2);
+  await chooseStatus('.vault-list-row.is-active .vault-status', 'verified');
+  await chooseStatus('.vault-information-heading .vault-status', 'problem');
+  await moveRow('field:p', 'field:e');
+  await moveRow('back', 'front');
+  await moveRow('group:g', 'primary');
+  await clickText('保存');
+  expect(JSON.parse(updates[0].ciphertext)).toMatchObject({
+    itemStatus: 'verified', status: 'problem', primaryInformationIndex: 1, manualFieldOrder: true,
+    fields: [{ id: 'p', secret: true }, { id: 'e', status: 'verified' }],
+    images: [{ id: 'back' }, { id: 'front', status: 'problem' }], notes: 'First notes',
+    informationGroups: [{ id: 'g', notes: 'Extra notes' }],
+  });
+  writes[0].ciphertext = updates[0].ciphertext;
+  await reopen();
+  expect([...host.querySelectorAll<HTMLTextAreaElement>('.vault-information-group textarea.vault-notes')].map(el => el.value))
+    .toEqual(['Extra notes', 'First notes']);
+  expect([...host.querySelectorAll<HTMLTextAreaElement>('.vault-fields textarea')].map(el => el.value))
+    .toEqual(['sample pass', 'sample login']);
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="删除第 2 组"]')!.click());
+  await clickText('保存');
+  expect(JSON.parse(updates[1].ciphertext)).toMatchObject({ notes: 'Extra notes', informationName: 'Second', informationGroups: [], itemStatus: 'verified' });
+  await toggleEditing();
+  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="删除第 1 组"]')!.click());
+  expect(host.querySelector('.vault-information-group')).toBeNull();
+  await clickText('添加一组');
+  expect(host.querySelectorAll('.vault-information-group')).toHaveLength(1);
+});
+
+it('keeps filtered-out items in place and saves the first position chosen for a new draft on creation', async () => {
+  for (const title of ['match A', 'hidden', 'match B']) {
+    writes.push({ ciphertext: JSON.stringify({ id: title, title, fields: [], notes: '' }), accesses: [] });
+  }
+  await act(async () => root.unmount());
+  root = createRoot(host);
+  await act(async () => root.render(createElement(VaultPage)));
+  await unlockAndEdit();
+  const search = host.querySelector<HTMLInputElement>('[placeholder="搜索资料"]')!;
+  await fill(search, 'match');
+  vi.mocked(fetch).mockResolvedValueOnce(response({ orderVersion: 1 }));
+  await moveRow('saved-2', 'saved-0');
+  const sorted = ['entry', 'saved-2', 'saved-1', 'saved-0'];
+  const [path, init] = vi.mocked(fetch).mock.lastCall!;
+  expect(path).toBe('/v1/vault/order');
+  expect(JSON.parse(init!.body as string)).toEqual({ ids: sorted, expectedVersion: 0 });
+  await fill(search, '');
+  const titles = () => [...host.querySelectorAll('.vault-list-item strong')].map(el => el.textContent);
+  expect(titles()).toEqual(['Test entry', 'match B', 'hidden', 'match A']);
+  await clickText('新建');
+  await fill(host.querySelector<HTMLInputElement>('.vault-title-input')!, 'New item');
+  const id = [...drag.byId.keys()].find(id => id.startsWith('new:'))!;
+  await moveRow(id, 'saved-0');
+  await clickText('保存');
+  expect(JSON.parse(vi.mocked(fetch).mock.lastCall![1]!.body as string).order).toEqual({ ids: [...sorted, null], expectedVersion: 1 });
+  expect(titles()).toEqual(['Test entry', 'match B', 'hidden', 'match A', 'New item']);
 });
 
 const openLegacyMergedFixture = async () => {
@@ -677,7 +793,7 @@ it('moves a saved item to Trash, restores it, and only empties Trash after confi
 
   await clickText('回收站');
   await clickText('Test entry');
-  expect(host.querySelector<HTMLInputElement>('.vault-title-input')?.readOnly).toBe(true);
+  expect(host.querySelector('.vault-editor input, .vault-editor textarea')).toBeNull();
   await toggleEditing();
   expect(host.textContent).not.toContain('恢复');
   expect(host.textContent).not.toContain('清空回收站');
