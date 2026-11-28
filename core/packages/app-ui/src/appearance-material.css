@@ -33,3 +33,20 @@
     --navigation-curtain-bg: var(--background);
   }
 }
+
+
+/* An unavailable image restores opaque surfaces, including independent lenses. */
+body[data-site-scenery-failed] {
+  --glass-background: var(--card);
+  --glass-surface-bg: var(--card);
+  --glass-popover-bg: var(--popover);
+  --glass-menu-bg: var(--popover);
+  --glass-dialog-bg: var(--popover);
+  --glass-filter: none;
+}
+body[data-site-scenery-failed] .af-glass-surface::before {
+  background-color: var(--af-glass-fill, var(--card));
+  background-image: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

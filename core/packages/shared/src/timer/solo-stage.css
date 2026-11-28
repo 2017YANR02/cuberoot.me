@@ -32,7 +32,7 @@
 }
 .timer-room-dialog.timer-solver-compare { width: min(100%, 760px); }
 .timer-room-overlay.solver-compare-overlay { background: var(--timer-solver-scrim, var(--modal-overlay)); }
-body[data-site-scenery='transparent'] .timer-room-dialog.timer-solver-compare {
+body:not([data-site-scenery]) .timer-room-dialog.timer-solver-compare {
   background: var(--card);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;

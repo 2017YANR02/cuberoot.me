@@ -17,13 +17,18 @@ export function AppearanceBackground({ choice, scheme, assetRoot = HOME_BACKGROU
   const [failedSource, setFailedSource] = useState<string | null>(null);
   useEffect(() => { setFailedSource(null); }, [choice, scheme, assetRoot]);
   const active = enabled && scene && source !== failedSource;
-  const material = active ? scene.id : enabled ? 'transparent' : null;
+  const material = active ? scene.id : null;
+  const imageFailed = enabled && source !== null && source === failedSource;
   useEffect(() => {
     if (!manageDocument) return;
     if (material) document.body.dataset.siteScenery = material;
     else delete document.body.dataset.siteScenery;
-    return () => { delete document.body.dataset.siteScenery; };
-  }, [material, manageDocument]);
+    document.body.toggleAttribute('data-site-scenery-failed', imageFailed);
+    return () => {
+      delete document.body.dataset.siteScenery;
+      document.body.removeAttribute('data-site-scenery-failed');
+    };
+  }, [material, imageFailed, manageDocument]);
   if (!active || !source) return null;
   return <div className="site-scenery" aria-hidden="true"
     style={{ '--site-scene-position': scene.position } as CSSProperties}>

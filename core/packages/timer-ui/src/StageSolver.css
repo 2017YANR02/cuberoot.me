@@ -364,8 +364,8 @@ html[data-theme='dark'] .stsv {
   padding: 16px 18px;
   font-variant-numeric: tabular-nums;
 }
-body[data-site-scenery='transparent'] .stsv-modal[data-site-surface='panel'],
-body[data-site-scenery='transparent'] .timer-room-dialog.stsv-settings-dialog {
+body:not([data-site-scenery]) .stsv-modal[data-site-surface='panel'],
+body:not([data-site-scenery]) .timer-room-dialog.stsv-settings-dialog {
   background: var(--card);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
