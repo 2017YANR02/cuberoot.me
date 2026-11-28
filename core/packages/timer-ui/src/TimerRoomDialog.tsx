@@ -16,12 +16,14 @@ export interface TimerRoomDialogProps {
   /** Open above native popover menus that launched this dialog. */
   topLayer?: boolean;
   language: 'en' | 'zh';
+  canClose?(): boolean;
   onClose(): void;
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, headerTitle, className, overlayClassName, headerControls, hideHeader = false, topLayer = false, language, onClose: onClosed, children }: TimerRoomDialogProps) {
-  const { motionRef, close: onClose } = useDialogMotion(onClosed);
+export function TimerRoomDialog({ title, headerTitle, className, overlayClassName, headerControls, hideHeader = false, topLayer = false, language, canClose, onClose: onClosed, children }: TimerRoomDialogProps) {
+  const { motionRef, close: animateClose } = useDialogMotion(onClosed);
+  const onClose = () => { if (canClose?.() !== false) animateClose(); };
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;

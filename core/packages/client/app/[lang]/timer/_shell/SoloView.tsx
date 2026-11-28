@@ -358,6 +358,7 @@ function SimulationFileProgress({ workspace }: { workspace: VideoWorkspace }) {
   </>;
 }
 const CameraSourceReplay = dynamic(() => import('../_components/CameraSourceReplay'), { ssr: false });
+const TimerVideoReviewDialog = dynamic(() => import('../_components/TimerVideoReview'), { ssr: false });
 const CameraTimerWorkspace = dynamic(() => import('../../video-recon/VideoReconClient').then(module => module.VideoReconWorkspace), { ssr: false });
 const LiveReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
 /** Administrator-only fake-cube panel, loaded on demand. */
@@ -1484,6 +1485,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const liveCompletionRef = useRef<TimerLiveCompletion | null>(null);
   const timerDisplayMsRef = useRef(0);
 
+  const [videoReview, setVideoReview] = useQueryState('video', parseAsBoolean.withDefault(false));
+  const [reviewScramble] = useQueryState('scramble', parseAsString);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraMounted, setCameraMounted] = useState(false);
   const cameraSupportedEvent = event === '333' || event === '333oh';
@@ -2833,7 +2836,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 成绩 / 图表面板在非桌面宽度下是整屏的(桌面是右侧常驻栏,不挡计时器),所以只有
   // 整屏那一形态要算进「有东西盖住计时器」—— 否则空格会穿到后面预备计时。
   const panelFullscreen = panelTab !== null && !isDesktop;
-  const otherModalOpen = layoutEditing || solverBlocking ||
+  const otherModalOpen = !!videoReview || layoutEditing || solverBlocking ||
     settingsOpen || bluetoothOpen || bluetoothTimerOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen || historyOverlayOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
@@ -3198,8 +3201,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // hidden, not animated; the reduced-motion block below drops the transition.
   const hideAllUi = !showTrainingCubes && timerHidesRunningUi(timer.phase, settings);
   const sourceControlsEnabled = timer.phase !== 'running';
-  const cameraLabel = tr({ zh: '摄像头计时', en: 'Camera timer' });
+  const cameraLabel = cameraOpen ? tr({ zh: '关闭摄像头计时', en: 'Close camera timer' }) : tr({ zh: '视频复盘', en: 'Video reconstruction' });
   const cameraToggleDisabled = !timerCanSwitchScramble(timer.phase) || cameraWaiting;
+  const openTimedCamera = (deviceId?: string) => {
+    void setVideoReview(null);
+    connectCamera(deviceId);
+    if (!cameraMounted) {
+      setCameraMounted(true);
+      void import('../_lib/storage/legacy-camera').then(module => module.importLegacyCameraSession()).catch(() => {});
+    }
+    setCameraOpen(true);
+  };
   const simulationLabel = tr({ zh: '模拟', en: 'Simulate' });
   const simulationReportTitle = tr({ zh: '模拟复盘', en: 'Simulated reconstruction' });
   const chooseSimulationFile = () => {
@@ -3439,6 +3451,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {trainingCubes.connections}
       {pllChain.orderOpen && <PllChainOrderDialog order={pllChain.order} cases={pllChain.cases} defaults={pllChain.defaults}
         onSave={pllChain.saveOrder} onClose={() => pllChain.setOrderOpen(false)} />}
+      {videoReview && <TimerVideoReviewDialog scramble={cameraSupportedEvent ? reviewScramble ?? scramble : ''} onClose={() => void setVideoReview(null)}
+        onTimedCapture={cameraSupportedEvent ? openTimedCamera : undefined} />}
       <TimerPrintController
         currentResult={digitsText}
         currentScramble={displayScramble}
@@ -3478,18 +3492,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             onSelect={useReconTestScramble} />}
           {!douyin && !multiEnabled &&
             <button type="button" className="tb-btn timer-camera-toggle" data-no-timer
-              aria-label={cameraLabel} aria-pressed={cameraOpen} disabled={cameraToggleDisabled}
+              aria-label={cameraLabel} aria-haspopup={cameraOpen ? undefined : 'dialog'} aria-expanded={cameraOpen || !!videoReview} disabled={cameraToggleDisabled}
               onClick={() => {
                 if (cameraOpen) {
                   closeCamera();
                   return;
                 }
-                if (cameraSupportedEvent) connectCamera();
-                if (!cameraMounted) {
-                  setCameraMounted(true);
-                  void import('../_lib/storage/legacy-camera').then(module => module.importLegacyCameraSession()).catch(() => {});
-                }
-                setCameraOpen(true);
+                void setVideoReview(true);
               }}>
               <Video size={16} aria-hidden />
             </button>}

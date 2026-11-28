@@ -113,6 +113,8 @@ interface PrimaryNavigationState {
 }
 
 export interface InstalledAppHost {
+  /** Local website used by the simulator live-reload host. */
+  videoReviewOrigin?: string;
   addNotificationOpenListener?(listener: (value: import('@cuberoot/shared/notification-push').NotificationOpen) => void): Promise<InstalledAppListener>;
   uuRemote?: import('./uu-remote').UURemoteClient;
   watchTimer?: import('./watch-timer').WatchTimerPort;

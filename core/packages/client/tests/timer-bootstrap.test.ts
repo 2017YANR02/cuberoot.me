@@ -432,8 +432,8 @@ describe('app bootstrap early guard', () => {
     expect(JSON.stringify(diagnostic)).not.toContain('?');
   });
 
-  it('stops quietly after a normal non-timer page load', () => {
-    window.history.replaceState({}, '', '/wca');
+  it.each(['/wca', '/zh/timer?video=review'])('stops quietly after loading %s without the timer shell', path => {
+    window.history.replaceState({}, '', path);
 
     window.eval(APP_BOOT_EARLY_SCRIPT);
     window.dispatchEvent(new Event('load'));

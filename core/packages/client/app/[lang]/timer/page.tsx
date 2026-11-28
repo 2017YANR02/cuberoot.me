@@ -8,9 +8,21 @@
  * implementation still stays off the server render path.
  */
 
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import TimerBootstrap from './_components/TimerBootstrap';
 import { TimerPracticeUrlProvider } from '@/lib/timer-practice-url-adapter';
 
-export default function Page() {
+const EmbeddedVideoReview = dynamic(() => import('./_components/EmbeddedVideoReview'), { ssr: false });
+
+function TimerEntry() {
+  const params = useSearchParams();
+  if (params.get('video') === 'review') return <EmbeddedVideoReview />;
   return <TimerPracticeUrlProvider><TimerBootstrap /></TimerPracticeUrlProvider>;
+}
+
+export default function Page() {
+  // Preserve the normal server-rendered timer loading shell while resolving the embedded entry.
+  return <Suspense fallback={<TimerBootstrap />}><TimerEntry /></Suspense>;
 }

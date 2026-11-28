@@ -32,6 +32,7 @@ const platform = Capacitor.getPlatform();
 const isIos = platform === 'ios';
 
 export const capacitorHost: InstalledAppHost = {
+  videoReviewOrigin: import.meta.env.DEV && location.hostname === '127.0.0.1' ? 'http://127.0.0.1:3000' : undefined,
   uuRemote,
   addNotificationOpenListener,
   watchTimer: isIos ? watchTimerPort : undefined,

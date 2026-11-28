@@ -1,0 +1,47 @@
+.settings-dialog:has(.timer-video-dialog) {
+  width: min(100%, 30rem);
+}
+.settings-dialog:has(.timer-video-dialog .video-recon-page) {
+  width: min(100%, 72rem);
+}
+.timer-video-review {
+  container-type: inline-size;
+  width: 100%;
+  min-width: 0;
+}
+.timer-video-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.timer-video-source-actions > button {
+  display: inline-flex;
+  flex: 1 1 10rem;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+}
+.timer-video-review .video-recon-page {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 0 0;
+}
+@container (max-width: 42rem) {
+  .timer-video-review .video-recon-columns { grid-template-columns: minmax(0, 1fr); }
+  .timer-video-review .video-recon-results { grid-template-areas: "source" "notation" "cube"; grid-template-rows: auto; }
+}
+.timer-video-dialog > .settings-dialog-heading .clear-btn--standalone {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.settings-dialog-backdrop:has(.timer-video-dialog) {
+  --review-top: max(12px, env(safe-area-inset-top));
+  --review-bottom: max(12px, env(safe-area-inset-bottom));
+  padding: var(--review-top) max(12px, env(safe-area-inset-right)) var(--review-bottom) max(12px, env(safe-area-inset-left));
+}
+.settings-dialog .settings-dialog-panel.timer-video-dialog {
+  max-height: calc(100dvh - var(--review-top) - var(--review-bottom));
+}

@@ -5,6 +5,7 @@ export const TIMER_OVERLAY_IDS = {
   practiceMethod: 'timer.practice-method',
   drillPicker: 'timer.drill-picker',
   stageSolver: 'timer.stage-solver',
+  videoReview: 'timer.video-review',
   bulkTool: 'timer.bulk-tool',
   bldTool: 'timer.bld-tool',
   solverTool: 'timer.solver-tool',

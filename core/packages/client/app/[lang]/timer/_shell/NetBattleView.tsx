@@ -1,4 +1,5 @@
 'use client';
+import { useCopy } from '@/hooks/useCopy';
 import PageBackLink from '@/components/PageBackLink';
 import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 import { STACKMAT_PAD_HOLD_MS, usesStackmatPads } from '@/components/stackmat-catalog';
@@ -1061,9 +1062,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [recordedSolve?.solve.id, roomController]);
 
   // ── 邀请链接复制 ────────────────────────────────────────────
-  const [linkCopied, setLinkCopied] = useState(false);
-  const copyTimerRef = useRef<number | null>(null);
-  useEffect(() => () => { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); }, []);
+  const { copied: linkCopied, copy } = useCopy({ scope: JSON.stringify([room?.code, pid, playerToken]) });
   // 邀请链接 = 当前页 URL + ?players=net&room=CODE(队友粘进浏览器 / 扫码打开即落加入页)。
   // 复制按钮与二维码共用这一份,别各拼各的。
   const roomInviteUrl = useCallback((): string | null => {
@@ -1078,15 +1077,12 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const url = roomInviteUrl();
     if (!url) return;
     const membership = credentialsRef.current;
-    void browserClipboardTransport(url).then(() => {
-      if (roomRef.current?.code !== room?.code || credentialsRef.current !== membership) return;
-      setLinkCopied(true);
-      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
-      copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1200);
-    }).catch(() => {
-      if (roomRef.current?.code === room?.code && credentialsRef.current === membership) setErr(tr({ en: 'Copy failed. Try again.', zh: '复制失败，请重试' }));
+    void copy(url).then(copied => {
+      if (!copied && roomRef.current?.code === room?.code && credentialsRef.current === membership) {
+        setErr(tr({ en: 'Copy failed. Try again.', zh: '复制失败，请重试' }));
+      }
     });
-  }, [roomInviteUrl, room?.code]);
+  }, [copy, roomInviteUrl, room?.code]);
 
   // ── 读数呈现(与 Solo 同口径)──────────────────────────────────
   const myPenalty: NetPenalty = myResult?.p ?? 'ok';

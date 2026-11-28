@@ -60,9 +60,9 @@ export function useCameraTimerCapture(onResult: (result: CameraTimerResult) => v
     }
   }, []);
 
-  const connect = useCallback(() => {
+  const connect = useCallback((deviceId?: string) => {
     cancelConnect();
-    requestCamera(requestVideoCamera());
+    requestCamera(requestVideoCamera(deviceId));
   }, [cancelConnect, requestCamera]);
 
   const simulate = useCallback((file: File, onEnded: () => void) => {

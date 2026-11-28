@@ -5,7 +5,7 @@
   <key>LSApplicationQueriesSchemes</key>
   <array><string>uuremote</string></array>
   <key>NSCameraUsageDescription</key>
-  <string>CubeRoot uses your camera when you enable video in an online battle.</string>
+  <string>CubeRoot uses your camera to record solves for video review and when you enable video in an online battle.</string>
   <key>NSMicrophoneUsageDescription</key>
   <string>CubeRoot uses your microphone for online battle audio and to read Stackmat timer signals.</string>
   <key>CubeRootAPNSEnvironment</key>

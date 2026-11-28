@@ -1,0 +1,5 @@
+/* The compact embedded document can be only one button tall. Keep the Next
+   development overlay from covering the capture and upload targets. */
+html:has(.timer-video-embedded) nextjs-portal {
+  display: none !important;
+}

@@ -24,6 +24,11 @@
 
 本节保留总体范围、当前验收入口与待完成检查。按日期的旧实现批次已归入[历史记录](history/mobile-app-history.md)，其中旧开关、商店状态和“未实现”不代表当前状态。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-11-27 iOS 登录修复复审
+
+- Apple 在 iPhone 17 Pro Max 和 iPad Air 11 英寸（M3）上测试 `1.0.2` 构建 `8`，登录卡在「正在返回 CubeRoot App」页面，按 2.1(a) 退回。构建 `9` 包含 App 内邮箱密码登录。25 项登录相关测试通过，审核演示账号的生产登录接口返回成功。在 iPhone Duo 和 iPad Air 11 英寸（M4）模拟器核对了「我的 → 登录 / 注册 → 用密码登录」路径。iPad 上使用实际审核账号登录后，进入会员页并看到了月卡和年卡。两款 iPhone 模拟器的自动化未完整走通，手机端登录结果待复核。审核备注已更新为相同入口与订阅步骤。第三方登录和购买交易待另行验收。
+- 于 03:46 PST 用 ASC CLI 在 [原 iOS 审核单](https://appstoreconnect.apple.com/apps/6816632957/distribution/reviewsubmissions/details/63c0190e-a8d1-4682-9c35-f979b1c14667) 重送构建 `9`、月卡、年卡和订阅组。iOS 版本与审核单均回读为「等待审核」，发布模式为审核通过后自动发布。中国大陆与美国分发可用。macOS `0.1.2` 构建 `7` 仍在等待审核。通过后核验发售和正式订阅。
+
 ### 2026-11-26 五端 App 内登录
 
 - iOS、Android、HarmonyOS NEXT、Windows 和 macOS 共用「我的」首页与随 App 打包的登录页。App 与网站共用第一方表单和同一账号 API。App 直接安装第一方会话，第三方保留系统浏览器与深链回跳。账号空间、安全与会员按需打开原有网站子页。
@@ -203,7 +208,7 @@
 - [x] 已从 Mobile 提取有真实多宿主消费者的 `@cuberoot/app-ui`；Mobile、Desktop 和 Harmony 只通过公开入口消费，无 app→app 源码或 `dist` 依赖。
 - [x] 已建立 `core/apps/desktop`，Windows 和 macOS 共用同一 Tauri 工程。
 - [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 当前源码的 release 可执行文件已构建，并有 Desktop 实际运行与 GAN v4 BLE 使用证据，但正式安装包、升级、签名和完整功能矩阵仍未验收。
-- [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。已在官方手机模拟器安装并验证离线成绩持久化；真机 BLE、发布签名和商店验收仍待完成。
+- [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。已在官方手机模拟器验证离线成绩持久化，首个正式包已签名并验签；真机 BLE 和商店验收待完成。
 - [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 已接共享多协议扫描、选择和连接链路，Windows 的 GAN v4 已实测；其他 Desktop 型号、macOS 与 Harmony 仍缺实体设备 BLE 证据。
 - [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
 
@@ -212,6 +217,7 @@
 - `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
 - Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport；BLEC 通过 `tauri-plugin-blec` / `btleplug` 使用 Windows 与 macOS 的系统 BLE 栈，并复用 `@cuberoot/app-ui` 中的 GAN v2/v3/v4、MoYu32 和 QiYi connection。2026-09-22 当前源码执行 `tauri build --no-bundle` 成功，产出 `src-tauri/target/release/cuberoot-desktop.exe`；所有者同日确认 Windows Desktop 上 GAN v4 可以正常连接和使用。这只证明 Windows 原生编译和该型号主链，不替代正式安装包、其他协议或压力矩阵。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有 macOS 实机 BLE 证据。
 - Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当时 `hdc list targets` 为 `[Empty]`，仅取得编译证据，`HARMONY-01` 保持进行中。
+- 2026-11-27，`pnpm --filter @cuberoot/harmony build` 和 Hvigor `assembleApp` 均通过。`0.1.0`（`1000`）验证首个公司发布签名流程。`0.1.1`（`1001`）替换 1×1 占位图标，商店使用同一正式图案；对比了编译器缩放后的包内图标。使用上海魔方根科技有限公司发布证书及 AppGallery Profile 签署 `me.cuberoot.app`，DevEco SDK `verify-app` 分别通过 `.app` 和内置 HAP 的验签，两者的证书与 Profile 均和华为下载件一致。当前交付件为 `.local-data/harmony-release/CubeRoot-HarmonyOS-0.1.1-1001-release-signed.app`，SHA-256 为 `e67da90546a3c393988f971611ff07d72e949ba80336ac5c8073bc55d6a45985`。后续版本沿用本次发布密钥。商店进度见[备案与主体迁移汇总](../../compliance/filing-and-identity.md)。
 - Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。旧工作室账号曾完成企业认证；当时自动调试签名因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
 - Desktop BLE 现有 8 秒实时扫描、按地址去重、RSSI 排序、名称列表选择、连接后 service/characteristic discovery、通知、读写和写入模式选择；关闭弹层、重扫和发起连接都会停止旧扫描。2026-09-27 所有者在 Windows 持续拧动 GAN v4 / MoYu32 时复现假连接，原生日志确认 `tauri-plugin-blec 0.12.0` 的容量 1 通知队列在 `commands.rs:179` 因 `Full(..)` panic，终止 `listen_notify` 却没有断连事件。Desktop 现通过插件公开的 Rust `Handler.subscribe` 直接转发到 Tauri IPC Channel，取消该中间队列；其余扫描、连接、退订与 GATT 仍由 BLEC 管理，不复制厂商协议。IPC 转发失败通过独立错误通道使所属前端会话断开，并等待原生清理后重连；已关闭的 WebView 无法保证收到错误通知。Rust 测试覆盖 4,096 帧顺序完整性和 IPC 失败，adapter 测试覆盖清理屏障及旧订阅迟到错误，Desktop CI 同时运行原生测试。新构建的 GAN v4 / MoYu32 持续拧动及 macOS 真机验证仍待验收，不能用自动化代替实物压力测试。
 - Android 对不支持安全 main-frame message listener 的旧 WebView 启动即 fail closed，并锁定 release manifest 的 10 项权限及 legacy 权限 `maxSdkVersion=30`/扫描 `neverForLocation`。Capacitor 内部仍注册 Cookies/Http/SystemBars 辅助 JS interface；通用 plugin dispatcher 已主 frame 隔离，但远端 iframe 的 cookie 边界仍是发布前 P2 审核项，文档不得声称“所有原生接口均仅主 frame”。
@@ -239,7 +245,7 @@
 | QA-02 | 进行中 | OPPO Tools/Account 主内容为 360/360，但生产首页 DeskPet 固定层右缘仍约溢出 30 CSS px；五端全弹层/键盘/安全区/动态字号仍未关闭 |
 | XPLAT-01 | 已完成 | `@cuberoot/app-ui` 已有 Mobile、Desktop 和 Harmony 真实消费者，无 app→app import |
 | DESKTOP-01 | 进行中 | 同一 Tauri 工程与 BLEC adapter 已落地；macOS `.app` 已启动、未签名 DMG 已校验，Windows CI 定义未实际跑；签名/公证、Windows 构建安装和两端 BLE 证据未齐 |
-| HARMONY-01 | 进行中 | 官方手机模拟器安装、断网计时及重启后成绩保留已验；蓝牙计时器接线已构建，待真机验证、发布签名和上架 |
+| HARMONY-01 | 进行中 | 官方手机模拟器安装、断网计时及重启后成绩保留已验；首个正式包已通过发布验签，待真机蓝牙验证、鸿蒙 ICP 和上架 |
 
 ### 阶段 3：PWA 补强和网站兜底
 
@@ -1250,6 +1256,8 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 新公司开发者实名认证已提交，进度见[备案与主体记录](../../compliance/filing-and-identity.md#2026-11-21-华为开发者企业认证)。
 
 - 模拟器验证不需要配置签名；需要真机验证时，先连接 HarmonyOS NEXT 设备并确认 `hdc list targets` 可见，再让 DevEco 自动生成调试 profile。证书、密码和本机签名材料不得进入 Git。
+
+2026-11-27，在 Mac mini 的 nova 16 Pro 官方手机模拟器安装 `0.1.1` 同次构建的未签名 HAP，启动后核对计时、项目选择、设置和工具页，提取前三个界面作为上架截图。原始截图及保留全画面的 9:16 商店素材保存在 `.local-data/harmony-release/screenshots/`。工具页可见 AI 助手入口，账号登录与真机 BLE 未验收。
 
 ### 19.2 Android 智能魔方桥接进度（2026-09-20）
 

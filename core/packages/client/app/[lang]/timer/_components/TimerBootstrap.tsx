@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopy } from '@/hooks/useCopy';
 import {
   Component,
   type ComponentType,
@@ -251,33 +252,6 @@ function failureMessage(diagnostic: TimerBootDiagnostic) {
   return TIMER_BOOT_COPY[bootFailureMessageKey(diagnostic)];
 }
 
-async function copyDiagnostic(diagnostic: TimerBootDiagnostic): Promise<boolean> {
-  const text = diagnosticText(diagnostic);
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-      return true;
-    }
-  } catch {
-    // Fall through to execCommand for older iOS WebKit and restricted contexts.
-  }
-
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.setAttribute('readonly', '');
-  textarea.style.position = 'fixed';
-  textarea.style.opacity = '0';
-  document.body.appendChild(textarea);
-  textarea.select();
-  let copied = false;
-  try {
-    copied = typeof document.execCommand === 'function' && document.execCommand('copy');
-  } finally {
-    textarea.remove();
-  }
-  return copied;
-}
-
 function TimerBootFailurePanel({
   diagnostic,
   onRetry,
@@ -285,17 +259,17 @@ function TimerBootFailurePanel({
   diagnostic: TimerBootDiagnostic;
   onRetry: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
+  const { copied, copy, reset: resetCopy } = useCopy({ persist: 'all' });
   const [reportState, setReportState] = useState<'reporting' | 'reported' | 'reportFailed'>('reporting');
   useEffect(() => {
     let active = true;
     setReportState('reporting');
-    setCopied(false);
+    resetCopy();
     void reportAppBootDiagnostic(diagnostic).then(recorded => {
       if (active) setReportState(recorded ? 'reported' : 'reportFailed');
     });
     return () => { active = false; };
-  }, [diagnostic]);
+  }, [diagnostic, resetCopy]);
 
   return (
     <main className="timer-bootstrap timer-bootstrap-error" data-timer-bootstrap="error" role="alert">
@@ -317,9 +291,7 @@ function TimerBootFailurePanel({
         {reportState === 'reportFailed' && <button
           type="button"
           className="timer-bootstrap-button"
-          onClick={() => {
-            void copyDiagnostic(diagnostic).then(setCopied).catch(() => setCopied(false));
-          }}
+          onClick={() => copy(diagnosticText(diagnostic))}
         >
           {tr(TIMER_BOOT_COPY.copy)}
         </button>}

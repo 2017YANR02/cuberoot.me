@@ -95,6 +95,10 @@ export async function launchAndroid(target, context) {
   const existing = forwards.find(([, devicePort]) => devicePort === endpoint);
   if (existing && existing[2] !== endpoint) throw new Error(`安卓设备上的端口 ${port} 已被其他调试任务占用。`);
   if (!existing) adb('reverse', '--no-rebind', endpoint, endpoint);
+  // The timer's embedded review uses the checkout's Next dev server.
+  if (!forwards.some(([, devicePort]) => devicePort === 'tcp:3000')) {
+    adb('reverse', '--no-rebind', 'tcp:3000', 'tcp:3000');
+  }
   const activity = adb('shell', 'cmd', 'package', 'resolve-activity', '--brief', '-a', liveAction, '-p', packageId);
   if (process.argv.includes('--rebuild') || !activity.endsWith(liveActivity)) {
     installDebugApp(adb, { run, mobile, sdk: tools.sdk });

@@ -13,6 +13,7 @@ import { timerPracticeContents, selectedTimerPracticeContent, type TimerPractice
 import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
 import { TimerSoloControls, TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
+import { InstalledTimerVideoReview } from './InstalledTimerVideoReview';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
@@ -277,6 +278,7 @@ import {
   useAutoReady,
 } from '@cuberoot/timer-ui';
 import {
+  Video,
   Clock3,
   Grid2X2,
   Settings as SettingsIcon,
@@ -4582,6 +4584,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
 
 
+      {openOverlay === TIMER_OVERLAY_IDS.videoReview && <InstalledTimerVideoReview
+        language={language} appearance={appearance} scramble={activeEvent === '333' || activeEvent === '333oh' ? scramble : ''} origin={host.videoReviewOrigin ?? SITE_ORIGIN}
+        onClose={() => setOpenOverlay(null)} onDismissChange={registerToolDismiss} />}
       <TimerWorkspace className="view-container" soloLayout={store?.settings.soloLayout} active={timerMode === 1 && timerVisible}
         data-fold-solver={upperPaneVisible && foldSolverOpen ? '' : undefined}
         data-live-reconstruction={liveSolutionPanel ? '' : undefined}
@@ -4605,6 +4610,12 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           controls: (
                 <>
                   {communityAvailable && <TimerLiveShareStatus controller={liveShare} language={language} />}
+                  <button type="button" className="timer-solo-control" data-no-timer aria-haspopup="dialog"
+                    aria-label={{ zh: '视频复盘', en: 'Video review' }[language]}
+                    disabled={!sourceControlsEnabled}
+                    onClick={() => setOpenOverlay(TIMER_OVERLAY_IDS.videoReview)}>
+                    <Video size={18} aria-hidden="true" />
+                  </button>
                   {smartCubeDeviceCenter}
                   <TimerSoloControls
                     project={<TimerPuzzlePicker

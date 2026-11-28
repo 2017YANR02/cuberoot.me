@@ -1164,3 +1164,18 @@ button {
   border: 0;
   background: transparent;
 }
+
+.timer-room-dialog.installed-video-review {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 30rem);
+  min-height: 0;
+  overflow: hidden;
+}
+.timer-room-dialog.installed-video-review.is-workspace { width: min(100%, 1080px); }
+.installed-video-review > iframe {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+}
