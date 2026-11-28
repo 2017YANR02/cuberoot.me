@@ -35,6 +35,7 @@ function createAccountCopy() {
     : { en: 'WeChat', zh: '微信' });
   return {
     spaceLabel: tr({ en: 'My space', zh: '我的空间' }),
+    fullSpaceLabel: tr({ en: 'Open full profile', zh: '打开完整空间' }),
     securityLabel: tr({ en: 'Account & security', zh: '账号与安全' }),
     settingsLabel: tr({ en: 'Settings', zh: '设置' }),
     appearanceLabel: tr({ en: 'Appearance', zh: '外观' }),
@@ -173,6 +174,7 @@ interface AccountPageData {
   appearanceScheme: 'light' | 'dark';
   appearanceSettings: ReturnType<typeof localAppearanceView> | null;
   accountSection: AccountSection;
+  showFullSpace: boolean;
   accountError: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
@@ -512,6 +514,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     appearanceScheme: 'light',
     appearanceSettings: null,
     accountSection: 'home',
+    showFullSpace: !isDouyinMiniProgram(),
     accountError: '',
     accountLinkPending: false,
     accountLinkRequired: false,
@@ -949,10 +952,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     if (section !== 'home' && section !== 'space' && section !== 'security' && section !== 'settings') return;
     if (this.data.isTimelineEntry || this.data.nameBusy || this.data.identityMutationBusy) return;
     if (this.data.loginRequired && (section === 'space' || section === 'security')) return;
-    if (section === 'space' && !isDouyinMiniProgram()) {
-      this.openAccount();
-      return;
-    }
     this.setData({ accountSection: section, accountError: '', editingName: false, nameDraft: '' });
     this.refreshAppearanceSettings();
   },

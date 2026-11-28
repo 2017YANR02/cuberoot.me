@@ -161,6 +161,11 @@
       </view>
     </view>
     <button hover-class="press-feedback" wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
+    <button wx:if="{{showFullSpace}}" class="account-home-row" hover-class="press-feedback" bindtap="openAccount">
+      <template is="account-icon" data="{{icon: 'user-round', scheme: appearanceScheme}}" />
+      <text>{{copy.fullSpaceLabel}}</text>
+      <template is="account-icon" data="{{icon: 'chevron-right', scheme: appearanceScheme}}" />
+    </button>
   </block>
   <view wx:if="{{accountSection === 'security'}}" class="account-security">
     <button hover-class="press-feedback" class="text-button account-name-edit account-security-row" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>
