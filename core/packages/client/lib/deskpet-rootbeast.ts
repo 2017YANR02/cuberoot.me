@@ -108,3 +108,8 @@ export const ROOTBEAST_BOTTOM_PEEK = motion('bottom-peek');
 export const ROOTBEAST_HUNT = motion('mouse-hunt');
 
 export const ROOTBEAST_SLEEP = motion('sleep-in-place');
+
+export const ROOTBEAST_RECON_REACTIONS = {
+  success: motion('recon-success'),
+  failure: motion('recon-failure'),
+};

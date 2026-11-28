@@ -7,7 +7,32 @@ const plan = (poses, face, gaze = look, description, descriptionEn) => ({ poses,
 // Keep celebratory gestures beside the lower shell, with short rounded paws.
 const reachLeft = [-210,-67,75,.95,1];
 const reachRight = [180,-67,-75,.95,1];
+// One gallop, travelling left. Fore and hind paws have separate contact arcs.
+// Paw offsets are [reach, lift, rotation]; the far pair leads by one beat.
+const gallop = [
+  { lift: 0,   pitch: -7, height: .94, fore: [-52, 0, 36],    hind: [-14, -40, 48], tail: 24 }, // fore contact
+  { lift: 6,   pitch: -9, height: .86, fore: [-27, 0, 10],    hind: [-48, -30, 32], tail: 18 }, // absorb
+  { lift: -10, pitch: -4, height: .91, fore: [20, -7, -32],   hind: [-60, -10, 12], tail: 23 }, // gather
+  { lift: 0,   pitch: 2,  height: .94, fore: [42, -46, -54],  hind: [-40, 2, 5],    tail: 36 }, // hind contact
+  { lift: 4,   pitch: 6,  height: .88, fore: [8, -54, -24],   hind: [3, 0, -12],    tail: 47 }, // load hind paws
+  { lift: -21, pitch: 4,  height: .99, fore: [-30, -34, 17],  hind: [45, 6, -38],   tail: 52 }, // push off
+  { lift: -53, pitch: 0,  height: .97, fore: [-66, -20, 52],  hind: [62, -26, -57], tail: 44 }, // full extension
+  { lift: -30, pitch: -4, height: .96, fore: [-70, -6, 48],   hind: [29, -46, -19], tail: 32 }, // reach for ground
+];
+const runPoses = Array.from({ length: 4 * gallop.length + 1 }, (_, index) => {
+  const beat = gallop[index % gallop.length];
+  const far = gallop[(index + 1) % gallop.length];
+  return [index * 100 / (4 * gallop.length), 'side', {
+    yaw: 63, ry: beat.lift, b: [0, -5, beat.pitch, 1, beat.height],
+    R: [-108 + beat.fore[0], -27 + beat.fore[1], beat.fore[2], .96, 1],
+    L: [-166 + far.fore[0] * .75, -48 + far.fore[1], far.fore[2], .8, .94],
+    HR: [148 + beat.hind[0], -33 + beat.hind[1], beat.hind[2], 1, 1],
+    HL: [103 + far.hind[0] * .75, -58 + far.hind[1], far.hind[2], .8, .9],
+    T: [193, -304 + beat.pitch, beat.tail, 1, 1],
+  }, 'linear'];
+});
 export const choreography = {
+  run: plan(runPoses, faces([0,'happy']), [[0,-8,0],[100,-8,0]]),
   'cube-pop': plan([
     [0,'sit',{yaw:18,L:[-117,-47,-45,1,1],R:[110,-47,45,1,1]}],
     [12,'sit',{yaw:18,L:[-117,-47,-45,1,1],R:[110,-47,45,1,1]}],

@@ -59,13 +59,12 @@ export const pawGrip = ([px, py, rotation, , sy]) => {
   const radians = rotation * Math.PI / 180;
   return [px - Math.sin(radians) * 65 * sy, py + Math.cos(radians) * 65 * sy];
 };
-export function stage(id, duration, draw, sceneId) {
-  const { a, styles } = createAnimator(`rb${id}`, duration);
+export function stage(id, duration, draw, sceneId, plan = choreography[sceneId]) {
+  if (!plan) throw new Error(`Missing character choreography: ${sceneId}`);
+  const { a, styles } = createAnimator(`rb${id}`, duration, { once: plan.once });
   const v = (art, start = 20, end = 80) => a(art, [[0, opacity(0)], [Math.max(0, start - 1), opacity(0)], [start, opacity(1)], [end, opacity(1)], [Math.min(100, end + 1), opacity(0)], [100, opacity(0)]]);
   const float = (art, x, y, amount = 12) => at(a(art, [[0, t()], [50, t(0, -amount)], [100, t()]]), x, y);
   const glints = (x, y) => at(a(star(), [[0, t(0, 0, 0, .25)], [35, t(0, -7, 35, 1)], [70, t(0, 0, 90, .35)]]), x, y) + at(a(star(cream), [[0, t(0, 0, 0, .6)], [55, t(0, 8, -45, .25)]]), x + 48, y + 30, .5);
-  const plan = choreography[sceneId];
-  if (!plan) throw new Error(`Missing character choreography: ${sceneId}`);
   const petPlacement = { x: 320, y: 520, scale: .73 };
   // Scene-space handoffs use the same resolved wrist as held artwork.
   const grip = (time, bone = 'L', offset = [0, 0]) => {

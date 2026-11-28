@@ -72,5 +72,7 @@
   { "id": "music-off-v3", "file": "rootbeast-music-off-v3.svg", "zh": "摘下收好耳机", "en": "Take off headphones", "duration": 1.4, "first": "listening", "last": "rest" },
   { "id": "bottom-peek", "file": "rootbeast-bottom-peek-rig.svg", "zh": "底沿探头", "en": "Bottom edge peek", "duration": 1.12, "first": "rest", "last": "peek" },
   { "id": "mouse-hunt", "file": "rootbeast-hunt-rig.svg", "zh": "鼠标追逐骨架", "en": "Mouse hunt rig", "duration": 0, "first": "rest", "last": "rest" },
-  { "id": "sleep-in-place", "file": "rootbeast-sleep-rig.svg", "zh": "原地自然睡着", "en": "Fall asleep in place", "duration": 7, "first": "rest", "last": "sleep" }
+  { "id": "sleep-in-place", "file": "rootbeast-sleep-rig.svg", "zh": "原地自然睡着", "en": "Fall asleep in place", "duration": 7, "first": "rest", "last": "sleep" },
+  { "id": "recon-success", "file": "recon-success.svg", "zh": "复盘成功", "en": "Reconstruction complete", "duration": 5.2, "first": "side", "last": "rest" },
+  { "id": "recon-failure", "file": "recon-failure.svg", "zh": "复盘失落", "en": "Reconstruction disappointment", "duration": 5.8, "first": "side", "last": "sit" }
 ]
