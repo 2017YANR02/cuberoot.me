@@ -21,6 +21,25 @@ const person = { profile: { person: { name: 'Test Person' }, personal_records: {
 describe('native personal results query', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
+  it('keeps completed results visible when returning to the tools tab and supports manual refresh', async () => {
+    vi.stubGlobal('wx', { setNavigationBarTitle: vi.fn() });
+    try {
+      vi.mocked(requestJson).mockResolvedValue(person);
+      const page = fixture();
+      page.onShow();
+      await flush();
+      page.onHide();
+      page.onShow();
+      expect(page.data).toMatchObject({ personName: 'Test Person', loading: false });
+      expect(requestJson).toHaveBeenCalledTimes(1);
+      page.search();
+      await flush();
+      expect(requestJson).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('clears the previous identity and results as soon as the query changes', async () => {
     vi.mocked(requestJson).mockResolvedValue(person);
     const page = fixture();

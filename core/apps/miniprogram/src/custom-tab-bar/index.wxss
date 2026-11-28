@@ -1,0 +1,32 @@
+.bar {
+  position: fixed;
+  z-index: 90;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3px 16px calc(3px + env(safe-area-inset-bottom));
+  background: var(--cr-bg);
+}
+.track { position: relative; display: flex; height: 44px; }
+.slider {
+  position: absolute;
+  top: 0;
+  width: 33.333333%;
+  height: 100%;
+}
+.pill {
+  height: 100%;
+  margin: 0 4px;
+  border-radius: 999px;
+  background: var(--cr-text);
+  opacity: .1;
+}
+.tab { position: relative; width: 33.333333%; display: flex; align-items: center; justify-content: center; }
+.icon { width: 23px; height: 23px; opacity: .62; transition: opacity 150ms; }
+.icon.selected { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .slot-0 { left: 0 !important; }
+  .slot-1 { left: 33.333333% !important; }
+  .slot-2 { left: 66.666667% !important; }
+  .icon { transition: none; }
+}

@@ -173,7 +173,6 @@
 </template>
 <view class="native-tab-surface" style="{{appearanceStyle}}">
 <view data-timer-surface="page" bindtouchstart="pageTimerTouch" class="native-timer nt-theme-{{appearanceScheme}} {{!battle && !netMode ? 'native-timer--solo' : ''}} {{layoutEditing ? 'native-timer--layout-editing' : ''}}" style="{{appearanceStyle}}{{!battle && !netMode && soloViewportHeight ? ';height:' + soloViewportHeight + 'px' : ''}}">
-  <view id="nt-navigation-palette" aria-hidden="true"></view>
   <block wx:if="{{!battle && !netMode}}">
   <view data-timer-surface="page" id="nt-toolbar" class="nt-toolbar {{hideChrome ? 'nt-solo-chrome-hidden' : ''}}" aria-hidden="{{hideChrome}}">
     <button class="nt-tool" bindtap="openSheet" data-sheet="solver" disabled="{{busy || layoutEditing || generating || event !== '333' || !scramble}}" aria-label="{{copy.solver}}" hover-class="press-feedback">

@@ -1,6 +1,6 @@
 /* Native scroll-view owns scrolling; the outer page is disabled in index.json. */
 .account-scroll {
-  height: 100vh;
+  height: calc(100vh - var(--cr-tab-inset, 0px));
   width: 100%;
   position: relative;
   z-index: 1;

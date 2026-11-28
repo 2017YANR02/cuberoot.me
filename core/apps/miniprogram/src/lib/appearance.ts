@@ -36,6 +36,17 @@ export function nativeAppearanceScheme(): 'light' | 'dark' {
   return appearanceScheme(readAppearance());
 }
 
+export function tabBarAppearance() {
+  const appearance = readAppearance();
+  const scheme = appearanceScheme(appearance);
+  const colors = appearanceColors(appearance, scheme);
+  return {
+    scheme,
+    background: colors?.['--cr-bg'] ?? themes[scheme].backgroundColor,
+    foreground: colors?.['--cr-text'] ?? themes[scheme].tabBarColor,
+  };
+}
+
 export function nativeAppearanceStyle(): string {
   const appearance = readAppearance();
   const scheme = appearanceScheme(appearance);
@@ -70,11 +81,16 @@ export function applyNativeAppearance(): void {
   // hidden tools WebView finally delivers its queued appearance message.
   if (typeof getCurrentPages === 'function') {
     const appearanceStyle = styleForAppearance(appearance, scheme, colors);
-    for (const page of getCurrentPages()) {
+    const pages = getCurrentPages();
+    for (const page of pages) {
       page.setData(page.data?.nativeTimerPage || (page.data && 'appearanceScheme' in page.data)
         ? { appearanceStyle, appearanceScheme: scheme }
         : { appearanceStyle });
       page.refreshAppearanceSettings?.(scheme);
+      if (page === pages[pages.length - 1]) {
+        const bar = isDouyinMiniProgram() ? page.selectComponent?.('#bottom-nav') : page.getTabBar?.();
+        bar?.refresh?.();
+      }
     }
   }
   try { api.setNavigationBarColor({ backgroundColor, frontColor: dark ? '#ffffff' : '#000000' }); } catch { /* optional host API */ }

@@ -46,7 +46,7 @@ export async function buildTabIcons(outputRoot, tabBar, suffix = '') {
 
 export async function buildAccountIcons(outputRoot) {
   const directory = join(outputRoot, 'assets', 'tabbar');
-  for (const icon of ['user-round', 'shield', 'settings', 'log-out', 'chevron-left', 'chevron-right', 'arrow-left', 'monitor', 'moon', 'sun', 'check']) {
+  for (const icon of ['clock-3', 'grid-2x2', 'user-round', 'shield', 'settings', 'log-out', 'chevron-left', 'chevron-right', 'arrow-left', 'monitor', 'moon', 'sun', 'check']) {
     const svg = await readFile(require.resolve(`lucide-static/icons/${icon}.svg`), 'utf8');
     for (const [scheme, color] of [['light', '#171717'], ['dark', '#f5f5f5']]) {
       await sharp(Buffer.from(svg.replaceAll('currentColor', color)), { density: 243 })

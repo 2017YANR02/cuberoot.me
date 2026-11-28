@@ -83,3 +83,5 @@
 .tools-stat-value { overflow-wrap: anywhere; font-size: 34rpx; font-weight: 650; font-variant-numeric: tabular-nums; }
 .tools-alg-output { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
 .tools-output .tools-button { margin: 12rpx 0 -12rpx auto; }
+
+.page.native-tools { padding-bottom: calc(50px + 48rpx + env(safe-area-inset-bottom)); }

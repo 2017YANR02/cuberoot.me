@@ -9,14 +9,16 @@
  */
 
 import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { listenForMiniProgramTabSession } from '@/lib/miniprogram-tab-session';
 import TimerBootstrap from './_components/TimerBootstrap';
 import { TimerPracticeUrlProvider } from '@/lib/timer-practice-url-adapter';
 
 const EmbeddedVideoReview = dynamic(() => import('./_components/EmbeddedVideoReview'), { ssr: false });
 
 function TimerEntry() {
+  useEffect(() => listenForMiniProgramTabSession('timer'), []);
   const params = useSearchParams();
   if (params.get('video') === 'review') return <EmbeddedVideoReview />;
   return <TimerPracticeUrlProvider><TimerBootstrap /></TimerPracticeUrlProvider>;

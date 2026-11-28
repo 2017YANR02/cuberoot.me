@@ -161,8 +161,6 @@
       </view>
     </view>
     <button hover-class="press-feedback" wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
-    <button wx:if="{{hasWebsiteAccount}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openAccount">{{copy.accountButtonLabel}}</button>
-    <button wx:if="{{copy.payouts}}" class="text-button account-security-row" hover-class="press-feedback" bindtap="openPayouts">{{copy.payouts}}</button>
   </block>
   <view wx:if="{{accountSection === 'security'}}" class="account-security">
     <button hover-class="press-feedback" class="text-button account-name-edit account-security-row" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>

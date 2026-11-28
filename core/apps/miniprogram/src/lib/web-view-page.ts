@@ -32,7 +32,7 @@ import {
   type RequiredSessionDestination,
 } from './required-session';
 import { decodeMiniProgramSessionMessage } from './web-session-contract';
-import { applyLocalizedTabBar, localizedWebsitePath, receiveNativeLocale, tr } from './i18n';
+import { localizedWebsitePath, receiveNativeLocale, tr } from './i18n';
 import { publicPageSharePath, decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
 import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 import { nativeWebDestination } from './native-web-destination';
@@ -66,6 +66,7 @@ interface WebViewPageMethods {
   refreshLocale(): void;
   invalidatePreferences(): void;
   acceptPreferences(): void;
+  handleWebViewLoad(event: WechatMiniprogram.CustomEvent<{ src?: string }>): void;
   handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
   handleWebViewMessage(event: WechatMiniprogram.CustomEvent<{ data?: unknown[] }>): void;
   loginWithMiniProgram(): Promise<void>;
@@ -82,6 +83,8 @@ const sharedDestinations = new WeakMap<WebViewPageContext, string>();
 const shareMetadata = new WeakMap<WebViewPageContext, PageShareMessage>();
 const preferencesAtOpen = new WeakMap<WebViewPageContext, string>();
 const nativeTabs = new WeakMap<WebViewPageContext, 'tools' | 'timer' | 'web'>();
+// Only reuse a web session in the same mounted tab after its destination loaded.
+const loadedTabSessions = new WeakMap<WebViewPageContext, string>();
 const sessionsAtOpen = new WeakMap<WebViewPageContext, string | null>();
 const pendingTabPaths: Partial<Record<'home' | 'timer', string>> = {};
 const stalePreferencePages = new WeakSet<WebViewPageContext>();
@@ -304,7 +307,7 @@ export function createWebViewPageData(): WebViewPageData {
   };
 }
 
-export async function openWebRoute(context: WebViewPageContext, key: unknown): Promise<boolean> {
+export async function openWebRoute(context: WebViewPageContext, key: unknown, preferencesOnly = false): Promise<boolean> {
   if (disposedPages.has(context)) return false;
 
   const route = resolveWebRoute(key, sharedDestinations.get(context));
@@ -371,6 +374,19 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   });
 
   const stored = getStoredSessionSnapshot();
+  // Public WeChat tab pages must mount before the first ticket request settles.
+  // Account replacement and explicit sign-out still use the account transition.
+  const tab = nativeTabs.get(context);
+  const pathname = route.path.split(/[?#]/)[0];
+  const publicTab = !isDouyinMiniProgram() && !sessionRequiredPages.has(context) && (
+    (tab === 'tools' && /^\/(?:zh\/?|en\/?)?$/.test(pathname)) ||
+    (tab === 'timer' && /^\/(?:zh\/|en\/)?timer\/?$/.test(pathname))
+  );
+  const previousToken = sessionsAtOpen.get(context);
+  if (publicTab && stored.status === 'unavailable') {
+    context.setData({ src: withNativePreferences(route.url, tab) });
+    return true;
+  }
   if (route.sessionHandoff && stored.status === 'unavailable') {
     if (isCurrentAttempt(context, attempt)
       && !requireMiniProgramSession(context, true)) {
@@ -381,6 +397,28 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   const session = stored.session;
   const signedOut = !session && Boolean(sessionsAtOpen.get(context));
   sessionsAtOpen.set(context, session?.token ?? null);
+  if (publicTab && session && (!previousToken || previousToken === session.token)) {
+    const src = withNativePreferences(route.url, tab);
+    context.setData({ src });
+    try {
+      const { ticket } = await createWebSessionTicket(session);
+      if (isCurrentAttempt(context, attempt) && getStoredSessionSnapshot().session?.token === session.token) {
+        // Reuse the exact document URL (including the preference nonce). Only
+        // the fragment changes, so the open page can consume the ticket.
+        context.setData({ src: src + (src.includes('#') ? '&' : '#') + 'ticket=' + ticket });
+      }
+    } catch (error) {
+      if (isCurrentAttempt(context, attempt) && error instanceof ApiError && error.status === 401
+        && getStoredSessionSnapshot().session?.token === session.token) clearStoredSession();
+      // The page remains usable if the optional session handoff fails.
+    }
+    return true;
+  }
+  if (preferencesOnly && session && loadedTabSessions.get(context) === session.token) {
+    context.setData({ src: withNativePreferences(route.url, nativeTabs.get(context)) });
+    return true;
+  }
+  loadedTabSessions.delete(context);
   if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)
       && (!route.sessionHandoff || !requireMiniProgramSession(context))) {
@@ -633,7 +671,6 @@ export function createWebViewPageOptions(
     onShow() {
       if (disposedPages.has(this)) return;
       applyNativeAppearance();
-      applyLocalizedTabBar();
       visiblePages.add(this);
       refreshWebLocale(this);
       startNetworkRecovery(this);
@@ -654,7 +691,7 @@ export function createWebViewPageOptions(
         const metadata = shareMetadata.get(this);
         const path = metadata?.path ?? sharedDestinations.get(this);
         if (path) sharedDestinations.set(this, localizedWebsitePath(path));
-        void openWebRoute(this, this.data.routeKey);
+        void openWebRoute(this, this.data.routeKey, !changedSession);
         return;
       }
       if (sessionGateResumes.delete(this)) {
@@ -689,7 +726,18 @@ export function createWebViewPageOptions(
       };
     },
 
+    handleWebViewLoad(event) {
+      const tab = nativeTabs.get(this);
+      const token = sessionsAtOpen.get(this);
+      if ((tab !== 'tools' && tab !== 'timer') || !token ||
+        !isCurrentAttempt(this, Number(event.currentTarget.dataset.attempt))) return;
+      const src = event.detail?.src;
+      const path = src?.startsWith(SITE_ORIGIN + '/') ? src.slice(SITE_ORIGIN.length).split(/[?#]/)[0] : '';
+      const expected = resolveWebRoute(this.data.routeKey, sharedDestinations.get(this))?.path.split(/[?#]/)[0];
+      if (path && path === expected && !path.startsWith('/auth/')) loadedTabSessions.set(this, token);
+    },
     handleWebViewError(event) {
+      loadedTabSessions.delete(this);
       markWebRouteFailed(this, event.currentTarget.dataset.attempt);
     },
 

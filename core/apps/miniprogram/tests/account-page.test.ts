@@ -136,7 +136,12 @@ describe('mini program account page', () => {
     storage.set('cuberoot:session', { token: 's'.repeat(20), user: { uid: 42, name: 'Member', wcaId: null, avatar: '' } });
     page.onShow();
     select('space');
-    expect(page.data.accountSection).toBe('space');
+    if (target === 'wechat') {
+      expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account' }));
+      expect(page.data.accountSection).toBe('home');
+    } else {
+      expect(page.data.accountSection).toBe('space');
+    }
     select('security');
     expect(page.data.accountSection).toBe('security');
   });

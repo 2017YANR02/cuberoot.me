@@ -2,7 +2,7 @@ import {
   createPlatformActionGuard,
   PLATFORM_INTERACTION_LOCK_TIMEOUT_MS,
 } from './lib/platform-action-guard';
-import { applyLocalizedTabBar, tr } from './lib/i18n';
+import { tr } from './lib/i18n';
 import { miniProgramApi } from './lib/platform';
 import { applyNativeAppearance } from './lib/appearance';
 
@@ -82,7 +82,6 @@ export function setupAppUpdate(): void {
 
 App({
   onLaunch() {
-    applyLocalizedTabBar();
     setupAppUpdate();
     const api = miniProgramApi();
     if (typeof api.onThemeChange === 'function') api.onThemeChange(applyNativeAppearance);

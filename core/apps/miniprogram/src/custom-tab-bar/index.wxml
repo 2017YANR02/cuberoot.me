@@ -1,0 +1,10 @@
+<cover-view class="bar" style="background-color: {{background}}">
+  <cover-view class="track">
+    <cover-view wx:if="{{selected >= 0}}" class="slider slot-{{selected}}" style="left: {{position * 100 / 3}}%">
+      <cover-view class="pill" style="background-color: {{foreground}}" />
+    </cover-view>
+    <cover-view wx:for="{{tabs}}" wx:key="route" class="tab" data-index="{{index}}" bindtap="selectTab" aria-role="button" aria-label="{{item[locale]}}" aria-pressed="{{selected === index}}">
+      <cover-image class="icon {{selected === index ? 'selected' : ''}}" src="/assets/tabbar/{{item.icon}}-{{scheme}}.png" aria-hidden="true" />
+    </cover-view>
+  </cover-view>
+</cover-view>

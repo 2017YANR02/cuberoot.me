@@ -27,6 +27,7 @@ interface ToolPage {
   setData(value: Record<string, unknown>): void;
   requestId?: number;
   active?: boolean;
+  loadedLocale?: string;
 }
 function labels() { return {
   title: tr({ en: 'Tools', zh: '工具' }),
@@ -88,6 +89,7 @@ function calculateAverages(text: string) {
 async function load(page: ToolPage) {
   if (page.data.section !== 'wca') return;
   const id = page.requestId = (page.requestId ?? 0) + 1;
+  const locale = getMiniProgramLocale();
   const mode = page.data.mode;
   const query = page.data.query.trim().toUpperCase();
   if (mode === 'person' && !WCA_ID_REGEX.test(query)) {
@@ -112,7 +114,10 @@ async function load(page: ToolPage) {
       const data = await requestJson<{ comps: { id: string; name: string; name_zh: string | null; city: string; start_date: string; end_date: string }[] }>('/comp/announced');
       rows = data.comps.map(c => ({ id: c.id, title: tr({ en: c.name, zh: c.name_zh || c.name }), detail: `${formatDateRangeIso(c.start_date, c.end_date)} · ${c.city}` }));
     }
-    if (page.active && page.requestId === id) page.setData({ rows, personName, loading: false });
+    if (page.active && page.requestId === id) {
+      page.loadedLocale = locale;
+      page.setData({ rows, personName, loading: false });
+    }
   } catch (error) {
     console.warn('[native-tools] Request failed', mode, error);
     if (page.active && page.requestId === id) page.setData({ loading: false, error: labels().fail });
@@ -132,11 +137,13 @@ export function createNativeToolsPageOptions() {
       this.setData({ copy });
       applyNativeAppearance();
       miniProgramApi().setNavigationBarTitle({ title: copy.title });
-      if (this.data.mode !== 'person' || this.data.query) void load(this);
+      const needsLoad = !this.data.searched || this.data.loading || this.data.error
+        || this.loadedLocale !== getMiniProgramLocale();
+      if (needsLoad && (this.data.mode !== 'person' || this.data.query)) void load(this);
     },
     onHide() { this.active = false; this.requestId = (this.requestId ?? 0) + 1; },
     onUnload() { this.onHide(); },
-    active: false, requestId: 0,
+    active: false, requestId: 0, loadedLocale: '',
     selectTool(event: WechatMiniprogram.TouchEvent) {
       const section: unknown = event.currentTarget.dataset.section;
       if (section !== 'wca' && section !== 'average' && section !== 'alg') return;

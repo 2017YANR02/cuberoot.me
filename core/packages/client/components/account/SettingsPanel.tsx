@@ -21,7 +21,8 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
   const t = useT();
   const titleId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
-  const [{ settings, view }, setQuery] = useQueryStates({
+  const [{ settings, view, mini_program }, setQuery] = useQueryStates({
+    mini_program: parseAsStringEnum(['space', 'login']),
     settings: parseAsStringEnum(['account', 'general', 'appearance']),
     view: parseAsStringEnum(['main', 'signin', 'delete', 'submissions', 'user']),
   });
@@ -30,7 +31,7 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
   const accountShell = useInstalledShellSurface() === 'account';
   const inlineSettings = useInlineInstalledAccountSettings();
   const detailNavigation = useInstalledAccountDetailNavigation();
-  const accountDetail = !embedded && detailNavigation;
+  const accountDetail = !embedded && (detailNavigation || mini_program === 'space');
   const showHeader = !accountDetail && (!accountShell || inlineSettings);
   const delegateSettings = shellNavigation && (accountDetail || !inlineSettings);
   useEffect(() => {

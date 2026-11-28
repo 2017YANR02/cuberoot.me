@@ -178,38 +178,18 @@ function soloStageData(timer: NativeTimer, display: string, layout: TimerSoloLay
   };
 }
 
-function updateTimerTabBar(p: NativePage, hidden: boolean) {
-  if (Boolean(p.tabBarHidden) === hidden) return;
+function tabContentHeight(height: number) {
   const api = miniProgramApi();
-  if (typeof api.hideTabBar !== 'function' || typeof api.showTabBar !== 'function') return;
-  p.tabBarHidden = hidden;
-  const options = { animation: false, fail: () => { if (p.tabBarHidden === hidden) p.tabBarHidden = !hidden; } };
-  if (hidden) api.hideTabBar(options);
-  else api.showTabBar(options);
-}
-
-function applyTimerTabBarColors(p: NativePage) {
-  const query = p.createSelectorQuery?.();
-  if (!query) return;
-  query.select('#nt-navigation-palette').fields({ computedStyle: ['backgroundColor'] });
-  query.exec(([palette]) => {
-    if (!p.active || !palette) return;
-    const css = (palette as unknown as { backgroundColor?: string }).backgroundColor;
-    const rgb = css?.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/)?.slice(1).map(Number);
-    if (!rgb) return;
-    const backgroundColor = '#' + rgb.map(value => value.toString(16).padStart(2, '0')).join('');
-    miniProgramApi().setTabBarStyle?.({
-      backgroundColor,
-      borderStyle: rgb[0] * .299 + rgb[1] * .587 + rgb[2] * .114 < 128 ? 'black' : 'white',
-    });
-  });
+  const info = api.getWindowInfo?.() ?? api.getSystemInfoSync();
+  const inset = info.safeArea ? Math.max(0, info.screenHeight - info.safeArea.bottom) : 0;
+  return Math.max(1, height - 50 - inset);
 }
 
 function nativeContentViewport() {
   try {
     const api = miniProgramApi();
     const size = api.getWindowInfo?.() ?? api.getSystemInfoSync();
-    return { width: size.windowWidth, height: size.windowHeight };
+    return { width: size.windowWidth, height: tabContentHeight(size.windowHeight) };
   } catch { return undefined; }
 }
 function buildCopy(language: MiniProgramLocale) {
@@ -430,7 +410,6 @@ interface NativePage {
   active?: boolean;
   localBattle?: ReturnType<typeof createNativeTimerLocalBattle>;
   soloViewport?: ReturnType<typeof nativeContentViewport>;
-  tabBarHidden?: boolean;
   netBattle?: NativeTimerNetRoom;
   netMode?: boolean;
   netLeaving?: Promise<void>;
@@ -1483,7 +1462,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       const width = event.windowWidth ?? event.size?.windowWidth;
       const height = event.windowHeight ?? event.size?.windowHeight;
       if (width && height && p.active) {
-        p.soloViewport = { width, height };
+        p.soloViewport = { width, height: tabContentHeight(height) };
         p.layoutDrag = undefined;
         p.layoutDraft = undefined;
         if (this.data.orientationMenu) this.setData({ orientationMenu: null });
@@ -1582,8 +1561,6 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       applyNativeAppearance();
       refreshTimerLocale(p);
       this.setData({ manualText: timer.settings.manualScrambles });
-      applyTimerTabBarColors(p);
-      updateTimerTabBar(p, p.sheet === 'settings' || p.sheet === 'solver' || p.sheet === 'bulk');
       if (p.netMode) {
         if (p.netBattle) p.netBattle.setVisible(true);
         else startNetBattle(p);
@@ -1639,7 +1616,6 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       if (this.data.inspectionAlertsHelp) this.setData({ inspectionAlertsHelp: null });
       p.liveShare?.setEnabled(false);
       p.nativeTimer?.releaseLiveShare();
-      updateTimerTabBar(p, false);
       p.layoutDrag = undefined;
       p.layoutDraft = undefined;
       p.difficultyPress = undefined;
@@ -1911,7 +1887,6 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       p.sheet = String(e.currentTarget.dataset.sheet);
       const resultsWorkspace = p.sheet === 'history'
         || (previousSheet === 'history' && (p.sheet === 'statistics' || p.sheet === 'manual'));
-      updateTimerTabBar(p, p.sheet === 'settings' || p.sheet === 'solver' || p.sheet === 'bulk');
       p.nativeTimer?.setAutoReadyBlocked(Boolean(p.sheet || p.netMode || p.manualEditing));
       p.importBusy = false;
       p.backupsExpanded = false;
@@ -2039,7 +2014,6 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
         this.cancelSolverScrambleEdit();
         return;
       }
-      updateTimerTabBar(p, false);
       if (p.sheet === 'device-management') {
         p.externalTimerScan?.controller.abort();
         p.externalTimerMac = undefined;

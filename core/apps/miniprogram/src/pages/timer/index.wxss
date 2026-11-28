@@ -1,4 +1,4 @@
-.native-timer { padding: 16rpx 28rpx calc(32rpx + env(safe-area-inset-bottom)); min-height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; background: var(--cr-bg); color: var(--cr-text); }
+.native-timer { padding: 16rpx 28rpx calc(50px + 32rpx + env(safe-area-inset-bottom)); min-height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; background: var(--cr-bg); color: var(--cr-text); }
 .nt-toolbar, .nt-footer, .nt-stats, .nt-sheet-header, .nt-setting { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
 .nt-toolbar { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0; width: 100%; max-width: 480px; margin: 0 auto; }
 .nt-tool { display: flex; width: 100%; height: 84rpx; max-height: 48px; align-items: center; justify-content: center; padding: 0; white-space: nowrap; font-size: 27rpx; font-weight: 650; }
@@ -33,7 +33,7 @@
 }
 .nt-solo-docked-preview > .nt-layout-handles { inset: 0; }
 .nt-solo-docked-preview .nt-layout-size { right: 0; bottom: 0; }
-.nt-layout-tools { position: fixed; z-index: 8; bottom: calc(12px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--cr-surface); border: 1px solid var(--cr-line); border-radius: 999px; }
+.nt-layout-tools { position: fixed; z-index: 8; bottom: calc(62px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px; background: var(--cr-surface); border: 1px solid var(--cr-line); border-radius: 999px; }
 .nt-layout-tools button { display: flex; align-items: center; justify-content: center; flex: 0 0 auto; height: 36px; width: 36px; padding: 0; gap: 5px; border-radius: 999px; font-size: 12px; }
 .nt-layout-tools image { width: 16px; height: 16px; }
 .nt-layout-tools .nt-layout-done { width: auto; padding: 0 14px; color: var(--cr-bg); background: var(--cr-text); font-weight: 600; }
@@ -398,7 +398,7 @@
 .nt-room-round + .nt-room-round { border-top: 1rpx solid var(--cr-line); margin-top: 12rpx; }
 
 /* The host's reported window height can be slightly smaller than its WebView. */
-.native-timer--solo { height: 100vh; padding: 0; overflow-y: auto; }
+.native-timer--solo { min-height: 0; height: calc(100vh - 50px - env(safe-area-inset-bottom)); padding: 0; overflow-y: auto; }
 .native-timer--solo .nt-toolbar { flex: 0 0 auto; width: calc(100% - 8px); max-width: 420px; min-height: 56px; align-items: center; }
 .native-timer--solo .nt-tool { min-height: 44px; height: 44px; font-size: 13px; font-weight: 400; }
 .native-timer--solo .nt-tool .nt-icon { width: 18px; height: 18px; }
@@ -740,7 +740,6 @@
 }
 .nt-sheet--difficulty .nt-difficulty-clear { color: var(--cr-text); }
 .nt-sheet--difficulty .nt-difficulty-apply { border-color: var(--cr-accent); background: color-mix(in srgb, var(--cr-accent) 6%, transparent); }
-#nt-navigation-palette { position: absolute; width: 0; height: 0; background-color: var(--cr-bg); pointer-events: none; }
 .nt-sheet--project, .nt-sheet--content { padding: 6px; border-radius: 10px; }
 .nt-choice {
   display: flex;

@@ -75,12 +75,14 @@ export function mayUseMiniProgramBridge(): boolean {
  * of a Mini Program. Wait for getEnv when iOS omits the explicit marker; callers
  * keep checkout unavailable while this check is pending.
  */
-export async function isMiniProgramCommerceRestricted(): Promise<boolean> {
+export async function isConfirmedMiniProgramWebView(): Promise<boolean> {
   if (isMiniProgramWebView()) return true;
   if (!mayUseMiniProgramBridge()) return false;
   const miniProgram = await loadMiniProgramNavigationApi();
   return miniProgram ? confirmMiniProgramEnvironment(miniProgram) : false;
 }
+
+export const isMiniProgramCommerceRestricted = isConfirmedMiniProgramWebView;
 
 export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi | null {
   if (typeof window === 'undefined') return null;

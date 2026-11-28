@@ -47,8 +47,7 @@ describe('saved WebView language', () => {
       expect(native.localizedWebsitePath('/zh?foo=bar&lang=zh#section')).toBe('/?foo=bar&lang=en#section');
       expect(native.localizedWebsitePath('/zh/?foo=bar')).toBe('/?foo=bar');
       expect(native.localizedWebsitePath('/zh/timer?players=2&lang=zh')).toBe('/timer?players=2&lang=en');
-      expect(setTabBarItem).toHaveBeenCalledWith({ index: 2, text: 'Me' });
-      expect(setTabBarItem).toHaveBeenCalledTimes(3);
+      expect(setTabBarItem).not.toHaveBeenCalled();
       expect(refreshLocale).toHaveBeenCalledOnce();
       vi.resetModules();
       expect((await import('../src/lib/i18n')).getMiniProgramLocale()).toBe('en');

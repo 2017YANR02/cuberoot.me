@@ -135,9 +135,9 @@ describe('shared web-view page state', () => {
     }));
     const callback = new URL(tools.data.src);
     const handoff = new URLSearchParams(callback.hash.slice(1));
-    expect(callback.pathname).toBe('/auth/miniprogram');
+    expect(callback.pathname).toBe('/zh');
     expect(handoff.get('ticket')).toBe(ticket);
-    expect(handoff.get('next')).toBe('/zh');
+    expect(handoff.has('next')).toBe(false);
     expect(callback.href).not.toContain(token);
     tools.onUnload();
   });
@@ -149,16 +149,39 @@ describe('shared web-view page state', () => {
     const options = createWebViewPageOptions('timer') as any;
     const page = { ...options, ...createContext() };
     page.onLoad({});
+    expect(page.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
     await vi.waitFor(() => expect(page.data.src).toContain('ticket='));
     const src = page.data.src;
     page.onHide();
     page.onShow();
     expect(page.data.src).toBe(src);
     expect(request).toHaveBeenCalledTimes(1);
+    page.handleWebViewLoad({ currentTarget: { dataset: { attempt: page.data.viewAttempt } },
+      detail: { src: 'https://cuberoot.me/zh/timer' } });
+    page.invalidatePreferences();
+    page.onShow();
+    expect(page.data.src).toBe('https://cuberoot.me/zh/timer#wechat_redirect');
+    expect(request).toHaveBeenCalledTimes(2);
     session = null;
     page.onHide();
     page.onShow();
     expect(page.data.src).toBe('https://cuberoot.me/auth/miniprogram#action=logout&next=%2Fzh%2Ftimer');
+  });
+
+  it.each([['home', '/zh'], ['timer', '/zh/timer']] as const)('keeps %s open when the background ticket request fails', async (key, path) => {
+    const request = vi.fn(({ success }) => success({ statusCode: 503, data: {} }));
+    Object.assign(wx, {
+      getStorageSync: (key: string) => key === 'cuberoot:session'
+        ? { token: 't'.repeat(20), user: { name: 'CubeRoot', wcaId: null } } : null,
+      request,
+    });
+    const page = { ...createWebViewPageOptions(key), ...createContext() } as any;
+    page.onLoad({});
+    const initial = page.data.src;
+    expect(new URL(initial).pathname).toBe(path);
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(page.data).toMatchObject({ src: initial, canRetry: false, loginRequired: false, errorTitle: '' });
   });
 
   it('opens an allowlisted route and updates its title', async () => {
@@ -420,7 +443,7 @@ describe('shared web-view page state', () => {
       setNavigationBarTitle,
     });
     const context = createContext();
-    const options = createWebViewPageOptions('timer') as unknown as {
+    const options = createWebViewPageOptions('home', { requireMiniProgramSession: true }) as unknown as {
       onHide(this: WebViewPageContext): void;
       onLoad(this: WebViewPageContext, query: Record<string, string>): void;
       onShow(this: WebViewPageContext): void;
@@ -448,7 +471,7 @@ describe('shared web-view page state', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(context.data.src).toBe(
-      `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${'B'.repeat(43)}&next=%2Fzh%2Ftimer`,
+      `https://cuberoot.me/auth/miniprogram#wechat_redirect&ticket=${'B'.repeat(43)}&next=%2Fzh`,
     );
   });
 

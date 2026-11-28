@@ -58,10 +58,10 @@ describe('mini program web routes', () => {
 
   it('keeps account and privacy destinations outside the homepage directory', () => {
     expect(resolveWebRoute('account')).toEqual({
-      title: '账号管理',
-      path: '/zh/account',
+      title: '我的空间',
+      path: '/zh/account?mini_program=space',
       sessionHandoff: true,
-      url: 'https://cuberoot.me/zh/account#wechat_redirect',
+      url: 'https://cuberoot.me/zh/account?mini_program=space#wechat_redirect',
     });
     expect(resolveWebRoute('account-link')).toEqual({
       title: '登录 CubeRoot',

@@ -88,13 +88,29 @@ async function prepareOutput(sourceFiles) {
       const path = normalizedRelativePath(sourceRoot, file);
       if (douyin && path === 'app.json') {
         const appConfig = JSON.parse(await readFile(file, 'utf8'));
+        appConfig.tabBar.custom = true;
         appConfig.workers = douyinWorkersDirectory;
         appConfig.pages = appConfig.pages.filter(page => !isDouyinExcludedPage(page));
         appConfig.tabBar.list = appConfig.tabBar.list.filter(tab => !isDouyinExcludedPage(tab.pagePath));
         await writeFile(output, `${JSON.stringify(appConfig, null, 2)}\n`, 'utf8');
         return;
       }
-      const page = path.match(/^pages\/(timer|tools|web)\/index\.wxml$/)?.[1];
+      // Douyin suppresses its native bar but leaves component mounting to each tab page.
+      const tabPage = douyin && path.match(/^pages\/(timer|tools|account)\/index\.(json|wxml)$/)?.[1];
+      if (tabPage && path.endsWith('.json')) {
+        const config = JSON.parse(await readFile(file, 'utf8'));
+        config.usingComponents = { ...config.usingComponents, 'bottom-nav': '/custom-tab-bar/index' };
+        await writeFile(output, JSON.stringify(config));
+        return;
+      }
+      if (tabPage) {
+        const template = tabPage === 'account' ? await readFile(file, 'utf8')
+          : `<include src="../../templates/native-${tabPage}.wxml" />`;
+        const visible = tabPage === 'timer' ? "sheet !== 'settings' && sheet !== 'solver' && sheet !== 'bulk'" : '!isTimelineEntry';
+        await writeFile(output, `${template}\n<bottom-nav id="bottom-nav" wx:if="{{${visible}}}" />\n`);
+        return;
+      }
+      const page = path.match(/^pages\/(web)\/index\.wxml$/)?.[1];
       if (douyin && page) {
         await writeFile(output, `<include src="../../templates/native-${page}.wxml" />\n`);
         return;
@@ -114,6 +130,7 @@ function entryPoints(sourceFiles) {
     if (extname(file) !== '.ts') return false;
     if (basename(file) === 'app.ts') return true;
     const sourcePath = relative(sourceRoot, file).replaceAll('\\', '/');
+    if (sourcePath === 'custom-tab-bar/index.ts') return true;
     return /^pages\/[^/]+\/index\.ts$/.test(sourcePath);
   });
 }
@@ -148,7 +165,10 @@ async function buildProject() {
       templateLabel: 'project.douyin.config.template.json',
     } : {}),
   });
-  const sourceFiles = (await walkFiles(sourceRoot)).filter(file => !douyin || !isDouyinExcludedPage(normalizedRelativePath(sourceRoot, file)));
+  const sourceFiles = (await walkFiles(sourceRoot)).filter(file => {
+    const path = normalizedRelativePath(sourceRoot, file);
+    return douyin ? !isDouyinExcludedPage(path) : !path.startsWith('custom-tab-bar/');
+  });
   const appConfigPath = join(sourceRoot, 'app.json');
   const sourceJsonFiles = [
     appConfigPath,
@@ -197,6 +217,7 @@ async function buildProject() {
   if (douyin) {
     graphInputFiles.push(...TIMER_PROJECT_ICONS, ...DOUYIN_TIMER_VOICE_ASSETS.map(asset => asset.source));
     await convertToDouyin();
+    await appendFile(join(stagingRoot, 'app.ttss'), '\npage { --cr-tab-inset: calc(50px + env(safe-area-inset-bottom)); }\n');
     for (const stylesheet of ['segment-font.css', 'solo-stage.css', 'results-tabs.css', 'smart-cube-device-modal.css', 'liberation-mono.css', 'classic-appearance.css']) {
       const source = new URL(import.meta.resolve(`@cuberoot/shared/timer/${stylesheet}`));
       let css = await readFile(source, 'utf8');
@@ -274,6 +295,7 @@ async function addWechatTabIcons() {
   }
   config.tabBar.list = list.map((tab, index) => ({
     ...tab,
+    text: '',
     iconPath: `@tabIcon${index}`,
     selectedIconPath: `@tabSelectedIcon${index}`,
   }));

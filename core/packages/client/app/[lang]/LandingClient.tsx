@@ -13,6 +13,7 @@ import { applyHomeSectionOrder } from '@/lib/home-section-order';
 import { SkeletonBlock } from '@/components/ContentSkeleton';
 
 /** Site entrypoint — Landing page. */
+import { listenForMiniProgramTabSession } from '@/lib/miniprogram-tab-session';
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
@@ -256,6 +257,7 @@ function useShortcutScrollColor(enabled: boolean) {
 }
 
 export default function LandingPage({ initialLayout = null }: { initialLayout?: HomeLayoutSnapshot | null }) {
+  useEffect(() => listenForMiniProgramTabSession('tools'), []);
   const douyin = useDouyinToolSurface();
   const communityDisabled = useInstalledCommunityDisabled();
   const contentRefreshKey = useContentRefreshKey();

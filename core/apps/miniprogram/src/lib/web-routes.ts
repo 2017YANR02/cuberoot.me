@@ -133,9 +133,9 @@ function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
       nativeTabPath: '/pages/tools/index',
     },
     account: {
-      title: tr({ en: 'Account', zh: '账号管理' }),
+      title: tr(isDouyinMiniProgram() ? { en: 'Account', zh: '账号管理' } : { en: 'My space', zh: '我的空间' }),
       description: tr({ en: 'Manage your WCA account and sign-in methods', zh: '管理 WCA 账号与登录方式' }),
-      path: localizedWebsitePath('/account'),
+      path: localizedWebsitePath('/account') + (isDouyinMiniProgram() ? '' : '?mini_program=space'),
       publicEntry: false,
     },
     'account-link': {

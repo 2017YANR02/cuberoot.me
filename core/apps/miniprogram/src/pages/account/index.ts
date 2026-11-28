@@ -46,7 +46,6 @@ function createAccountCopy() {
     hexError: tr({ en: 'Enter a six-digit HEX color.', zh: '请输入六位 HEX 色值。' }),
     settingsFailure: tr({ en: 'Could not save appearance settings. Try again.', zh: '外观设置未能保存，请重试。' }),
     backLabel: tr({ en: 'Back to Me', zh: '返回「我的」' }),
-    payouts: isDouyinMiniProgram() ? null : tr({ en: 'Commission payouts', zh: '佣金提现' }),
     editName: tr({ en: 'Edit display name', zh: '修改展示名' }),
     saveName: tr({ en: 'Save', zh: '保存' }),
     clearName: tr({ en: 'Clear display name', zh: '清除展示名' }),
@@ -67,7 +66,6 @@ function createAccountCopy() {
       en: 'Read the User Agreement and Privacy Policy, then confirm your agreement before signing in.',
       zh: '请先阅读用户协议和隐私政策，并手动确认同意后再登录',
     }),
-    accountButtonLabel: tr({ en: 'Account', zh: '账号管理' }),
     accountFailure: tr({
       en: 'Account management is temporarily unavailable. Try again later.',
       zh: '账号管理暂时无法打开，请稍后重试',
@@ -173,7 +171,6 @@ type AccountSection = 'home' | 'space' | 'security' | 'settings';
 interface AccountPageData {
   appearanceStyle: string;
   appearanceScheme: 'light' | 'dark';
-  hasWebsiteAccount: boolean;
   appearanceSettings: ReturnType<typeof localAppearanceView> | null;
   accountSection: AccountSection;
   accountError: string;
@@ -513,7 +510,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
     appearanceStyle: '',
     appearanceScheme: 'light',
-    hasWebsiteAccount: !isDouyinMiniProgram(),
     appearanceSettings: null,
     accountSection: 'home',
     accountError: '',
@@ -953,6 +949,10 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     if (section !== 'home' && section !== 'space' && section !== 'security' && section !== 'settings') return;
     if (this.data.isTimelineEntry || this.data.nameBusy || this.data.identityMutationBusy) return;
     if (this.data.loginRequired && (section === 'space' || section === 'security')) return;
+    if (section === 'space' && !isDouyinMiniProgram()) {
+      this.openAccount();
+      return;
+    }
     this.setData({ accountSection: section, accountError: '', editingName: false, nameDraft: '' });
     this.refreshAppearanceSettings();
   },
@@ -994,7 +994,6 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     if (scene) this.commitAppearanceSettings({ [nativeAppearanceScheme() === 'dark' ? 'darkBackground' : 'lightBackground']: scene.id });
   },
 
-  openPayouts() { miniProgramApi().navigateTo({ url: '/pages/payouts/index' }); },
   openSecuritySettings() { this.openNativeAccountPage('account-settings'); },
   openDeleteAccount() { this.openNativeAccountPage('account-delete'); },
   openNativeAccountPage(page: 'account-settings' | 'account-delete') {

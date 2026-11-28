@@ -1,4 +1,4 @@
-import { isDouyinMiniProgram, miniProgramApi } from './platform';
+import { miniProgramApi } from './platform';
 
 export type MiniProgramLocale = 'en' | 'zh';
 
@@ -56,36 +56,12 @@ export function localizedWebsitePath(href: string): string {
   return path + query + hash;
 }
 
-export function applyLocalizedTabBar(): void {
-  if (isDouyinMiniProgram()) return; // The generated native tabs display only their icons.
-  const labels = [
-    tr({ en: 'Timer', zh: '计时' }),
-    tr({ en: 'Tools', zh: '工具' }),
-    tr({ en: 'Me', zh: '我的' }),
-  ];
-
-  try {
-    const api = miniProgramApi();
-    if (typeof api.setTabBarItem !== 'function') return;
-    labels.forEach((text, index) => {
-      try {
-        api.setTabBarItem({ index, text });
-      } catch {
-        // A localized label is cosmetic and must not block app startup.
-      }
-    });
-  } catch {
-    // The tab bar keeps its app.json fallback when the runtime is unavailable.
-  }
-}
-
 export function receiveNativeLocale(value: unknown): void {
   if (!value || typeof value !== 'object') return;
   const message = value as { type?: unknown; locale?: unknown };
   if (message.type !== 'cuberoot:locale' || (message.locale !== 'en' && message.locale !== 'zh')) return;
   try { miniProgramApi().setStorageSync(LOCALE_STORAGE_KEY, message.locale); }
   catch { return; }
-  applyLocalizedTabBar();
   // Tools messages can arrive after the destination page's onShow.
   if (typeof getCurrentPages === 'function') {
     // Hidden pages refresh onShow; only the foreground page may set its title.
