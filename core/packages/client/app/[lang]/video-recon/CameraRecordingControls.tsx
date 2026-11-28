@@ -35,7 +35,7 @@ export function CameraSelector({ stream, workspace, disabled }: {
   const id = current?.getSettings().deviceId ?? cameras.find(camera => camera.label === current?.label)?.deviceId;
   return <label className="video-recon-camera-select">
     {t('摄像头', 'Camera')}
-    <select value={id ?? ''} disabled={disabled} onChange={event => {
+    <select className="video-recon-camera-choice" value={id ?? ''} disabled={disabled} onChange={event => {
       const deviceId = event.currentTarget.value;
       // Some phones can only open one camera at a time.
       workspace.stopSource();

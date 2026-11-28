@@ -200,7 +200,7 @@
   overscroll-behavior: contain;
 }
 .video-recon-context { z-index: 5; width: max-content; padding: 4px; }
-.video-recon-context button {
+.video-recon-context .video-recon-context-action {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -212,7 +212,7 @@
   font: inherit;
   cursor: pointer;
 }
-.video-recon-context button:is(:hover, :focus-visible) { background: var(--muted); }
+.video-recon-context .video-recon-context-action:is(:hover, :focus-visible) { background: var(--muted); }
 .video-recon-stats {
   /* Keep video statistics readable over footage in either site theme. */
   --foreground: white;
@@ -704,7 +704,7 @@
   gap: 6px;
   max-width: 100%;
 }
-.video-recon-camera-select select {
+.video-recon-camera-choice {
   min-width: 0;
   max-width: 100%;
   min-height: 44px;
@@ -725,12 +725,6 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-}
-.video-recon-page .video-recon-scramble-toggle input[type='checkbox'] {
-  width: 1rem;
-  height: 1rem;
-  padding: 0;
-  accent-color: var(--accent);
 }
 @media (hover: hover) and (pointer: fine) {
   .video-recon-page .video-recon-system-camera { display: none; }

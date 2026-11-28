@@ -1180,9 +1180,8 @@
 .recon-caption-fields section { display: grid; min-width: 0; gap: .6rem; padding: 1rem; margin-bottom: .8rem; }
 .recon-caption-fields h3 { font-size: 1rem; margin: 0; }
 .recon-caption-fields label { min-width: 0; }
-.recon-caption-fields textarea { display: block; width: 100%; margin-top: .35rem; box-sizing: border-box; resize: vertical; }
-.recon-caption-editor :is(input[type=number], textarea, select) { padding: .3rem .45rem; color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: .35rem; font: inherit; }
+.recon-caption-text { display: block; width: 100%; margin-top: .35rem; box-sizing: border-box; resize: vertical; }
+.recon-caption-editor :is(input[type=number], .recon-caption-text) { padding: .3rem .45rem; color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: .35rem; font: inherit; }
 .recon-caption-editor input[type=number] { width: 5.4em; max-width: 100%; }
-.recon-caption-editor select { max-width: 100%; }
 .recon-caption-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .6rem; }
 .recon-caption-monitor .recon-caption-actions { margin-top: .75rem; }

@@ -162,7 +162,7 @@ export function VideoStatsStage({ fileName, stats, playback, settingsAvailable =
       }}><Info aria-hidden /><span>{label}</span></button>
     </div>}
     {fileName && menu && <VideoContextMenu player={stage} position={menu} onClose={setMenu} className="video-recon-context">
-      <button type="button" role="menuitemcheckbox" aria-checked={open} onClick={toggleStats}><Info size={16} aria-hidden />{label}</button>
+      <button className="video-recon-context-action" type="button" role="menuitemcheckbox" aria-checked={open} onClick={toggleStats}><Info size={16} aria-hidden />{label}</button>
     </VideoContextMenu>}
     {fileName && open && <section ref={panel} className="video-recon-stats" role="dialog" aria-label={label} tabIndex={-1} style={panelStyle}>
       <header onPointerDown={startDrag} onPointerMove={moveDrag}

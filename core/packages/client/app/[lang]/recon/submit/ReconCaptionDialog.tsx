@@ -648,7 +648,7 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
     </div>
     <fieldset className="recon-caption-fields" disabled={busy}>
       <section><label><strong>{t('复盘文本', 'Reconstruction text')}</strong>
-        <textarea rows={4} value={text} onChange={e => setText(e.target.value)} /></label></section>
+        <textarea className="recon-caption-text" rows={4} value={text} onChange={e => setText(e.target.value)} /></label></section>
     </fieldset>
   </div>;
 }

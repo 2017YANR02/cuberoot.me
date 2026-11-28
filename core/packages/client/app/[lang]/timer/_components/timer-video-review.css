@@ -14,7 +14,7 @@
   flex-wrap: wrap;
   gap: 8px;
 }
-.timer-video-source-actions > button {
+.timer-video-source-actions > .timer-video-source-action {
   display: inline-flex;
   flex: 1 1 10rem;
   align-items: center;

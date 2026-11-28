@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from '@app-foundation/icons/lucide';
+import BoolToggle from '@/components/BoolToggle';
 import { Tooltip } from '@/components/Tooltip';
 import { VideoTrimTimeline } from '@/components/VideoTrimTimeline';
 import { useT } from '@/hooks/useT';
@@ -53,11 +54,10 @@ export function SolveRange({ view, workspace, onBegin, showScramble = true, time
           onKeyDown={event => { if (event.key === 'Enter') event.currentTarget.blur(); }} />
       </label>
     </div>
-    {timerScramble && <label className="video-recon-scramble-toggle">
-      <input type="checkbox" checked={view.initialScramble === timerScramble}
-        onChange={event => workspace.setScramble(event.currentTarget.checked ? timerScramble : '')} />
-      {t('使用计时器当前打乱', 'Use the current timer scramble')}
-    </label>}
+    {timerScramble && <BoolToggle className="video-recon-scramble-toggle"
+      label={t('使用计时器当前打乱', 'Use the current timer scramble')}
+      value={view.initialScramble === timerScramble}
+      onChange={enabled => workspace.setScramble(enabled ? timerScramble : '')} />}
     {showScramble && <label className="video-recon-field">{t('打乱（选填）', 'Scramble (optional)')}
       <input type="text" value={view.initialScramble} onChange={event => workspace.setScramble(event.currentTarget.value)}
         autoComplete="off" autoCapitalize="none" spellCheck={false} />

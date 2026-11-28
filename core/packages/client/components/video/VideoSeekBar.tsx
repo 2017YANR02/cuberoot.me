@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
-import { X } from '@app-foundation/icons/lucide';
+import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
 
 const FILMSTRIP_DRAG_THRESHOLD_PX = 20;
@@ -99,7 +99,7 @@ export function VideoSeekBar({ position, total, buffered, step, time, filmstrip,
         </div>
       </div>
     </div>}
-    {reveal === 1 && <button type="button" className="lesson-video-button video-scrubber-close"
-      aria-label={t('收起缩略图', 'Collapse thumbnails')} onClick={close}><X size={16} aria-hidden /></button>}
+    {reveal === 1 && <ClearButton variant="standalone" className="lesson-video-button video-scrubber-close"
+      ariaLabel={t('收起缩略图', 'Collapse thumbnails')} onClick={close} />}
   </div>;
 }

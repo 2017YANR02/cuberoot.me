@@ -67,7 +67,7 @@
   content: ''; position: absolute; inset-block: 0; left: var(--played); transform: translateX(-50%);
   width: 2px; background: var(--player-ink); pointer-events: none;
 }
-.video-scrubber-close { position: absolute; right: 0; bottom: 100%; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--player-base) 65%, transparent); }
+.clear-btn.video-scrubber-close { position: absolute; right: 0; bottom: 100%; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: color-mix(in srgb, var(--player-base) 65%, transparent); }
 .lesson-video-volume .lesson-video-range[type=range] { width: 0; height: 24px; opacity: 0; transition: width .15s, opacity .15s; background: linear-gradient(to right, var(--player-ink) var(--volume), var(--player-track) var(--volume)) center / 100% 3px no-repeat; }
 .lesson-video-volume:hover .lesson-video-range, .lesson-video-volume:focus-within .lesson-video-range { width: 60px; margin-right: 10px; opacity: 1; }
 .lesson-video-capture { border: 0; background: transparent; font-size: 13px !important; padding: 10px 3px; }

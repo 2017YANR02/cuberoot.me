@@ -51,7 +51,7 @@ export function TimerVideoReview({ scramble, onTimedCapture, onBusyChange, onSou
   };
   return <div className="timer-video-review">
     <div className="timer-video-source-actions">
-      {source?.mode !== 'record' && <button className="btn-secondary" type="button" disabled={busy} onClick={() => {
+      {source?.mode !== 'record' && <button className="btn-secondary timer-video-source-action" type="button" disabled={busy} onClick={() => {
         releasePending();
         pending.current = requestVideoCamera();
         // Keep the permission request attached while the workspace is loading.
@@ -59,7 +59,7 @@ export function TimerVideoReview({ scramble, onTimedCapture, onBusyChange, onSou
         onSourceOpen?.();
         setSource({ mode: 'record', scramble });
       }}><Video size={18} aria-hidden />{t('现场录制', 'Record live')}</button>}
-      {source?.mode !== 'detector' && <button className="btn-secondary" type="button" disabled={busy} onClick={() => input.current?.click()}>
+      {source?.mode !== 'detector' && <button className="btn-secondary timer-video-source-action" type="button" disabled={busy} onClick={() => input.current?.click()}>
         <Upload size={18} aria-hidden />{t('上传已有视频', 'Upload a video')}
       </button>}
     </div>
@@ -84,8 +84,8 @@ export default function TimerVideoReviewDialog({ onClose, ...props }: Props & { 
       {busy && confirmExit && <div className="timer-video-confirm-exit" role="alert">
         <p>{t('退出会丢弃正在进行的录制或复盘。', 'Leaving will discard the recording or reconstruction in progress.')}</p>
         <div className="timer-video-source-actions">
-          <button type="button" className="btn-secondary" autoFocus onClick={() => setConfirmExit(false)}>{t('继续', 'Continue')}</button>
-          <button type="button" className="btn-secondary" onClick={close}>{t('丢弃并退出', 'Discard and leave')}</button>
+          <button type="button" className="btn-secondary timer-video-source-action" autoFocus onClick={() => setConfirmExit(false)}>{t('继续', 'Continue')}</button>
+          <button type="button" className="btn-secondary timer-video-source-action" onClick={close}>{t('丢弃并退出', 'Discard and leave')}</button>
         </div>
       </div>}
       <TimerVideoReview {...props} onBusyChange={setBusy} />
