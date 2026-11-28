@@ -426,6 +426,7 @@ function useSlot(
   const { gyroEnabled, bluetoothAutoReady } = useSettings();
   const subscribers = useRef(new Set<(move: string, ts: number) => void>());
   const handle = useBluetoothCube({
+    shareConnection: slot === 0,
     validateDevice: device => validateDevice(slot, device),
     onMove: (m, ts, facelets, metadata, clock) => {
       liveRef.current?.anchor.move(m, ts);

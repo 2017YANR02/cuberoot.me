@@ -276,6 +276,8 @@ export interface CubeDriverContext {
    * pre-massage the sample.
    */
   onGyro?: GyroSink;
+  /** Override the handshake's gyro switch when the connection manages it after start. */
+  enableGyroOnStart?: boolean;
 }
 
 /**

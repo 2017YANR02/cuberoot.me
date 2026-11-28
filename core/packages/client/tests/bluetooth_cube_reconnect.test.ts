@@ -213,6 +213,87 @@ describe('smart-cube reconnect ownership', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps the primary cube and its physical state across route changes', async () => {
+    const rig = fakeGattRig('shared-primary');
+    const cleanup = vi.fn();
+    const beforeMove = vi.fn();
+    const afterMove = vi.fn();
+    const onSolved = vi.fn();
+    let primary!: BluetoothCubeHandle;
+    let emit!: Parameters<typeof gocubeDriver.start>[1];
+    vi.spyOn(gocubeDriver, 'start').mockImplementation(async (_server, sink, ctx) => {
+      emit = sink;
+      ctx?.onState?.(SCRAMBLED);
+      return { battery: async () => 70, cleanup };
+    });
+    function CubePage({ onMove }: { onMove: typeof beforeMove }) {
+      primary = useBluetoothCube({ shareConnection: true, onMove, onSolved });
+      return null;
+    }
+    await act(async () => root.render(createElement(CubePage, { key: 'trainer', onMove: beforeMove })));
+    try {
+      await act(async () => primary.connectDevice(rig.device));
+      await act(async () => { primary.hijackTo(toFaceletString(solved(3))); });
+      expect(primary.hijacked).toBe(true);
+      onSolved.mockClear();
+
+      await act(async () => root.render(createElement('main', null, 'Other page')));
+      await act(async () => emit('F'));
+      expect(beforeMove).not.toHaveBeenCalled();
+      expect(cleanup).not.toHaveBeenCalled();
+      expect(rig.disconnect).not.toHaveBeenCalled();
+
+      await act(async () => root.render(createElement(CubePage, { key: 'timer', onMove: afterMove })));
+      expect(primary.status).toMatchObject({ connected: true, deviceId: rig.device.id, battery: 70 });
+      expect(primary.facelets).toBe(toFaceletString(applyMoves(solved(3), 3, parseScramble('R U F'))));
+      expect(primary.hijacked).toBe(false);
+      expect(rig.connect).toHaveBeenCalledTimes(1);
+      expect(afterMove).not.toHaveBeenCalled();
+      expect(onSolved).not.toHaveBeenCalled();
+      await act(async () => emit('L'));
+      expect(afterMove.mock.calls[0]?.[0]).toBe('L');
+      expect(beforeMove).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => {
+        root.render(createElement(CubePage, { key: 'timer', onMove: afterMove }));
+      });
+      await act(async () => primary.disconnect());
+    }
+    expect(rig.disconnect).toHaveBeenCalledTimes(1);
+    expect(primary.status.connected).toBe(false);
+  });
+
+  it('reconnects the primary cube while no page is listening', async () => {
+    const rig = fakeGattRig('shared-reconnect');
+    const onConnectionEvent = vi.fn();
+    const start = vi.spyOn(gocubeDriver, 'start').mockImplementation(async (_server, _sink, ctx) => {
+      ctx?.onState?.(SCRAMBLED);
+      return { battery: async () => null, cleanup: vi.fn() };
+    });
+    let primary!: BluetoothCubeHandle;
+    function CubePage() {
+      primary = useBluetoothCube({ shareConnection: true, onConnectionEvent });
+      return null;
+    }
+    await act(async () => root.render(createElement(CubePage)));
+    try {
+      await act(async () => primary.connectDevice(rig.device));
+      await act(async () => root.render(null));
+      await act(async () => {
+        rig.drop();
+        await vi.advanceTimersByTimeAsync(1_000);
+      });
+      expect(start).toHaveBeenCalledTimes(2);
+      expect(onConnectionEvent).not.toHaveBeenCalled();
+      await act(async () => root.render(createElement(CubePage)));
+      expect(primary.status.connected).toBe(true);
+      expect(primary.facelets).toBe(SCRAMBLED);
+    } finally {
+      await act(async () => root.render(createElement(CubePage)));
+      await act(async () => primary.disconnect());
+    }
+  });
+
   it('keeps battery notifications through handshake, delayed reads and reconnects', async () => {
     const rig = fakeGattRig('battery');
     const contexts: CubeDriverContext[] = [];

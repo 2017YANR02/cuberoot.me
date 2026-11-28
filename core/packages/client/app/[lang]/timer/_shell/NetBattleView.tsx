@@ -695,6 +695,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   };
 
   const bluetoothCube = useBluetoothCube({
+    shareConnection: true,
     onGyro: settings.gyroEnabled ? (q) => {
       gyroQuatRef.current = q;
       if (gyroCalibrationPendingRef.current) {

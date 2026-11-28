@@ -54,6 +54,7 @@ export default function SmartPracticePage() {
     setMacPrompt(null);
   }, []);
   const cube = useBluetoothCube({
+    shareConnection: true,
     onMove: (move, timestamp, facelets) => onCubeMove.current?.(move, timestamp, facelets),
     onGyro: quat => onCubeGyro.current?.(quat),
     onNeedMac: (deviceName, isWrongKey) => new Promise(resolve => {

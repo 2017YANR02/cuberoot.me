@@ -2701,6 +2701,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const bluetoothRequestIdRef = useRef(0);
+  useLayoutEffect(() => () => { bluetoothRequestIdRef.current++; }, []);
   const bluetoothConnectingRef = useRef(false);
   const [bluetoothTimerOpen, setBluetoothTimerOpen] = useState(false);
   const [bluetoothTimerConnectAttempt, setBluetoothTimerConnectAttempt] = useState<Promise<void> | null>(null);
@@ -2736,6 +2737,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       const device = await requestUnifiedBluetoothDevice();
       if (!device || requestId !== bluetoothRequestIdRef.current) return;
+      const primary = trainingCubes.handlesRef.current.get(FIRST_TRAINING_CUBE);
+      if (primary?.status.connected && primary.status.deviceId === device.id) return;
       if ([...trainingCubes.handlesRef.current].some(([id, cube]) => id !== FIRST_TRAINING_CUBE && cube.status.deviceId === device.id)) {
         throw new Error(tr({ zh: '这颗智能魔方已在连接列表中', en: 'This smart cube is already in the connection list' }));
       }

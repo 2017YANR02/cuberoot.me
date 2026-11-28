@@ -100,6 +100,7 @@ export default function CrossTrainingClient() {
     setMacInput('');
   }, []);
   const cube = useBluetoothCube({
+    shareConnection: true,
     onMove: (move, timestamp) => moveHandlerRef.current(move, timestamp),
     onNeedMac: requestMac,
   });

@@ -280,6 +280,7 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   };
 
   const cube = useBluetoothCube({
+    shareConnection: true,
     solvedStep: judgeStep,
     onNeedMac,
     // Orientation is a firehose and nothing here reacts to it — straight into

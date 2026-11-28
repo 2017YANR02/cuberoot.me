@@ -539,7 +539,7 @@ export const moyu32Driver: CubeDriver = {
           },
         },
       });
-      if (onGyro) await setGyro(true);
+      if (ctx?.enableGyroOnStart ?? !!onGyro) await setGyro(true);
     } catch (error) {
       cleanup();
       throw error;

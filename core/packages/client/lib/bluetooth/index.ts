@@ -11,7 +11,9 @@
  *
  *   <button onClick={cube.connect}>Connect cube</button>
  *
- * The hook is a no-op until `connect()` is called. On non-Web-Bluetooth
+ * With `shareConnection`, the primary connection lives for the browser tab.
+ * Page callbacks are registered only while their consumer is mounted.
+ * On non-Web-Bluetooth
  * browsers (Safari, Firefox without flag) `connect()` rejects with a
  * descriptive Error; the rest of the handle stays in a benign disconnected
  * state so the timer page renders normally.
@@ -41,7 +43,7 @@
  *   callback is fired with `{ kind: 'reconnect-failed' }`.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { CubeDriver, CubeMoveMetadata, GyroSink } from './driver';
 import type { MoveClockSample } from '@cuberoot/shared/smart-cube/move-clock';
 // detectBluetoothEnv re-exported above; the connect() helper uses it
@@ -469,7 +471,7 @@ export interface BluetoothCubeHandle {
    * `step` says what finishing this case means, and is applied in the same
    * breath as the state rather than by re-rendering with a new `solvedStep`.
    * Drilling a mixed set changes both at once, and doing it in two steps has a
-   * window in which the old step judges the new case — see `hijackStepRef`.
+   * window in which the old step judges the new case.
    * Omit it to keep judging by `solvedStep`.
    */
   hijackTo(target: import('@cuberoot/shared/timer/reconstruct/state').CubeFaces | string, step?: CubeStep): boolean;
@@ -497,6 +499,8 @@ export interface BluetoothAdvertisementDiagnostic {
 }
 
 interface UseBluetoothCubeOpts {
+  /** Use the tab's primary cube instead of a dedicated connection. */
+  shareConnection?: boolean;
   /** Reject a device owned by another local player before touching its GATT session. */
   validateDevice?: (device: BluetoothDevice) => void;
   /** Official competition sessions only accept physical peripherals. */
@@ -573,178 +577,170 @@ function prettyDeviceName(device: BluetoothDevice): string {
   return n;
 }
 
-export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCubeHandle {
-  const allowSimulatedRef = useRef(opts.allowSimulated !== false);
-  allowSimulatedRef.current = opts.allowSimulated !== false;
-  const [status, setStatus] = useState<BluetoothCubeStatus>(INITIAL_STATUS);
-  const [advertisementDiagnostic, setAdvertisementDiagnostic] = useState<BluetoothAdvertisementDiagnostic | null>(null);
-  const [lastMove, setLastMove] = useState<string | null>(null);
-  const [solved, setSolved] = useState<boolean>(true);
-  /**
-   * The tracked state as a facelet string, pushed rather than pulled.
-   * `getFaces()` reads the session controller's synchronous snapshot, while
-   * this value drives rendering after the same move has been published.
-   */
-  const [facelets, setFacelets] = useState<string | null>(null);
+type BluetoothCubeSnapshot = Pick<BluetoothCubeHandle,
+  'status' | 'advertisementDiagnostic' | 'lastMoveMetadata' | 'lastMove' | 'solved' |
+  'facelets' | 'hijacked' | 'resetDeviceState'>;
 
-  // Refs so the GATT-event closure doesn't capture stale callback refs.
-  const onMoveRef = useRef(opts.onMove);
-  const validateDeviceRef = useRef(opts.validateDevice);
-  validateDeviceRef.current = opts.validateDevice;
-  const onSolvedRef = useRef(opts.onSolved);
-  const onConnectionEventRef = useRef(opts.onConnectionEvent);
-  useEffect(() => { onMoveRef.current = opts.onMove; }, [opts.onMove]);
-  useEffect(() => { onSolvedRef.current = opts.onSolved; }, [opts.onSolved]);
-  useEffect(() => { onConnectionEventRef.current = opts.onConnectionEvent; }, [opts.onConnectionEvent]);
-  const onNeedMacRef = useRef(opts.onNeedMac);
-  useEffect(() => { onNeedMacRef.current = opts.onNeedMac; }, [opts.onNeedMac]);
-  const onGyroRef = useRef(opts.onGyro);
-  useEffect(() => { onGyroRef.current = opts.onGyro; }, [opts.onGyro]);
-  // Stable trampoline so drivers keep firing into the LATEST callback across
-  // re-renders without us having to re-subscribe the characteristic. We hand
-  // drivers this (never `opts.onGyro`) — and only when the consumer actually
-  // wants orientation, because passing it is what makes MoYu32 send its 0xAC
-  // enable command during the handshake. QiYi is also observed without a UI
-  // listener so valid samples can establish its runtime gyro capability.
-  const gyroSeenRef = useRef(false);
-  const gyroSink = useRef<GyroSink>((q, v) => {
-    gyroSeenRef.current = true;
-    setStatus(current => current.connected && !current.hasGyro ? { ...current, hasGyro: true } : current);
-    onGyroRef.current?.(q, v);
-  }).current;
+const INITIAL_SNAPSHOT: BluetoothCubeSnapshot = {
+  status: INITIAL_STATUS,
+  advertisementDiagnostic: null,
+  lastMove: null,
+  solved: true,
+  facelets: null,
+  hijacked: false,
+};
 
-  // Mutable runtime handles. We can't put these in state because they are
-  // not serializable and updating them would re-render the consumer.
-  const deviceRef = useRef<BluetoothDevice | null>(null);
-  const macRef = useRef<string | null>(null);
+function createBluetoothCubeConnection(shared: boolean) {
+  let snapshot = INITIAL_SNAPSHOT;
+  const listeners = new Set<() => void>();
+  const consumers = new Map<symbol, () => UseBluetoothCubeOpts>();
+  let activeConsumer: symbol | undefined;
+  let changingConsumer = false;
+  let simulated = false;
+  let established = false;
+  let pendingOwner: symbol | undefined;
+  let cancelMacPrompt: (() => void) | undefined;
+  const options = () => (activeConsumer && consumers.get(activeConsumer)?.()) || {};
+
+  async function requestMac(name: string, wrongKey?: boolean): Promise<string | null> {
+    const prompt = options().onNeedMac;
+    if (!prompt) return null;
+    cancelMacPrompt?.();
+    let cancel: () => void = () => {};
+    const cancelled = new Promise<null>(resolve => { cancel = () => resolve(null); });
+    cancelMacPrompt = cancel;
+    try {
+      const answer = wrongKey === undefined ? prompt(name) : prompt(name, wrongKey);
+      return await Promise.race([answer, cancelled]);
+    }
+    finally { if (cancelMacPrompt === cancel) cancelMacPrompt = undefined; }
+  }
+
+  function publish(patch: Partial<BluetoothCubeSnapshot>) {
+    if (!Object.entries(patch).some(([key, value]) => snapshot[key as keyof BluetoothCubeSnapshot] !== value)) return;
+    snapshot = { ...snapshot, ...patch };
+    for (const listener of listeners) listener();
+  }
+
+  const setStatus = (value: BluetoothCubeStatus | ((current: BluetoothCubeStatus) => BluetoothCubeStatus)) => {
+    const status = typeof value === 'function' ? value(snapshot.status) : value;
+    publish({ status, resetDeviceState: status.connected && resetDevice ? resetDeviceState : undefined });
+  };
+  const setAdvertisementDiagnostic = (value: BluetoothAdvertisementDiagnostic | null |
+    ((current: BluetoothAdvertisementDiagnostic | null) => BluetoothAdvertisementDiagnostic | null)) => {
+    publish({ advertisementDiagnostic: typeof value === 'function' ? value(snapshot.advertisementDiagnostic) : value });
+  };
+  const setHijacked = (hijacked: boolean) => publish({ hijacked });
+
+  const gyroSink: GyroSink = (q, v) => {
+    gyroSeen = true;
+    const { status } = snapshot;
+    if (status.connected && !status.hasGyro) setStatus({ ...status, hasGyro: true });
+    options().onGyro?.(q, v);
+  };
+  let gyroSeen = false;
+  let activeDevice: BluetoothDevice | null = null;
+  let activeMac: string | null = null;
   // MAC pending persistence — only written once a real move or a validated
   // state decodes, so a wrong MAC the user typed never poisons storage.
-  const pendingSaveMacRef = useRef<{ name: string | null; mac: string } | null>(null);
-  const driverRef = useRef<CubeDriver | null>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
-  // Driver-provided orientation switch, when the brand has one (MoYu32).
-  const lastMoveMetadataRef = useRef<CubeMoveMetadata | undefined>(undefined);
-  const resetDeviceRef = useRef<(() => Promise<void>) | null>(null);
-  const calibratingRef = useRef(false);
-  const relayCalibratingRef = useRef(false);
-  const setGyroRef = useRef<((enabled: boolean) => Promise<void>) | null>(null);
-  const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
+  let pendingSaveMac: { name: string | null; mac: string } | null = null;
+  let activeDriver: CubeDriver | null = null;
+  let cleanup: (() => void) | null = null;
+  let resetDevice: (() => Promise<void>) | null = null;
+  let calibrating = false;
+  let relayCalibrating = false;
+  let updateDeviceGyro: ((enabled: boolean) => Promise<void>) | null = null;
+  let requestedGyro: boolean | undefined;
+  let disconnectListener: ((ev: Event) => void) | null = null;
   /**
    * Training-mode offset: non-null means what we publish is a relabelling of
    * the physical cube, not the cube itself. See `./state_hijack.ts`.
    */
-  const hijackRef = useRef<StateHijack | null>(null);
-  const [hijacked, setHijacked] = useState(false);
-  /**
-   * Which step counts as done. A full solve unless a caller is drilling one.
-   *
-   * Two sources, and the split matters: the option is a render-time preference
-   * copied in by an effect, while `hijackTo` sets one SYNCHRONOUSLY alongside
-   * the state it installs. A trainer that changed the step by re-rendering
-   * would have a window between the two — the offset in place, the step still
-   * the previous case's — and if the new case happened to satisfy the old step,
-   * the session controller would latch solved on a state nobody solved. The real
-   * finish then produces no edge at all and the clock never stops. Mixed
-   * sessions, where consecutive cases genuinely want different steps, hit that
-   * on their first PLL after an OLL.
-   */
-  const optionStepRef = useRef<CubeStep>(opts.solvedStep ?? 'solved');
-  const hijackStepRef = useRef<CubeStep | null>(null);
-  useEffect(() => { optionStepRef.current = opts.solvedStep ?? 'solved'; }, [opts.solvedStep]);
-  const activeStep = () => hijackStepRef.current ?? optionStepRef.current;
+  let hijack: StateHijack | null = null;
+  // A training case can override the page's default solve criterion.
+  let hijackStep: CubeStep | null = null;
   // True only when the user (or unmount) explicitly tore the connection
   // down. The gattserverdisconnected handler reads this to decide whether
   // to attempt auto-reconnect.
-  const intentionalDisconnectRef = useRef<boolean>(false);
+  let intentionalDisconnect: boolean = false;
   // Monotonically identifies the currently-owned connection session. Async
   // reconnect work captures this value and must discard its result if a
   // manual disconnect, a new device selection, or unmount has moved on.
-  const connectionGenerationRef = useRef<number>(0);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  let connectionGeneration: number = 0;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   // Set while a reconnect attempt is in flight, so we don't double-fire from
   // overlapping disconnect events.
-  const reconnectInFlightRef = useRef<boolean>(false);
-  const sessionControllerRef = useRef<SmartCubeSessionController<CubeMoveMetadata> | null>(null);
-  if (!sessionControllerRef.current) {
-    sessionControllerRef.current = new SmartCubeSessionController({
-      now: () => performance.now(),
-      projectFacelets: (rawFacelets) => applyHijack(hijackRef.current, rawFacelets),
-      isSolved: (nextFacelets) => stepSolved(activeStep(), nextFacelets),
-      onChange: (snapshot) => {
-        lastMoveMetadataRef.current = snapshot.lastMoveMetadata;
-        setLastMove(snapshot.lastMove);
-        setFacelets(snapshot.facelets);
-        setSolved(snapshot.solved);
-      },
-      onMove: ({ facelets, metadata, move, timestamp, clock }) => {
-        // Persist a MAC only after a real frame decodes successfully.
-        const pendingMac = pendingSaveMacRef.current;
-        if (pendingMac) {
-          saveMac(pendingMac.name, pendingMac.mac);
-          pendingSaveMacRef.current = null;
-        }
-        if (calibratingRef.current || relayCalibratingRef.current) return;
-        onMoveRef.current?.(move, timestamp, facelets, metadata, clock);
-      },
-      onSolved: (timestamp, clock) => {
-        if (!calibratingRef.current && !relayCalibratingRef.current) onSolvedRef.current?.(timestamp, clock);
-      },
-    });
-  }
-  const sessionController = sessionControllerRef.current;
+  let reconnectInFlight: boolean = false;
+  const sessionController = new SmartCubeSessionController<CubeMoveMetadata>({
+    now: () => performance.now(),
+    projectFacelets: (rawFacelets) => applyHijack(hijack, rawFacelets),
+    isSolved: (nextFacelets) => stepSolved(hijackStep ?? options().solvedStep ?? 'solved', nextFacelets),
+    onChange: ({ lastMoveMetadata, lastMove, facelets, solved }) => {
+      publish({ lastMoveMetadata, lastMove, facelets, solved });
+    },
+    onMove: ({ facelets, metadata, move, timestamp, clock }) => {
+      // Persist a MAC only after a real frame decodes successfully.
+      const pendingMac = pendingSaveMac;
+      if (pendingMac) {
+        saveMac(pendingMac.name, pendingMac.mac);
+        pendingSaveMac = null;
+      }
+      if (calibrating || relayCalibrating) return;
+      options().onMove?.(move, timestamp, facelets, metadata, clock);
+    },
+    onSolved: (timestamp, clock) => {
+      if (!changingConsumer && !calibrating && !relayCalibrating) options().onSolved?.(timestamp, clock);
+    },
+  });
 
-  const adoptCubeState = useCallback((
+  const adoptCubeState = (
     session: SmartCubeSessionLease<CubeMoveMetadata>,
     nextFacelets: string,
   ): void => {
     if (!session.adoptFacelets(nextFacelets)) return;
     // A validated encrypted state proves the MAC even before the first move.
-    const pendingMac = pendingSaveMacRef.current;
+    const pendingMac = pendingSaveMac;
     if (pendingMac) {
       saveMac(pendingMac.name, pendingMac.mac);
-      pendingSaveMacRef.current = null;
+      pendingSaveMac = null;
     }
-  }, []);
+  };
 
-  const cancelPendingReconnect = useCallback(() => {
-    if (reconnectTimerRef.current != null) {
-      clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = null;
+  const cancelPendingReconnect = () => {
+    if (reconnectTimer != null) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     }
-    reconnectInFlightRef.current = false;
-  }, []);
+    reconnectInFlight = false;
+  };
 
-  // Forward declaration: scheduleReconnect calls attemptReconnect, which
-  // itself can re-arm scheduleReconnect on failure. We resolve the cycle
-  // through refs rather than mutual-recursive useCallbacks.
-  const scheduleReconnectRef = useRef<((attempt: number) => void) | null>(null);
-
-  const attemptReconnect = useCallback(async (attempt: number): Promise<void> => {
-    reconnectInFlightRef.current = true;
-    const generation = connectionGenerationRef.current;
-    const device = deviceRef.current;
-    const driver = driverRef.current;
-    const isCurrentSession = (): boolean => connectionGenerationRef.current === generation;
+  const attemptReconnect = async (attempt: number): Promise<void> => {
+    reconnectInFlight = true;
+    const generation = connectionGeneration;
+    const device = activeDevice;
+    const driver = activeDriver;
+    const isCurrentSession = (): boolean => connectionGeneration === generation;
 
     // Guard: device or driver got nulled out (manual disconnect / unmount
     // beat the timer). Bail.
     if (!device || !driver) {
-      if (isCurrentSession()) reconnectInFlightRef.current = false;
+      if (isCurrentSession()) reconnectInFlight = false;
       return;
     }
-    if (intentionalDisconnectRef.current) {
-      if (isCurrentSession()) reconnectInFlightRef.current = false;
+    if (intentionalDisconnect) {
+      if (isCurrentSession()) reconnectInFlight = false;
       return;
     }
     if (!device.gatt) {
       // Browser revoked GATT access entirely; we can't recover.
-      onConnectionEventRef.current?.({ kind: 'reconnect-failed', attempts: attempt });
-      reconnectInFlightRef.current = false;
+      options().onConnectionEvent?.({ kind: 'reconnect-failed', attempts: attempt });
+      reconnectInFlight = false;
       // Fall through to a hard reset so the user can re-pair.
-      deviceRef.current = null;
-      driverRef.current = null;
-      cleanupRef.current = null;
-      disconnectListenerRef.current = null;
+      activeDevice = null;
+      activeDriver = null;
+      established = false;
+      cleanup = null;
+      disconnectListener = null;
       sessionController.close();
       setStatus(INITIAL_STATUS);
       return;
@@ -758,7 +754,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       try { started?.cleanup(); } catch { /* ignore */ }
       if (onDisc) {
         try { device.removeEventListener('gattserverdisconnected', onDisc); } catch { /* ignore */ }
-        if (disconnectListenerRef.current === onDisc) disconnectListenerRef.current = null;
+        if (disconnectListener === onDisc) disconnectListener = null;
       }
       if (server?.connected) {
         try { server.disconnect(); } catch { /* ignore */ }
@@ -767,36 +763,38 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
     try {
       server = await device.gatt.connect();
-      if (!isCurrentSession() || intentionalDisconnectRef.current) {
+      if (!isCurrentSession() || intentionalDisconnect) {
         discardAttempt();
         return;
       }
       // Establish the provisional solved baseline before the driver starts.
       // Some drivers publish their authoritative state during start(); doing
       // this afterwards would overwrite a real scrambled reconnect state.
-      gyroSeenRef.current = false;
-      hijackRef.current = null;
-      hijackStepRef.current = null;
+      gyroSeen = false;
+      hijack = null;
+      hijackStep = null;
       setHijacked(false);
       reconnectSession = sessionController.open();
       const session = reconnectSession;
 
       // Re-attach the disconnect listener (the device may keep the old one,
       // but to be safe we strip + re-add a fresh closure).
-      if (disconnectListenerRef.current) {
-        device.removeEventListener('gattserverdisconnected', disconnectListenerRef.current);
+      if (disconnectListener) {
+        device.removeEventListener('gattserverdisconnected', disconnectListener);
       }
       onDisc = (): void => {
         if (!isCurrentSession()) return;
-        if (intentionalDisconnectRef.current) return;
+        if (intentionalDisconnect) return;
         if (!session.isCurrent()) return;
         sessionController.close();
-        if (reconnectInFlightRef.current) return;
-        onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
-        scheduleReconnectRef.current?.(0);
+        if (reconnectInFlight) return;
+        cleanup?.();
+        cleanup = null;
+        options().onConnectionEvent?.({ kind: 'disconnected', reason: 'gatt-lost' });
+        scheduleReconnect(0);
       };
       device.addEventListener('gattserverdisconnected', onDisc);
-      disconnectListenerRef.current = onDisc;
+      disconnectListener = onDisc;
 
       // Re-run the driver handshake to resume the move stream. Re-arm the
       // gyro sink too, or orientation would silently die after any drop.
@@ -804,7 +802,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       started = await driver.start(server, (move, deviceTs, metadata) => {
         if (isCurrentSession()) session.move(move, deviceTs, metadata);
       }, {
-        mac: macRef.current,
+        mac: activeMac,
         onBattery: (level) => {
           if (!isCurrentSession() || !session.isCurrent()) return;
           notifiedBattery = level;
@@ -813,19 +811,21 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         onState: (nextFacelets) => {
           if (isCurrentSession()) adoptCubeState(session, nextFacelets);
         },
-        onGyro: (onGyroRef.current || driver.brand === 'qiyi')
+        enableGyroOnStart: shared ? false : undefined,
+        onGyro: (shared || options().onGyro || driver.brand === 'qiyi')
           ? ((q, v) => {
               if (isCurrentSession() && session.isCurrent()) gyroSink(q, v);
             })
           : undefined,
       });
-      if (!isCurrentSession() || intentionalDisconnectRef.current || !session.isCurrent()) {
+      if (!isCurrentSession() || intentionalDisconnect || !session.isCurrent()) {
         discardAttempt();
         return;
       }
-      cleanupRef.current = started.cleanup;
-      setGyroRef.current = started.setGyro ?? null;
-      resetDeviceRef.current = started.resetDeviceState ?? null;
+      cleanup = started.cleanup;
+      updateDeviceGyro = started.setGyro ?? null;
+      requestedGyro = shared ? false : undefined;
+      resetDevice = started.resetDeviceState ?? null;
 
       setStatus({
         connected: true,
@@ -833,50 +833,52 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         battery: notifiedBattery,
         deviceName: prettyDeviceName(device),
         deviceId: device.id,
-        hasGyro: driver.hasGyro === true || gyroSeenRef.current,
+        hasGyro: driver.hasGyro === true || gyroSeen,
       });
+      syncGyroPreference();
 
       void started.battery().then(b => {
-        if (isCurrentSession() && session.isCurrent() && deviceRef.current === device) {
+        if (isCurrentSession() && session.isCurrent() && activeDevice === device) {
           setStatus(s => ({ ...s, battery: notifiedBattery ?? b }));
         }
       }).catch(() => {});
 
-      reconnectInFlightRef.current = false;
-      onConnectionEventRef.current?.({ kind: 'reconnected' });
+      reconnectInFlight = false;
+      options().onConnectionEvent?.({ kind: 'reconnected' });
     } catch {
       discardAttempt();
       if (!isCurrentSession()) return;
       if (reconnectSession?.isCurrent()) sessionController.close();
       // Reconnect failed (timeout, GATT error, cube off, etc.).
-      reconnectInFlightRef.current = false;
-      if (intentionalDisconnectRef.current) return;
+      reconnectInFlight = false;
+      if (intentionalDisconnect) return;
       const next = attempt + 1;
       if (next >= RECONNECT_MAX_ATTEMPTS) {
-        onConnectionEventRef.current?.({ kind: 'reconnect-failed', attempts: next });
+        options().onConnectionEvent?.({ kind: 'reconnect-failed', attempts: next });
         // Hard reset — caller can call connect() again to re-pair.
-        deviceRef.current = null;
-        driverRef.current = null;
-        cleanupRef.current = null;
-        if (disconnectListenerRef.current) {
+        activeDevice = null;
+        activeDriver = null;
+        established = false;
+        cleanup = null;
+        if (disconnectListener) {
           try {
-            device.removeEventListener('gattserverdisconnected', disconnectListenerRef.current);
+            device.removeEventListener('gattserverdisconnected', disconnectListener);
           } catch { /* ignore */ }
         }
-        disconnectListenerRef.current = null;
+        disconnectListener = null;
         sessionController.close();
         setStatus(INITIAL_STATUS);
         return;
       }
-      scheduleReconnectRef.current?.(next);
+      scheduleReconnect(next);
     }
-  }, [adoptCubeState, gyroSink, sessionController]);
+  };
 
-  const scheduleReconnect = useCallback((attempt: number) => {
-    if (intentionalDisconnectRef.current) return;
-    if (reconnectTimerRef.current != null) return; // already armed
+  const scheduleReconnect = (attempt: number) => {
+    if (intentionalDisconnect) return;
+    if (reconnectTimer != null) return; // already armed
     const delay = RECONNECT_BACKOFF_MS[attempt] ?? RECONNECT_BACKOFF_MS[RECONNECT_BACKOFF_MS.length - 1];
-    onConnectionEventRef.current?.({
+    options().onConnectionEvent?.({
       kind: 'reconnecting',
       attempt: attempt + 1,
       maxAttempts: RECONNECT_MAX_ATTEMPTS,
@@ -884,83 +886,86 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     });
     // Mark disconnected in UI status while we're in retry purgatory.
     setStatus(s => (s.connected ? { ...s, connected: false } : s));
-    reconnectTimerRef.current = setTimeout(() => {
-      reconnectTimerRef.current = null;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
       void attemptReconnect(attempt);
     }, delay);
-  }, [attemptReconnect]);
+  };
 
-  // Wire the ref so attemptReconnect (defined above) can invoke
-  // scheduleReconnect after a failed try.
-  useEffect(() => {
-    scheduleReconnectRef.current = scheduleReconnect;
-  }, [scheduleReconnect]);
-
-  const internalDisconnect = useCallback((reason: 'manual' | 'gatt-lost') => {
+  const internalDisconnect = (reason: 'manual' | 'gatt-lost') => {
     cancelPendingReconnect();
-    cleanupRef.current?.();
-    cleanupRef.current = null;
-    setGyroRef.current = null;
-    resetDeviceRef.current = null;
-    calibratingRef.current = false;
-    relayCalibratingRef.current = false;
-    const dev = deviceRef.current;
+    cleanup?.();
+    cleanup = null;
+    updateDeviceGyro = null;
+    requestedGyro = undefined;
+    resetDevice = null;
+    calibrating = false;
+    relayCalibrating = false;
+    const dev = activeDevice;
     if (dev) {
-      if (disconnectListenerRef.current) {
-        dev.removeEventListener('gattserverdisconnected', disconnectListenerRef.current);
+      if (disconnectListener) {
+        dev.removeEventListener('gattserverdisconnected', disconnectListener);
       }
       if (reason === 'manual' && dev.gatt?.connected) {
         try { dev.gatt.disconnect(); } catch { /* ignore */ }
       }
     }
-    deviceRef.current = null;
-    driverRef.current = null;
-    disconnectListenerRef.current = null;
+    activeDevice = null;
+    activeDriver = null;
+    activeMac = null;
+    pendingSaveMac = null;
+    disconnectListener = null;
+    simulated = false;
+    established = false;
+    hijack = null;
+    hijackStep = null;
+    setHijacked(false);
     sessionController.close();
     setStatus(INITIAL_STATUS);
-    onConnectionEventRef.current?.({ kind: 'disconnected', reason });
-  }, [cancelPendingReconnect, sessionController]);
+    options().onConnectionEvent?.({ kind: 'disconnected', reason });
+  };
 
-  const disconnect = useCallback(() => {
-    connectionGenerationRef.current += 1;
-    intentionalDisconnectRef.current = true;
+  const disconnect = () => {
+    connectionGeneration += 1;
+    intentionalDisconnect = true;
+    cancelMacPrompt?.();
     internalDisconnect('manual');
-  }, [internalDisconnect]);
+  };
 
-  const resetState = useCallback(() => {
+  const resetState = () => {
     // "The cube in my hands is solved" is a statement about the PHYSICAL cube,
     // so any pretence about where it is has to go with it.
-    hijackRef.current = null;
-    hijackStepRef.current = null;
+    hijack = null;
+    hijackStep = null;
     setHijacked(false);
     sessionController.resetState();
-  }, [sessionController]);
+  };
 
-  const resetDeviceState = useCallback(async () => {
-    const reset = resetDeviceRef.current;
-    if (!reset || !cleanupRef.current) throw new Error('Device calibration unavailable');
-    if (calibratingRef.current || relayCalibratingRef.current) throw new Error('Device calibration already in progress');
-    const generation = connectionGenerationRef.current;
-    calibratingRef.current = true;
+  const resetDeviceState = async () => {
+    const reset = resetDevice;
+    if (!reset || !cleanup) throw new Error('Device calibration unavailable');
+    if (calibrating || relayCalibrating) throw new Error('Device calibration already in progress');
+    const generation = connectionGeneration;
+    calibrating = true;
     // Reset is one user operation: update the local model before sending the
     // solved-state command so software and hardware move together.
     resetState();
     try {
       await reset();
-      if (connectionGenerationRef.current !== generation) throw new Error('Cube connection changed');
+      if (connectionGeneration !== generation) throw new Error('Cube connection changed');
       sessionController.resetClock();
       // The driver published the confirmed snapshot and may already have
       // replayed newer turns. Clear training offsets without overwriting them.
-      hijackRef.current = null;
-      hijackStepRef.current = null;
+      hijack = null;
+      hijackStep = null;
       setHijacked(false);
       sessionController.republish();
     } finally {
-      if (connectionGenerationRef.current === generation) calibratingRef.current = false;
+      if (connectionGeneration === generation) calibrating = false;
     }
-  }, [resetState, sessionController]);
+  };
 
-  const hijackTo = useCallback((target: import('@cuberoot/shared/timer/reconstruct/state').CubeFaces | string, step?: CubeStep): boolean => {
+  const hijackTo = (target: import('@cuberoot/shared/timer/reconstruct/state').CubeFaces | string, step?: CubeStep): boolean => {
     const raw = sessionController.getRawFacelets();
     if (!raw) return false;
     const wanted = typeof target === 'string' ? target : toFaceletString(target);
@@ -970,29 +975,29 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // case that happens to match the cube's current state would be judged by the
     // PREVIOUS case's step. "Unusable state" must change nothing at all.
     if (!h && raw !== wanted) return false;
-    hijackRef.current = h;
-    // Set before publishing, not by a re-render: see `hijackStepRef`.
-    hijackStepRef.current = step ?? null;
+    hijack = h;
+    // Set before publishing so this case is judged against its own goal.
+    hijackStep = step ?? null;
     setHijacked(h !== null);
     // Publish at once: the case has to appear without waiting for a turn.
     sessionController.republish();
     return true;
-  }, [sessionController]);
+  };
 
-  const clearHijack = useCallback(() => {
-    if (!hijackRef.current && hijackStepRef.current === null) return;
-    hijackRef.current = null;
-    hijackStepRef.current = null;
+  const clearHijack = () => {
+    if (!hijack && hijackStep === null) return;
+    hijack = null;
+    hijackStep = null;
     setHijacked(false);
     sessionController.republish();
-  }, [sessionController]);
+  };
 
   /**
    * Everything after "we have a device": open GATT, pick the driver from the
    * services it actually exposes, settle the MAC, run the handshake. Shared by
    * the picker path and the dev fake cube so neither can drift from the other.
    */
-  const attachToDevice = useCallback(async (
+  const attachToDevice = async (
     device: BluetoothDevice,
     advMac: string | null,
     generation: number,
@@ -1001,8 +1006,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       completedPhaseMs: number,
     ) => void,
   ): Promise<void> => {
-    const isCurrentSession = (): boolean => connectionGenerationRef.current === generation;
-    validateDeviceRef.current?.(device);
+    const isCurrentSession = (): boolean => connectionGeneration === generation;
+    options().validateDevice?.(device);
     if (!device.gatt) {
       throw new BluetoothConnectError('gatt', 'Selected device does not expose a GATT server.');
     }
@@ -1061,8 +1066,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         // Brand-specific name fallback, never used for MY32.
         ?? driver.defaultMac?.(device)
         ?? null);
-      if (!mac && driver.brand !== 'moyu32' && onNeedMacRef.current) {
-        try { mac = normalizeMac(await onNeedMacRef.current(device.name ?? '')); }
+      if (!mac && driver.brand !== 'moyu32') {
+        try { mac = normalizeMac(await requestMac(device.name ?? '')); }
         catch { mac = null; }
       }
     }
@@ -1070,7 +1075,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       try { server.disconnect(); } catch { /* ignore */ }
       return;
     }
-    macRef.current = mac;
+    activeMac = mac;
 
     // A MAC-keyed cube with no MAC (user dismissed the prompt, nothing auto-
     // detected) can't decode anything — abort cleanly instead of showing a
@@ -1087,25 +1092,25 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     let activeSession: SmartCubeSessionLease<CubeMoveMetadata> | null = null;
     const onDisc = (): void => {
       if (!isCurrentSession()) return;
-      if (intentionalDisconnectRef.current) return;
+      if (intentionalDisconnect) return;
       if (activeSession?.isCurrent()) sessionController.close();
       // During the initial handshake, the owning connectDevice() call must
       // handle failure. Scheduling an independent reconnect here would race a
       // user retry while the modal is already reporting that handshake error.
       if (!readyForReconnect) return;
-      if (reconnectInFlightRef.current) return;
-      // Tear down the live subscriptions but keep deviceRef/driverRef so
+      if (reconnectInFlight) return;
+      // Tear down the live subscriptions but keep the device and driver so
       // the reconnect path can reuse them.
-      cleanupRef.current?.();
-      cleanupRef.current = null;
-      onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
-      scheduleReconnectRef.current?.(0);
+      cleanup?.();
+      cleanup = null;
+      options().onConnectionEvent?.({ kind: 'disconnected', reason: 'gatt-lost' });
+      scheduleReconnect(0);
     };
     device.addEventListener('gattserverdisconnected', onDisc);
-    disconnectListenerRef.current = onDisc;
+    disconnectListener = onDisc;
 
-    deviceRef.current = device;
-    driverRef.current = driver;
+    activeDevice = device;
+    activeDriver = driver;
 
     // `activate` (re)subscribes the driver with a given MAC. Factored out so a
     // wrong-MAC re-prompt can re-run it on the same open GATT connection. The
@@ -1113,7 +1118,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     const discardAttachedAttempt = (started?: Awaited<ReturnType<CubeDriver['start']>>): void => {
       try { started?.cleanup(); } catch { /* ignore */ }
       try { device.removeEventListener('gattserverdisconnected', onDisc); } catch { /* ignore */ }
-      if (disconnectListenerRef.current === onDisc) disconnectListenerRef.current = null;
+      if (disconnectListener === onDisc) disconnectListener = null;
       if (server.connected) {
         try { server.disconnect(); } catch { /* ignore */ }
       }
@@ -1124,16 +1129,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         discardAttachedAttempt();
         return;
       }
-      macRef.current = macToUse;
-      pendingSaveMacRef.current = macToUse && driver!.brand !== 'moyu32'
+      activeMac = macToUse;
+      pendingSaveMac = macToUse && driver!.brand !== 'moyu32'
         ? { name: device.name ?? device.id, mac: macToUse } : null;
 
       // Establish the fallback baseline before start(). Drivers are allowed to
       // synchronously publish their authoritative state during the handshake;
       // resetting afterwards would incorrectly replace it with solved.
-      gyroSeenRef.current = false;
-      hijackRef.current = null;
-      hijackStepRef.current = null;
+      gyroSeen = false;
+      hijack = null;
+      hijackStep = null;
       setHijacked(false);
       const session = sessionController.open();
       activeSession = session;
@@ -1147,14 +1152,14 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           mac: macToUse,
           macHints: [installedBleDeviceMac(device), advMac, savedMac(device.name ?? device.id)],
           isCurrent: () => isCurrentSession() && session.isCurrent(),
-          requestMac: () => onNeedMacRef.current?.(device.name ?? '') ?? Promise.resolve(null),
+          requestMac: () => requestMac(device.name ?? ''),
           onRejectedMac: rejected => {
             if (savedMac(device.name ?? device.id) === rejected) clearMac(device.name ?? device.id);
           },
           onVerifiedMac: verified => {
             if (!isCurrentSession() || !session.isCurrent()) return;
-            macRef.current = verified;
-            pendingSaveMacRef.current = null;
+            activeMac = verified;
+            pendingSaveMac = null;
             saveMac(device.name ?? device.id, verified);
           },
           onBattery: (level) => {
@@ -1168,10 +1173,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           onState: (nextFacelets) => {
             if (isCurrentSession()) adoptCubeState(session, nextFacelets);
           },
-          // Only hand the sink over when a consumer asked for orientation —
-          // that's the signal MoYu32 uses to turn its 0xAB stream on. QiYi
-          // additionally needs this listener for runtime capability detection.
-          onGyro: (onGyroRef.current || driver!.brand === 'qiyi')
+          // A shared connection can gain a gyro consumer after the handshake.
+          enableGyroOnStart: shared ? false : undefined,
+          onGyro: (shared || options().onGyro || driver!.brand === 'qiyi')
             ? ((q, v) => {
                 if (isCurrentSession() && session.isCurrent()) gyroSink(q, v);
               })
@@ -1186,20 +1190,23 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         return;
       }
       readyForReconnect = true;
-      cleanupRef.current = started.cleanup;
-      setGyroRef.current = started.setGyro ?? null;
-      resetDeviceRef.current = started.resetDeviceState ?? null;
+      established = true;
+      cleanup = started.cleanup;
+      updateDeviceGyro = started.setGyro ?? null;
+      requestedGyro = shared ? false : undefined;
+      resetDevice = started.resetDeviceState ?? null;
       setStatus({
         connected: true,
         brand: driver!.brand,
         battery: notifiedBattery,
         deviceName: prettyDeviceName(device),
         deviceId: device.id,
-        hasGyro: driver!.hasGyro === true || gyroSeenRef.current,
+        hasGyro: driver!.hasGyro === true || gyroSeen,
       });
+      syncGyroPreference();
       // Read battery in the background; failures fall back to null silently.
       void started.battery().then(b => {
-        if (isCurrentSession() && session.isCurrent() && deviceRef.current === device) {
+        if (isCurrentSession() && session.isCurrent() && activeDevice === device) {
           setStatus(s => ({ ...s, battery: notifiedBattery ?? b }));
         }
       }).catch(() => {});
@@ -1214,15 +1221,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       keyErrorBusy = true;
       void (async () => {
         if (!isCurrentSession()) return;
-        cleanupRef.current?.();
-        cleanupRef.current = null;
+        cleanup?.();
+        cleanup = null;
         clearMac(device.name ?? device.id);
-        pendingSaveMacRef.current = null;
+        pendingSaveMac = null;
         let newMac: string | null = null;
-        if (onNeedMacRef.current) {
-          try { newMac = normalizeMac(await onNeedMacRef.current(device.name ?? '', true)); }
-          catch { newMac = null; }
-        }
+        try { newMac = normalizeMac(await requestMac(device.name ?? '', true)); }
+        catch { newMac = null; }
         if (!isCurrentSession()) return;
         keyErrorBusy = false;
         if (newMac) {
@@ -1230,7 +1235,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         } else {
           // User gave up — tear the connection down fully so a later GATT drop
           // doesn't auto-reconnect against the bad MAC.
-          intentionalDisconnectRef.current = true;
+          intentionalDisconnect = true;
           internalDisconnect('manual');
         }
       })();
@@ -1246,13 +1251,21 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw atStage('handshake', err);
     }
     onPhase?.('connected', Math.max(0, Math.round(performance.now() - phaseStartedAt)));
-  }, [adoptCubeState, cancelPendingReconnect, gyroSink, internalDisconnect, sessionController]);
+  };
 
-  const connectDevice = useCallback(async (device: BluetoothDevice): Promise<void> => {
+  const connectDevice = async (device: BluetoothDevice): Promise<void> => {
+    if (shared && snapshot.status.connected && activeDevice?.id === device.id) return;
+    if (shared && (activeDevice || cleanup)) disconnect();
+    if (!shared && sharedCubeConnection?.ownsDevice(device.id)) {
+      // Dedicated sessions (e.g. official online competition) can explicitly
+      // select the same cube. Release its primary connection before opening GATT.
+      options().validateDevice?.(device);
+      sharedCubeConnection.disconnect();
+    }
     const connectionStartedAt = performance.now();
-    const generation = connectionGenerationRef.current + 1;
-    connectionGenerationRef.current = generation;
-    intentionalDisconnectRef.current = false;
+    const generation = connectionGeneration + 1;
+    connectionGeneration = generation;
+    intentionalDisconnect = false;
     cancelPendingReconnect();
 
     // Recover the MAC from BLE advertisements BEFORE connecting, but only
@@ -1261,7 +1274,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // wait. The handshake's key-error path clears a stale value and asks the
     // user again if the cube identity or key ever changes.
     await syncAccountMacs();
-    if (generation !== connectionGenerationRef.current) return;
+    if (generation !== connectionGeneration) return;
     const legacyMac = savedMac(device.id);
     if (device.name && device.name !== device.id && legacyMac) {
       if (!savedMac(device.name)) saveMac(device.name, legacyMac);
@@ -1293,7 +1306,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     const advMac = nativeMac ?? (shouldWatchMac
       ? await watchAdvertisementsMac(device, {
           onAdvertisement: (observation) => {
-            if (connectionGenerationRef.current === generation) {
+            if (connectionGeneration === generation) {
               setAdvertisementDiagnostic((current) => current
                 ? {
                     ...current,
@@ -1305,13 +1318,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           },
         }).catch((err: unknown) => { throw atStage('advertisement', err); })
       : null);
-    if (connectionGenerationRef.current !== generation) return;
+    if (connectionGeneration !== generation) return;
     const advertisementMs = Math.max(0, Math.round(performance.now() - connectionStartedAt));
     setAdvertisementDiagnostic((current) => current
       ? { ...current, phase: 'gatt', totalElapsedMs: advertisementMs, advertisementMs }
       : null);
     const reportPhase = (phase: 'discovery' | 'handshake' | 'connected', completedPhaseMs: number) => {
-      if (connectionGenerationRef.current !== generation) return;
+      if (connectionGeneration !== generation) return;
       setAdvertisementDiagnostic((current) => {
         if (!current) return null;
         const timing = phase === 'discovery'
@@ -1330,7 +1343,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     try {
       await attachToDevice(device, advMac, generation, reportPhase);
     } catch (error) {
-      if (connectionGenerationRef.current !== generation || !isTransientGattDisconnect(error)) {
+      if (connectionGeneration !== generation || !isTransientGattDisconnect(error)) {
         throw error;
       }
       // Windows/Chrome can finish service discovery just as the peripheral
@@ -1340,42 +1353,46 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       cancelPendingReconnect();
       await attachToDevice(device, advMac, generation, reportPhase);
     }
-  }, [attachToDevice, cancelPendingReconnect]);
+  };
 
-  const connect = useCallback(async (pick?: ConnectPickOptions): Promise<void> => {
+  const connect = async (pick?: ConnectPickOptions): Promise<void> => {
+    const owner = activeConsumer;
     // Dev escape hatch: `__cuberootFakeCube.arm()` in the console stands up a
     // fake GAN v4 peripheral so the whole smart-cube experience can be driven
     // without hardware. It joins the normal path below at the same point a real
     // device does — driver selection, MAC handling and the handshake all run
     // for real. Compiled out of production; see ./fake_cube.ts.
-    const fake = allowSimulatedRef.current ? armedFakeCube() : null;
+    const fake = options().allowSimulated !== false ? armedFakeCube() : null;
     if (fake) {
-      const generation = connectionGenerationRef.current + 1;
-      connectionGenerationRef.current = generation;
-      intentionalDisconnectRef.current = false;
+      if (shared && (activeDevice || cleanup)) disconnect();
+      simulated = true;
+      const generation = connectionGeneration + 1;
+      connectionGeneration = generation;
+      intentionalDisconnect = false;
       cancelPendingReconnect();
       await attachToDevice(fake.device, fake.mac, generation);
       return;
     }
 
     if (mayUseMiniProgramBridge()) {
-      const generation = connectionGenerationRef.current + 1;
-      connectionGenerationRef.current = generation;
-      const isCurrentSession = (): boolean => connectionGenerationRef.current === generation;
+      if (shared && snapshot.status.connected) return;
+      const generation = connectionGeneration + 1;
+      connectionGeneration = generation;
+      const isCurrentSession = (): boolean => connectionGeneration === generation;
       let session: SmartCubeSessionLease<CubeMoveMetadata> | null = null;
       const isCurrentBridgeSession = (): boolean => (
         isCurrentSession() && session?.isCurrent() === true
       );
-      intentionalDisconnectRef.current = false;
+      intentionalDisconnect = false;
       cancelPendingReconnect();
-      cleanupRef.current?.();
-      cleanupRef.current = null;
+      cleanup?.();
+      cleanup = null;
 
       const applyBridgeEvent = (calibration: boolean | undefined, apply: () => void): void => {
         if (!isCurrentBridgeSession()) return;
-        const previous = relayCalibratingRef.current;
-        if (calibration) relayCalibratingRef.current = true;
-        try { apply(); } finally { relayCalibratingRef.current = previous; }
+        const previous = relayCalibrating;
+        if (calibration) relayCalibrating = true;
+        try { apply(); } finally { relayCalibrating = previous; }
       };
       const bridge = await connectMiniProgramCubeBridge({
         onMove: (move, deviceTs, metadata, calibration) => {
@@ -1394,10 +1411,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         },
         onStatus: (next) => {
           if (!isCurrentBridgeSession()) return;
-          if (next.phase === 'connected') relayCalibratingRef.current = next.calibrating === true;
+          if (next.phase === 'connected') relayCalibrating = next.calibrating === true;
           if ((next.phase === 'disconnected' || next.phase === 'error')
-            && cleanupRef.current) {
-            connectionGenerationRef.current += 1;
+            && cleanup) {
+            connectionGeneration += 1;
             internalDisconnect('gatt-lost');
           }
         },
@@ -1407,12 +1424,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         return;
       }
 
-      hijackRef.current = null;
-      hijackStepRef.current = null;
+      hijack = null;
+      hijackStep = null;
       setHijacked(false);
       session = sessionController.open();
-      cleanupRef.current = bridge.disconnect;
-      resetDeviceRef.current = bridge.resetDeviceState ?? null;
+      cleanup = bridge.disconnect;
+      established = true;
+      resetDevice = bridge.resetDeviceState ?? null;
       setStatus({
         connected: true,
         brand: normalizeMiniProgramCubeBrand(bridge.brand),
@@ -1428,84 +1446,54 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       return;
     }
 
-    const pickerGeneration = connectionGenerationRef.current + 1;
-    connectionGenerationRef.current = pickerGeneration;
-    intentionalDisconnectRef.current = false;
-    cancelPendingReconnect();
+    // Keep the existing stream alive while the chooser is open.
+    const pickerGeneration = shared ? connectionGeneration : connectionGeneration + 1;
+    connectionGeneration = pickerGeneration;
+    if (!shared) {
+      intentionalDisconnect = false;
+      cancelPendingReconnect();
+    }
     const device = await requestBluetoothDevice((nameOnly) =>
       pickerOptions(pick?.acceptAllDevices === true, nameOnly));
-    if (connectionGenerationRef.current !== pickerGeneration) return;
+    if (connectionGeneration !== pickerGeneration || (shared && activeConsumer !== owner)) return;
     if (!device) return;
     await connectDevice(device);
-  }, [
-    attachToDevice,
-    cancelPendingReconnect,
-    connectDevice,
-    gyroSink,
-    adoptCubeState,
-    internalDisconnect,
-    sessionController,
-  ]);
+  };
 
-  const preconnectGrantedDevice = useCallback(async (): Promise<boolean> => {
+  const preconnectGrantedDevice = async (): Promise<boolean> => {
+    if (shared && snapshot.status.connected) return true;
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
     if (mayUseMiniProgramBridge()) return false;
     const bluetooth = typeof navigator === 'undefined' ? undefined : navigator.bluetooth;
     if (!bluetooth?.getDevices) return false;
 
+    const generation = connectionGeneration;
+    const owner = activeConsumer;
     let devices: BluetoothDevice[];
     try {
       devices = await bluetooth.getDevices();
     } catch {
       return false;
     }
+    if (generation !== connectionGeneration || (shared && activeConsumer !== owner)) return false;
     const device = grantedCubeForPreconnect(devices);
     if (!device) return false;
     await connectDevice(device);
     return true;
-  }, [connectDevice]);
+  };
 
-  // Tear down on unmount so we don't leak GATT subscriptions.
-  useEffect(() => {
-    return () => {
-      connectionGenerationRef.current += 1;
-      intentionalDisconnectRef.current = true;
-      if (reconnectTimerRef.current != null) {
-        clearTimeout(reconnectTimerRef.current);
-        reconnectTimerRef.current = null;
-      }
-      sessionController.dispose();
-      cleanupRef.current?.();
-      cleanupRef.current = null;
-      setGyroRef.current = null;
-      resetDeviceRef.current = null;
-      calibratingRef.current = false;
-      relayCalibratingRef.current = false;
-      const dev = deviceRef.current;
-      if (dev) {
-        if (disconnectListenerRef.current) {
-          dev.removeEventListener('gattserverdisconnected', disconnectListenerRef.current);
-        }
-        try { dev.gatt?.disconnect(); } catch { /* ignore */ }
-      }
-      deviceRef.current = null;
-      driverRef.current = null;
-      disconnectListenerRef.current = null;
-    };
-  }, [sessionController]);
-
-  const getFaces = useCallback(() => {
-    if (!status.connected) return null;
+  const getFaces = () => {
+    if (!snapshot.status.connected) return null;
     const faceletView = sessionController.getFacelets();
     if (!faceletView) return null;
     // Consumers must see the same state `facelets` shows, hijack included —
     // otherwise the two disagree mid-training and whichever one a caller
     // happens to read decides its behaviour.
     return fromFaceletString(faceletView);
-  }, [sessionController, status.connected]);
+  };
 
-  const setGyro = useCallback(async (enabled: boolean): Promise<boolean> => {
-    const fn = setGyroRef.current;
+  const setGyro = async (enabled: boolean): Promise<boolean> => {
+    const fn = updateDeviceGyro;
     if (!fn) return false;
     try {
       await fn(enabled);
@@ -1513,25 +1501,114 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     } catch {
       return false;
     }
-  }, []);
+  };
+
+  function syncGyroPreference() {
+    if (!shared || !snapshot.status.connected || !updateDeviceGyro) return;
+    const enabled = !!options().onGyro;
+    if (enabled === requestedGyro) return;
+    requestedGyro = enabled;
+    void setGyro(enabled);
+  }
+
+  function changeConsumer(next: symbol | undefined) {
+    const previous = activeConsumer;
+    activeConsumer = undefined;
+    cancelMacPrompt?.();
+    if (shared && previous !== undefined
+      && (simulated || (pendingOwner === previous && !established))) {
+      disconnect();
+    }
+    activeConsumer = next;
+    if (!shared) return;
+    // Rebase on the physical state when leaving a training case. A change
+    // of page or solve criterion must never count as a completed solve.
+    hijack = null;
+    hijackStep = null;
+    setHijacked(false);
+    changingConsumer = true;
+    try { sessionController.republish(); }
+    finally { changingConsumer = false; }
+    syncGyroPreference();
+  }
+
+  function bind(owner: symbol, getOptions: () => UseBluetoothCubeOpts) {
+    consumers.set(owner, getOptions);
+    changeConsumer(owner);
+    return () => {
+      consumers.delete(owner);
+      if (activeConsumer !== owner) return;
+      changeConsumer([...consumers.keys()].at(-1));
+      if (!shared) disconnect();
+    };
+  }
+
+  async function connectFor<T>(owner: symbol, start: () => Promise<T>, inactive: T): Promise<T> {
+    if (activeConsumer !== owner) return inactive;
+    if (!shared) return start();
+    if (pendingOwner) return inactive;
+    // Register ownership before calling into the browser to retain the user gesture.
+    pendingOwner = owner;
+    try { return await start(); }
+    finally { pendingOwner = undefined; }
+  }
+
+  function commands(owner: symbol) {
+    const canControl = () => activeConsumer === owner;
+    return {
+      connect: (pick?: ConnectPickOptions) => connectFor(owner, () => connect(pick), undefined),
+      connectDevice: (device: BluetoothDevice) => connectFor(owner, () => connectDevice(device), undefined),
+      preconnectGrantedDevice: () => connectFor(owner, preconnectGrantedDevice, false),
+      disconnect: () => { if (canControl()) disconnect(); },
+      resetState: () => { if (canControl()) resetState(); },
+      resetDeviceState: async () => { if (canControl()) await resetDeviceState(); },
+      getFaces: () => canControl() ? getFaces() : null,
+      setGyro: (enabled: boolean) => canControl() ? setGyro(enabled) : Promise.resolve(false),
+      hijackTo: (target: Parameters<typeof hijackTo>[0], step?: CubeStep) =>
+        canControl() && hijackTo(target, step),
+      clearHijack: () => { if (canControl()) clearHijack(); },
+    };
+  }
 
   return {
-    status,
-    advertisementDiagnostic,
-    lastMoveMetadata: lastMoveMetadataRef.current,
-    lastMove,
-    solved,
-    facelets,
-    connect,
-    connectDevice,
-    preconnectGrantedDevice,
+    bind,
+    commands,
     disconnect,
-    resetState,
-    resetDeviceState: status.connected && resetDeviceRef.current ? resetDeviceState : undefined,
-    getFaces,
-    setGyro,
-    hijackTo,
-    clearHijack,
-    hijacked,
+    syncGyroPreference,
+    ownsDevice: (id: string) => activeDevice?.id === id,
+    getSnapshot: () => snapshot,
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => { listeners.delete(listener); };
+    },
   };
+}
+
+// Created only in the browser, and only on routes that use the primary cube.
+// Next.js client navigation keeps this module alive even on pages with no cube UI.
+let sharedCubeConnection: ReturnType<typeof createBluetoothCubeConnection> | undefined;
+const getServerSnapshot = () => INITIAL_SNAPSHOT;
+
+export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCubeHandle {
+  const [binding] = useState(() => {
+    const shared = opts.shareConnection === true && typeof window !== 'undefined';
+    const connection = shared
+      ? sharedCubeConnection ??= createBluetoothCubeConnection(true)
+      : createBluetoothCubeConnection(false);
+    const owner = Symbol();
+    return { connection, owner, commands: connection.commands(owner) };
+  });
+  const { connection, owner, commands } = binding;
+  const options = useRef(opts);
+  useLayoutEffect(() => {
+    options.current = opts;
+    connection.syncGyroPreference();
+  });
+  useLayoutEffect(() => connection.bind(owner, () => options.current), [connection, owner]);
+  const snapshot = useSyncExternalStore(connection.subscribe, connection.getSnapshot, getServerSnapshot);
+  return useMemo(() => ({
+    ...snapshot,
+    ...commands,
+    resetDeviceState: snapshot.resetDeviceState ? commands.resetDeviceState : undefined,
+  }), [snapshot, commands]);
 }

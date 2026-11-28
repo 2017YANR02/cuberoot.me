@@ -16,8 +16,7 @@ function CubeConnection({ id, options, report }: {
   const handle = useBluetoothCube(options);
   const latest = useRef(handle);
   latest.current = handle;
-  // The transport returns a fresh facade on every render. Notify the parent
-  // only for actual transport changes, never for the facade's object identity.
+  // Notify the parent only when its render snapshot needs to change.
   useLayoutEffect(() => {
     report(id, latest.current);
   }, [id, report, handle.status, handle.facelets, handle.lastMove, handle.lastMoveMetadata,
@@ -28,7 +27,7 @@ function CubeConnection({ id, options, report }: {
 
 /** Existing single-cube transport per slot; no fixed limit or dynamic hook calls. */
 export function useTrainingCubes(optionsFor: (id: string) => CubeOptions) {
-  const first = useBluetoothCube(optionsFor(FIRST_TRAINING_CUBE));
+  const first = useBluetoothCube({ ...optionsFor(FIRST_TRAINING_CUBE), shareConnection: true });
   const [extraIds, setExtraIds] = useState(['cube-2']);
   const nextSlotRef = useRef(3);
   const [extras, setExtras] = useState<Record<string, BluetoothCubeHandle>>({});
@@ -41,6 +40,7 @@ export function useTrainingCubes(optionsFor: (id: string) => CubeOptions) {
     { deviceId: first.status.deviceId, deviceName: first.status.deviceName });
   const connectingRef = useRef<string | null>(null);
   const generationRef = useRef(0);
+  useLayoutEffect(() => () => { generationRef.current++; }, []);
   const [connecting, setConnecting] = useState(false);
   const report = useCallback((id: string, handle: BluetoothCubeHandle | null) => {
     if (handle?.status.deviceId) knownDevicesRef.current.set(id,

@@ -32,6 +32,7 @@ export default function ReplayGoalTrainer({owner, set, caseId, session}: {owner:
   const [macRequest, setMacRequest] = useState<{device:string; finish:(value:string|null)=>void}>();
   const [mac, setMac] = useState('');
   const cube = useBluetoothCube({
+    shareConnection: true,
     allowSimulated:false,
     onNeedMac:(device)=>new Promise(resolve=>{setMac('');setMacRequest({device,finish:resolve});}),
     onConnectionEvent:event=>{if(event.kind!=='reconnected') turns.current.valid=false;},
