@@ -1,1 +1,8 @@
 checkbox-group { margin: 24rpx 0; }
+
+.membership-loading {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+.membership-loading-logo { width: 76px; height: 76px; }

@@ -6,9 +6,12 @@ import { tr } from '../../lib/i18n';
 
 interface Context { ticket?: string; pilot?: boolean; pilotPayment?: boolean; account: string; name: string; planSlug: string; priceCents: number; period: string; termsVersion: string; available: boolean }
 interface Contract { id: string; planSlug: string; state: string; syncStatus: string; cancellationRequested: boolean; billingStatus: string | null }
-const states = new WeakMap<object, { ticket: string; pilotPlan: string; visible: boolean; revision: number }>();
+const states = new WeakMap<object, { ticket: string; pilotPlan: string; entryKey: string; visible: boolean; revision: number; token?: string }>();
+let lastMembershipView: { entryKey: string; token: string; view: { context: Context; account: string; amount: string; message: string } } | null = null;
 const labels = () => ({
   title: tr({ zh: 'Pro 自动续费', en: 'Pro auto-renewal' }),
+  loading: tr({ zh: '正在读取账号与套餐', en: 'Loading account and plan' }),
+  retry: tr({ zh: '重试', en: 'Try again' }),
   login: tr({ zh: '登录 CubeRoot', en: 'Sign in to CubeRoot' }),
   agree: tr({ zh: '我已阅读并同意自动续费服务协议', en: 'I have read and agree to the Auto-renewal Agreement' }),
   terms: tr({ zh: '查看自动续费服务协议', en: 'Read the Auto-renewal Agreement' }),
@@ -21,13 +24,14 @@ const labels = () => ({
 Page({
   data: { appearanceStyle: '', labels: labels(), context: null as Context | null,
     account: '', amount: '', message: '', error: '', agreed: false, busy: false,
-    needsLogin: false, canSign: false, canCancel: false, contractId: '' },
+    loading: true, refreshing: false, hasEntry: false, needsLogin: false, canSign: false, canCancel: false, contractId: '' },
   onLoad(options: Record<string, string | undefined>) {
     if (isDouyinMiniProgram()) return;
     const ticket = options.ticket ?? '';
     const pilotPlan = options.pilotPlan === 'yearly_auto_renew' ? 'yearly_auto_renew' : options.pilotPlan === 'monthly_auto_renew' ? 'monthly_auto_renew' : '';
-    if ((!ticket && !pilotPlan) || ticket.length > 2048) { this.setData({ error: tr({ zh: '请从网站会员页重新打开签约链接。', en: 'Open a new authorization link from the website membership page.' }) }); return; }
-    states.set(this, { ticket, pilotPlan, visible: false, revision: 0 });
+    if ((!ticket && !pilotPlan) || ticket.length > 2048) { this.setData({ loading: false, error: tr({ zh: '请从网站会员页重新打开签约链接。', en: 'Open a new authorization link from the website membership page.' }) }); return; }
+    states.set(this, { ticket, pilotPlan, entryKey: ticket || pilotPlan, visible: false, revision: 0 });
+    this.setData({ hasEntry: true });
   },
   onShow() {
     applyNativeAppearance();
@@ -49,7 +53,17 @@ Page({
     if (!state?.visible || isDouyinMiniProgram()) return;
     const revision = ++state.revision;
     const session = getStoredSession();
-    this.setData({ needsLogin: !session, canSign: false, canCancel: false, error: '' });
+    if (lastMembershipView && lastMembershipView.token !== session?.token) lastMembershipView = null;
+    const keepContext = Boolean(session && state.token === session.token && this.data.context);
+    const cached = !keepContext && lastMembershipView?.entryKey === state.entryKey ? lastMembershipView.view : null;
+    state.token = session?.token;
+    this.setData({
+      needsLogin: !session, loading: Boolean(session) && !keepContext && !cached, refreshing: Boolean(session), error: '',
+      ...(keepContext ? {} : {
+        context: null, account: '', amount: '', message: '', ...cached,
+        agreed: false, canSign: false, canCancel: false, contractId: '',
+      }),
+    });
     if (!session) return;
     try {
       const context = await requestJson<Context>('/membership/subscriptions/mini-context', { method: 'POST', token: session.token, body: { ticket: state.ticket, pilotPlan: state.pilotPlan } });
@@ -67,19 +81,23 @@ Page({
             : !contract && cancelled
               ? tr({ zh: '已取消自动续费，不会再发起续费扣款。已付会员权益保留至到期。', en: 'Auto-renewal cancelled. No further renewal charges will be requested. Paid benefits remain until expiry.' })
               : tr({ zh: '请核对开通账号、价格及续费规则。', en: 'Check the membership account, price and renewal terms.' });
-      this.setData({ context, account: `${context.name} (${context.account})`,
+      const view = { context, account: `${context.name} (${context.account})`,
         amount: `¥${(context.priceCents / 100).toFixed(2)} / ${context.period === 'year' ? tr({ zh: '年', en: 'year' }) : tr({ zh: '月', en: 'month' })}`,
         message: context.pilot ? (context.pilotPayment
           ? tr({ zh: '指定账号验收：签约后申请真实首期扣款，验收期间不申请第二期扣款。', en: 'Private acceptance: signing requests a real first charge. No second-period charge during acceptance.' })
-          : tr({ zh: '指定账号验收：目前扣款关闭，仅验证签约和取消，不发放会员。', en: 'Private acceptance: debits disabled. Test authorization and cancellation only; no membership is granted.' })) + '\n' + message : message, canSign: context.available && (!contract || contract.state === 'pending' && !contract.cancellationRequested && contract.planSlug === context.planSlug),
+          : tr({ zh: '指定账号验收：目前扣款关闭，仅验证签约和取消，不发放会员。', en: 'Private acceptance: debits disabled. Test authorization and cancellation only; no membership is granted.' })) + '\n' + message : message };
+      lastMembershipView = { entryKey: state.entryKey, token: session.token, view };
+      this.setData({ ...view, loading: false, refreshing: false, canSign: context.available && (!contract || contract.state === 'pending' && !contract.cancellationRequested && contract.planSlug === context.planSlug),
         canCancel: Boolean(contract && contract.state !== 'terminated'), contractId: contract?.id ?? '' });
     } catch {
-      if (state.visible && state.revision === revision) this.setData({ context: null, error: tr({ zh: '链接已过期、账号不一致或服务暂不可用。请确认小程序与网站登录同一账号，再从网站重新打开。', en: 'The link expired, the account differs, or the service is unavailable. Sign in to the same account as the website and open a new link.' }) });
+      if (state.visible && state.revision === revision && getStoredSession()?.token === session.token) {
+        this.setData({ loading: false, refreshing: false, canSign: false, canCancel: false, error: tr({ zh: '链接已过期、账号不一致或服务暂不可用。请确认小程序与网站登录同一账号，再从网站重新打开。', en: 'The link expired, the account differs, or the service is unavailable. Sign in to the same account as the website and open a new link.' }) });
+      }
     }
   },
   async sign() {
     const state = states.get(this); const context = this.data.context; const session = getStoredSession();
-    if (!state?.visible || !session || !context || !this.data.agreed || !this.data.canSign || this.data.busy || isDouyinMiniProgram()) return;
+    if (!state?.visible || !session || state.token !== session.token || !context || !this.data.agreed || !this.data.canSign || this.data.busy || this.data.refreshing || isDouyinMiniProgram()) return;
     this.setData({ busy: true, error: '' });
     try {
       const code = await miniProgramLoginCode();
@@ -100,7 +118,7 @@ Page({
   },
   async cancel() {
     const state = states.get(this); const session = getStoredSession(); const id = this.data.contractId;
-    if (!state?.visible || !session || !id || this.data.busy || !this.data.canCancel) return;
+    if (!state?.visible || !session || state.token !== session.token || !id || this.data.busy || this.data.refreshing || !this.data.canCancel) return;
     const accepted = await new Promise<boolean>(resolve => miniProgramApi().showModal({ title: this.data.labels.cancel,
       content: tr({ zh: '确认取消？已付会员权益保留到期，取消不会自动退款。', en: 'Cancel renewal? Paid benefits remain until expiry. This does not issue a refund.' }),
       success: r => resolve(r.confirm), fail: () => resolve(false) }));

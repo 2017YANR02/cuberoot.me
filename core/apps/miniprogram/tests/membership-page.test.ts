@@ -5,7 +5,7 @@ vi.mock('../src/lib/appearance', () => ({ applyNativeAppearance: vi.fn() }));
 vi.mock('../src/lib/required-session', () => ({ openRequiredSessionLogin: vi.fn() }));
 vi.mock('../src/lib/i18n', () => ({ tr: (v: { zh: string }) => v.zh }));
 interface MembershipPage {
-  data: { agreed: boolean; canSign: boolean; message: string; error: string; busy: boolean };
+  data: { agreed: boolean; canSign: boolean; message: string; error: string; busy: boolean; account: string; loading: boolean; refreshing: boolean };
   setData(data: Partial<MembershipPage['data']>): void;
   onLoad(options: Record<string, string>): void;
   onShow(): void;
@@ -23,10 +23,12 @@ async function load(target = 'wechat') {
   vi.stubGlobal('Page', (p: MembershipPage) => { page = p; });
   await import('../src/pages/membership/index');
   page.setData = function (data) { Object.assign(this.data, data); };
+  const initialData = { ...page.data };
+  const createPage = () => ({ ...page, data: { ...initialData } });
   page.onLoad({ ticket: 'ticket' });
   page.onShow();
   await page.refresh();
-  return { page, navigate };
+  return { page, navigate, createPage };
 }
 beforeEach(() => {
   subscriptions = [];
@@ -72,4 +74,41 @@ it('does not update an unloaded page or enroll on Douyin', async () => {
   await other.page.sign();
   expect(auth.requestJson).not.toHaveBeenCalled();
   expect(other.navigate).not.toHaveBeenCalled();
+});
+
+it('keeps the loaded plan steady during refresh and waits after an account switch', async () => {
+  const { page, navigate } = await load();
+  let resolve!: (value: typeof context) => void;
+  auth.requestJson.mockImplementation((path: string) => path.endsWith('mini-context')
+    ? new Promise(done => { resolve = done; }) : Promise.resolve({ subscriptions }));
+  const pending = page.refresh();
+  expect(page.data).toMatchObject({ account: 'Name (owner)', loading: false, refreshing: true });
+  page.data.agreed = true;
+  await page.sign();
+  expect(navigate).not.toHaveBeenCalled();
+  resolve(context);
+  await pending;
+  expect(page.data).toMatchObject({ account: 'Name (owner)', loading: false, refreshing: false });
+
+  auth.getStoredSession.mockReturnValue({ token: 'other' });
+  const switched = page.refresh();
+  expect(page.data).toMatchObject({ account: '', loading: true, refreshing: true, agreed: false });
+  resolve(context);
+  await switched;
+});
+
+it('reopens the same authorization with cached content while checking the current plan', async () => {
+  const { page, createPage, navigate } = await load();
+  page.onUnload();
+  const reopened = createPage();
+  let resolve!: (value: typeof context) => void;
+  auth.requestJson.mockImplementation((path: string) => path.endsWith('mini-context')
+    ? new Promise(done => { resolve = done; }) : Promise.resolve({ subscriptions }));
+  reopened.onLoad({ ticket: 'ticket' });
+  reopened.onShow();
+  expect(reopened.data).toMatchObject({ loading: false, account: 'Name (owner)', refreshing: true, canSign: false });
+  await reopened.sign();
+  expect(navigate).not.toHaveBeenCalled();
+  resolve(context);
+  await vi.waitFor(() => expect(reopened.data.refreshing).toBe(false));
 });
