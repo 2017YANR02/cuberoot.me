@@ -3,7 +3,7 @@ import type { MobileAuthProvider, PendingIdentity, WebSession } from '@cuberoot/
 import type { SupportedLanguage } from '../copy';
 import type { InstalledAppAuth } from '../platform';
 import {
-  authErrorText, CredentialFormsProvider, FirstPartyLogin, RegistrationConsent,
+  authErrorText, providerGlyphs, CredentialFormsProvider, FirstPartyLogin, RegistrationConsent,
   type CredentialFormPort,
 } from './account-forms';
 import { accountRequest, credentialSession, installedAuthProviders, InstalledAccountChoiceRequired } from './credential-api';
@@ -178,13 +178,17 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
       <>
         {(providers.email || providers.phone) && <div className="auth-divider"><span>{t('或', 'or')}</span></div>}
         <div className="auth-sso-list">
-          {providers.social.map((provider) => (
+          {providers.social.map((provider) => {
+            const Glyph = providerGlyphs[provider];
+            return (
             <button key={provider} data-mobile-auth-provider={provider} className="auth-sso" type="button"
               disabled={auth.busy} onClick={() => signInWithProvider(provider)}>
+              <Glyph size={16} />
               {provider === 'apple' ? t('通过 Apple 登录', 'Sign in with Apple')
                 : t(`用 ${PROVIDER_NAMES[provider][0]} 登录`, `Continue with ${PROVIDER_NAMES[provider][1]}`)}
             </button>
-          ))}
+            );
+          })}
         </div>
       </>
     )}

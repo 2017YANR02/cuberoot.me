@@ -64,13 +64,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz",
     "@app-foundation/ui-controls": "file:../../vendor/app-foundation/app-foundation-ui-controls-0.2.7.tgz",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
     "@emoji-mart/data": "1.2.1",
-    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.2.tgz",
-    "react-colorful": "^5.8.0"
+    "react-colorful": "^5.8.0",
+    "react-icons": "^5.7.0"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",

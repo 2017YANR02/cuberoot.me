@@ -3,3 +3,4 @@ export { CodeFlow, CredentialFormsProvider, FirstPartyLogin, SetPasswordForm,
   type AccountTranslate, type CredentialFormPort, type SignedIn } from './credential-forms';
 export { PasswordInput, type PasswordInputProps } from './PasswordInput';
 export { RegistrationConsent } from './RegistrationConsent';
+export { providerGlyphs } from './provider-glyphs';
