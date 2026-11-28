@@ -1,5 +1,5 @@
 import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
-import { NATIVE_APPEARANCE_TOKENS, type NativeAppearance, type NativeAppearanceColors, type MiniProgramPreferences } from '@cuberoot/shared/appearance';
+import { ACCENT_KEY, findAccentColor, NATIVE_APPEARANCE_TOKENS, type NativeAppearance, type NativeAppearanceColors, type MiniProgramPreferences } from '@cuberoot/shared/appearance';
 import { confirmMiniProgramEnvironment, loadMiniProgramNavigationApi, mayUseMiniProgramBridge } from './miniprogram-bridge';
 import { readContrast, readEffective, readPalette, THEME_KEY } from './theme';
 
@@ -17,7 +17,7 @@ function backgroundScene(scheme: 'light' | 'dark') {
 }
 
 
-function resolveColors(scheme: 'light' | 'dark', palette: string | null): NativeAppearanceColors | null {
+function resolveColors(scheme: 'light' | 'dark', palette: string | null, accent: ReturnType<typeof findAccentColor>): NativeAppearanceColors | null {
     // Reuse the global palette scopes so an art-directed page cannot publish
     // its local colors as the user's global preference.
     const probe = document.createElement('div');
@@ -25,6 +25,10 @@ function resolveColors(scheme: 'light' | 'dark', palette: string | null): Native
     probe.setAttribute('data-af-glass-theme', '');
     probe.dataset.theme = scheme;
     if (palette) probe.dataset.palette = palette;
+    if (accent) {
+      probe.style.setProperty('--accent', accent[scheme]);
+      probe.style.setProperty('--accent-soft', 'color-mix(in srgb, var(--accent) 16%, transparent)');
+    }
     probe.style.display = 'none';
     const contrast = document.createElement('div');
     contrast.className = 'contrast-scope';
@@ -79,7 +83,8 @@ export async function syncMiniProgramAppearance(): Promise<void> {
     if (root.hasAttribute('data-appearance-preview')
       || (root.getAttribute('data-palette') || null) !== palette
       || (root.getAttribute('data-theme') || scheme) !== scheme) return;
-    const colors = resolveColors(scheme, palette);
+    const accent = findAccentColor(localStorage.getItem(ACCENT_KEY));
+    const colors = resolveColors(scheme, palette, accent);
     if (!colors) return;
     const savedTheme = localStorage.getItem(THEME_KEY);
     const message: NativeAppearance = { type: 'cuberoot:appearance', scheme, colors,
@@ -87,15 +92,16 @@ export async function syncMiniProgramAppearance(): Promise<void> {
       backgrounds: { light: backgroundScene('light'), dark: backgroundScene('dark') },
       softBackground: readContrast() === 'soft' };
     if (message.followSystem) {
-      const light = resolveColors('light', null);
-      const dark = resolveColors('dark', null);
+      const light = resolveColors('light', null, accent);
+      const dark = resolveColors('dark', null, accent);
       if (light && dark) message.systemColors = { light, dark };
     }
     const serialized = JSON.stringify(message);
     if (immediate) {
       const preferences: MiniProgramPreferences = { locale,
         theme: savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'system',
-        palette, contrast: readContrast(), lightBackground, darkBackground };
+        palette, contrast: readContrast(), lightBackground, darkBackground,
+        ...(protocol === '3' ? { accent: accent?.id ?? null } : {}) };
       const settings = JSON.stringify(preferences);
       // Opening a WebView establishes its baseline; it is not a settings edit.
       // Navigating on mount pushes the native "Return" page and immediately

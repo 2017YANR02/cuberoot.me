@@ -33,6 +33,20 @@ it('restores all native settings before paint even in an empty WebView store', (
   expect(localStorage.getItem('theme')).toBe('light');
   expect(localStorage.getItem('home-background.v1.dark')).toBe('none');
 });
+it('applies and clears native accent choices while preserving older snapshots', () => {
+  localStorage.setItem('accent-color', 'blue');
+  const apply = (value: object, nonce: number) => {
+    window.history.replaceState(null, '', '/timer?mpPreferences=' + encodeURIComponent(JSON.stringify({ preferences: value, nonce })));
+    window.eval(THEME_BOOTSTRAP);
+  };
+  apply(preferences, 1);
+  expect(localStorage.getItem('accent-color')).toBe('blue');
+  apply({ ...preferences, accent: '#12AB34' }, 2);
+  expect(document.documentElement.dataset.accent).toBe('#12AB34');
+  apply({ ...preferences, accent: null }, 3);
+  expect(localStorage.getItem('accent-color')).toBeNull();
+  expect(document.documentElement.dataset.accent).toBeUndefined();
+});
 it('rejects malformed preferences without overwriting existing storage', () => {
   localStorage.setItem('theme', 'light');
   window.history.replaceState(null, '', '/timer?mpPreferences=' + encodeURIComponent(JSON.stringify({ preferences: { ...preferences, darkBackground: 'url(evil)' } })));

@@ -34,7 +34,7 @@ const SCHEME_BY_ID: Record<string, 'light' | 'dark'> = Object.fromEntries(
 );
 
 export function isPaletteId(id: string | null | undefined): id is PaletteId {
-  return typeof id === 'string' && Object.hasOwn(SCHEME_BY_ID, id);
+  return typeof id === 'string' && Object.prototype.hasOwnProperty.call(SCHEME_BY_ID, id);
 }
 
 export function paletteScheme(id: string | null | undefined): 'light' | 'dark' | null {

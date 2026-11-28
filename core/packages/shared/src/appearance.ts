@@ -115,6 +115,7 @@ export interface MiniProgramPreferences {
   theme: 'system' | 'light' | 'dark';
   palette: string | null;
   contrast: 'normal' | 'soft';
+  accent?: string | null;
   lightBackground: string;
   darkBackground: string;
 }
@@ -125,7 +126,9 @@ export function decodeMiniProgramPreferences(value: unknown): MiniProgramPrefere
   const background = (v: unknown) => typeof v === 'string' && /^(auto|none|transparent|0[1-9]|10)$/.test(v);
   if (!['en', 'zh'].includes(p.locale) || !['system', 'light', 'dark'].includes(p.theme)
     || !(p.palette === null || (typeof p.palette === 'string' && /^[a-z][a-z0-9-]{0,40}$/.test(p.palette)))
+    || !(p.accent === undefined || p.accent === null || (typeof p.accent === 'string' && /^(?:#[\da-f]{6}|[a-z]{1,16})$/i.test(p.accent)))
     || !['normal', 'soft'].includes(p.contrast) || !background(p.lightBackground) || !background(p.darkBackground)) return null;
   return { locale: p.locale, theme: p.theme, palette: p.palette, contrast: p.contrast,
-    lightBackground: p.lightBackground, darkBackground: p.darkBackground };
+    lightBackground: p.lightBackground, darkBackground: p.darkBackground,
+    ...(p.accent !== undefined ? { accent: p.accent } : {}) };
 }

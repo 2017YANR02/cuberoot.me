@@ -29,6 +29,7 @@ export const THEME_BOOTSTRAP = `(() => {
             palette: preferences.palette, contrast: preferences.contrast,
             'home-background.v1.light': preferences.lightBackground,
             'home-background.v1.dark': preferences.darkBackground };
+          if (preferences.accent !== undefined) values['${ACCENT_KEY}'] = preferences.accent;
           Object.keys(values).forEach(function(key) {
             try {
               if (values[key] === null) localStorage.removeItem(key);
