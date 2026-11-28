@@ -38,6 +38,12 @@ export async function GET(
   if (rel.includes('..') || path.isAbsolute(rel)) {
     return new Response('forbidden', { status: 403 });
   }
+  if (process.env.NODE_ENV === 'production' && /^comp\/[^/]+\.json$/.test(rel)) {
+    // Even a bundled snapshot must pass the origin gate before its bytes can be served.
+    const location = new URL('/stats/' + slug.map(encodeURIComponent).join('/'), PUBLISHED_STATS_ORIGIN);
+    location.search = new URL(_req.url).search;
+    return new Response(null, { status: 307, headers: { location: location.href, 'cache-control': 'private, no-store' } });
+  }
   const filePath = path.join(STATS_DIR, rel);
   const localStats = usesLocalStats();
   const publishedDev = process.env.NODE_ENV === 'development' && !localStats;

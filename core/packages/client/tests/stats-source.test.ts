@@ -88,3 +88,12 @@ it('retains Vercel fallback even if a local-only setting leaked into production'
   expect(result.status).toBe(307);
   expect(result.headers.get('location')).toBe('https://static.cuberoot.me/stats/index.json?v=42');
 });
+
+it('sends even a bundled competition snapshot through the protected origin in production', async () => {
+  vi.stubEnv('NODE_ENV', 'production');
+  const result = await request('comp/WC2015.json');
+  expect(result.status).toBe(307);
+  expect(result.headers.get('location')).toBe('https://static.cuberoot.me/stats/comp/WC2015.json?v=42');
+  expect(result.headers.get('cache-control')).toBe('private, no-store');
+  expect(readFile).not.toHaveBeenCalled();
+});
