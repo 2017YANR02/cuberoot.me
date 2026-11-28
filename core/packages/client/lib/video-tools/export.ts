@@ -1,4 +1,5 @@
 import { paintCaption, type PreparedCaptions, type CaptionStyle } from './recon-captions';
+import type { SolveRange } from '../video-recon/engine/solve-range';
 import type { PixelCrop } from '../video-recon/engine/source-crop';
 import type { CaptionCube } from './caption-cube';
 import { downloadBlob } from '@/lib/scramble-dist/download';
@@ -29,7 +30,8 @@ async function convertVideoClip(
   try {
     const target = new BufferTarget();
     const output = new Output({ format: new Mp4OutputFormat(), target });
-    const conversion = await Conversion.init({ input, output, trim: range, video });
+    const conversion = await Conversion.init({ input, output, trim: range, video,
+      audio: video && range && range.start > 0 ? { forceTranscode: true } : undefined });
     if ((video && conversion.discardedTracks.some(item => item.track.type === 'audio')) || !conversion.isValid || !conversion.utilizedTracks.some(track => track.type === 'video')) {
       throw new Error('The browser cannot export this source as MP4.');
     }
@@ -51,11 +53,11 @@ export async function exportVideoClip(file: File, range: { start: number; end: n
   downloadBlob(`${file.name.replace(/\.[^.]+$/, '')}_export.mp4`, blob);
 }
 
-export async function renderReconVideo(file: File, cues: PreparedCaptions, style: CaptionStyle, onProgress: (n: number) => void, signal: AbortSignal, cube?: CaptionCube, crop?: PixelCrop) {
+export async function renderReconVideo(file: File, cues: PreparedCaptions, style: CaptionStyle, onProgress: (n: number) => void, signal: AbortSignal, cube?: CaptionCube, crop?: PixelCrop, range?: SolveRange) {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) throw Error('Canvas unavailable');
-  const blob = await convertVideoClip(file, undefined, onProgress, {
+  const blob = await convertVideoClip(file, range, onProgress, {
     codec: 'avc', forceTranscode: true, allowTransformationMetadata: false,
     crop: crop && { left: crop.x, top: crop.y, width: crop.width, height: crop.height },
     process(sample) {
@@ -64,8 +66,10 @@ export async function renderReconVideo(file: File, cues: PreparedCaptions, style
         canvas.height = sample.displayHeight;
       }
       sample.draw(ctx, 0, 0);
-      cube?.draw(ctx, sample.timestamp, canvas.width, canvas.height, style.cubePosition, style.cubeScale);
-      paintCaption(ctx, cues, sample.timestamp, canvas.width, canvas.height, style);
+      // Conversion rebases trimmed samples to the start of the exported clip.
+      const sourceTime = sample.timestamp + (range?.start ?? 0);
+      cube?.draw(ctx, sourceTime, canvas.width, canvas.height, style.cubePosition, style.cubeScale);
+      paintCaption(ctx, cues, sourceTime, canvas.width, canvas.height, style);
       return canvas;
     },
   }, signal);

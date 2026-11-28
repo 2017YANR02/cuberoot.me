@@ -21,6 +21,8 @@ import { downloadBlob } from '@/lib/scramble-dist/download';
 import { bindTrackpadZoom } from '@/lib/cube-trackpad';
 import { captionAss, captionCubeRect, initialCaptionStyle, paintCaption, prepareCaptions, solutionCues } from '@/lib/video-tools/recon-captions';
 
+import { ReconExportEditor, type ReconExportSelection } from './ReconExportEditor';
+
 const rounded = (n: number) => Math.round(n * 1000) / 1000;
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const MIN_CAPTION_SIZE = 8;
@@ -394,9 +396,14 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
     const content = captionAss(prepared, style, family, media.width, media.height);
     downloadBlob(file.name.replace(/\.[^.]+$/, '') + '.ass', new Blob(['\uFEFF', content], { type: 'text/plain;charset=utf-8' }));
   }
-  async function render(useOutput = false) {
+  const [customExport, setCustomExport] = useState<File>();
+  const solveRange = review && review.view.solveEnd > review.view.solveStart
+    ? { start: review.view.solveStart, end: review.view.solveEnd } : { start: 0, end: duration };
+  async function render(useOutput = false, selection?: ReconExportSelection) {
     if (task.current || !valid || !ready) return;
-    if (output) {
+    const matchesPreview = !selection || (selection.captions !== false && selection.crop === crop
+      && selection.range.start === 0 && selection.range.end === duration);
+    if (output && matchesPreview) {
       if (useOutput) onUse?.(output);
       else downloadBlob(output.name, output);
       return;
@@ -406,11 +413,12 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
     try {
       const { renderReconVideo } = await import('@/lib/video-tools/export');
       cube?.setSolidFoundation?.(solidFoundation);
-      const result = await renderReconVideo(file, prepared, style, percent => {
+      const overlays = selection?.captions !== false;
+      const result = await renderReconVideo(file, overlays ? prepared : [], style, percent => {
         if (!controller.signal.aborted) setProgress(Math.min(percent, 99));
-      }, controller.signal, cube, crop);
+      }, controller.signal, overlays ? cube : undefined, selection ? selection.crop : crop, selection?.range);
       if (controller.signal.aborted) return;
-      setOutput(result);
+      if (matchesPreview) setOutput(result);
       setProgress(100);
       if (useOutput) onUse?.(result);
       else downloadBlob(result.name, result);
@@ -526,11 +534,11 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
         moveCaption((captionRect.x + dx) / media.width, (captionRect.y + dy) / media.height);
       }} />}
     {styleEditorVisible && <div id={stylePanelId} ref={stylePanel} role="dialog" aria-label={styleLabel} tabIndex={-1}
-      popover="manual" className="settings-popover-layer recon-caption-editor" style={stylePanelStyle}>
+      popover="manual" className="settings-popover-layer recon-caption-editor recon-caption-style-panel" style={stylePanelStyle}>
       <div className="settings-popover-panel" data-site-surface="popover">
         <strong>{styleLabel}</strong>
         <div className="recon-caption-actions"><span>{t('字体', 'Font')}</span>
-          <CompactSelect ariaLabel={t('字体', 'Font')} value={style.font} disabled={loadingFont} onOpenChange={setFontMenuOpen}
+          <CompactSelect popupClassName="recon-caption-font-menu" ariaLabel={t('字体', 'Font')} value={style.font} disabled={loadingFont} onOpenChange={setFontMenuOpen}
             items={[...fontItems, { value: 'import-font', label: t('导入字体', 'Import font') }]}
             label={fontItems.find(item => item.value === style.font)?.label} keyboardListNavigation showArrow
             onChange={font => {
@@ -577,15 +585,29 @@ export default function ReconCaptionEditor({ file, review, solution, recognition
       {!review && recognition?.cues?.length && !recognized ? <button type="button" className="submit-reuse-btn" disabled={busy} onClick={() => {
         setText(undefined); setError('');
       }}>{t('使用识别出的解法', 'Use recognized solution')}</button> : null}
-      {(onApply || output && onUse) && <CompactSelect label={t('使用', 'Use')} ariaLabel={useLabel}
+      {(onApply || valid && ready && onUse) && <CompactSelect label={t('使用', 'Use')} ariaLabel={useLabel}
         items={useOptions} disabled={busy} triggerClassName="btn-primary" unstyledTrigger showArrow keyboardListNavigation
         onChange={value => {
           if (value === 'solution') onApply?.();
           else void render(true);
         }} />}
-      <button type="button" className="btn-primary" disabled={!valid || !ready || busy} onClick={() => void render()}>{t('导出', 'Export')}</button>
+      <CompactSelect label={t('导出', 'Export')} ariaLabel={t('导出', 'Export')} disabled={busy}
+        triggerClassName="btn-primary" unstyledTrigger keyboardListNavigation showArrow
+        items={[
+          { value: 'solve', label: t('复盘区间（含字幕）', 'Solve clip with captions'), disabled: !valid || !ready },
+          { value: 'full', label: t('完整原片（含字幕）', 'Full frame and duration with captions'), disabled: !valid || !ready },
+          { value: 'custom', label: t('自定义裁剪', 'Custom trim and crop'), disabled: !valid || !ready },
+          { value: 'source', label: t('下载原文件', 'Download original file') },
+        ]} onChange={value => {
+          if (value === 'source') downloadBlob(file.name, file);
+          else if (value === 'custom') setCustomExport(file);
+          else void render(false, value === 'solve' ? { range: solveRange, crop } : { range: { start: 0, end: duration } });
+        }} />
       <button type="button" className="submit-reuse-btn" onClick={downloadAss}
         disabled={!valid || framing?.file !== file || !media.width || !media.height || busy}>{t('下载 ASS 字幕', 'Download ASS subtitles')}</button>
+      {customExport === file && <ReconExportEditor file={file} duration={duration} initial={{ range: solveRange, crop }}
+        fps={review?.view.sourceFps || 30} thumbnails={review?.view.thumbnails} onClose={() => setCustomExport(undefined)}
+        onExport={selection => { setCustomExport(undefined); void render(false, selection); }} />}
     </div>
     {!review && !recognized && duration > 0 && <button type="button" className="submit-reuse-btn" disabled={busy}
       onClick={() => setOffset(video.current?.currentTime ?? 0)}>{t('以当前画面作为还原起点', 'Use current frame as solve start')}</button>}

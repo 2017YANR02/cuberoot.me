@@ -1180,5 +1180,8 @@
 .recon-caption-text { display: block; width: 100%; margin-top: .35rem; box-sizing: border-box; resize: vertical; }
 .recon-caption-editor :is(input[type=number], .recon-caption-text) { padding: .3rem .45rem; color: var(--foreground); background: var(--background); border: 1px solid var(--border-default); border-radius: .35rem; font: inherit; }
 .recon-caption-editor input[type=number] { width: 5.4em; max-width: 100%; }
+.recon-caption-style-panel,
+.recon-caption-style-panel > .settings-popover-panel,
+.compact-select-popup.recon-caption-font-menu { scrollbar-width: none; }
 .recon-caption-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem .6rem; }
 .recon-caption-monitor .recon-caption-actions { margin-top: .75rem; }
