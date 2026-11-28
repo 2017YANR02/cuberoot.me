@@ -49,6 +49,7 @@ export interface ListSelectItem {
 interface ListSelectProps {
   /** Escape scrolling tables using the shared viewport-positioned menu. */
   portal?: boolean;
+  popupClassName?: string;
   showArrow?: boolean;
   /** Hide only the selected label; keep menu labels and accessible text. */
   hideSelectedLabel?: boolean;
@@ -64,6 +65,7 @@ interface ListSelectProps {
   className?: string;
   /** popup 顶部加搜索框 (列表长时建议开) */
   searchable?: boolean;
+  onOpen?: () => void;
   /** 是否显示 × 清除按钮. 默认 true (筛选语义). 视图切换器这种"必须选一项"的场景传 false. */
   clearable?: boolean;
   /** popup 里最多渲染几条 (超出显示「还有 N 项」提示). 列表上百条时必传, 否则一次开就是几百个 DOM 节点. */
@@ -72,7 +74,7 @@ interface ListSelectProps {
   searchPlaceholder?: string;
 }
 
-export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel = false, selectedLabel, items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
+export function ListSelect({ portal = false, popupClassName = 'wca-relation-filter-popup', showArrow = true, hideSelectedLabel = false, selectedLabel, items, value, onChange, allLabel, className, searchable, onOpen, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
   const [pins, togglePin] = usePinnedCountries();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -210,11 +212,11 @@ export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel
       </div>}
     </div>
   </>;
-  if (portal) return <CompactSelect className={className} popupClassName="wca-relation-filter-popup" unstyledTrigger showArrow={showArrow}
+  if (portal) return <CompactSelect className={className} popupClassName={popupClassName} unstyledTrigger showArrow={showArrow}
     ariaLabel={ariaLabel ?? allLabel} label={selectedLabel ?? (current ? <span title={current.hideLabel ? current.label : undefined}>{current.icon}<span className={(hideSelectedLabel || current.hideLabel) ? 'sr-only' : undefined}>{current.label}</span></span> : allLabel)}
     items={shown.filter(item => !item.group || expandedGroups[item.group.value] || (searchable && query.trim()))} value={value} onChange={select} disabled={disabled} open={open}
     onOpenChange={next => {
-      if (next) { const group = current?.group; setExpandedGroups(group ? { [group.value]: true } : {}); }
+      if (next) { onOpen?.(); const group = current?.group; setExpandedGroups(group ? { [group.value]: true } : {}); }
       setOpen(next);
     }} panelContent={menuContent} />;
 
@@ -229,6 +231,7 @@ export function ListSelect({ portal = false, showArrow = true, hideSelectedLabel
         aria-expanded={open}
         onClick={() => {
           if (!open) {
+            onOpen?.();
             const group = items.find(item => item.value === value)?.group;
             setExpandedGroups(group ? { [group.value]: true } : {});
           }

@@ -18,10 +18,11 @@ import { expandOccurrences } from '@cuberoot/shared/recur';
 import type {
   CalEvent, CalendarMeta, EditScope, EventOccurrence, ShareDetail, ShareSettings,
 } from '@cuberoot/shared/calendar';
+import { CALENDAR_PREFS_KEY } from './display-time-zone';
 import { persistItem } from './safe-storage';
 
 const HIDDEN_KEY = 'cuberoot-calendar.hidden.v1';
-const PREF_KEY = 'cuberoot-calendar.prefs.v1';
+
 
 /** 每次向后端要数据时,在可视范围两侧各留这么多天的余量。 */
 const PAD_DAYS = 62;
@@ -30,8 +31,6 @@ const DAY = 86_400_000;
 export interface CalendarPrefs {
   /** 上次用的视图 */
   view: string;
-  /** 显示时区(空 = 跟随本机) */
-  tz: string;
   tzLabel: string;
   showOtherZones: boolean;
   secondaryTz: string;
@@ -55,14 +54,14 @@ export interface CalendarPrefs {
 
 export const DEFAULT_PREFS: CalendarPrefs = {
   tzLabel: '', showOtherZones: false, secondaryTz: '', secondaryTzLabel: '', thirdTz: '', thirdTzLabel: '',
-  view: 'timeGridWeek', tz: '', weekStart: 1, hour24: true, weekends: true, showDeclined: false,
+  view: 'timeGridWeek', weekStart: 1, hour24: true, weekends: true, showDeclined: false,
   defaultDuration: 60, weekNumbers: false, keyboardShortcuts: true, sidebarCollapsed: false,
 };
 
 export function readCalendarPrefs(): CalendarPrefs {
   if (typeof window === 'undefined') return DEFAULT_PREFS;
   try {
-    const raw = localStorage.getItem(PREF_KEY);
+    const raw = localStorage.getItem(CALENDAR_PREFS_KEY);
     return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<CalendarPrefs>) } : DEFAULT_PREFS;
   } catch {
     return DEFAULT_PREFS;
@@ -174,7 +173,7 @@ export const useCalendarStore = create<State & Actions>()((set, get) => ({
   setPrefs: (patch) => {
     const prefs = { ...get().prefs, ...patch };
     set({ prefs });
-    persistItem(PREF_KEY, JSON.stringify(prefs));
+    persistItem(CALENDAR_PREFS_KEY, JSON.stringify(prefs));
   },
 
   toggleHidden: (id) => {

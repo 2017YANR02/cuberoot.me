@@ -55,7 +55,7 @@ import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '
 import { fetchCompSchedule } from '@/lib/comp-schedule';
 import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
-import { formatDateRangeIso, formatDateTimeLocal, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
+import { formatDateRangeIso, formatCompDateTime, formatCubingDeadline, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { getSameCityComps } from '@/lib/comp-city';
@@ -75,6 +75,8 @@ import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStr
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
+import { useDisplayTimeZone } from '@/lib/display-time-zone';
+import { DisplayTimeZoneSelect } from '@/components/DisplayTimeZoneSelect';
 import { CompetitionCalendarButton } from '@/components/CompetitionCalendarButton';
 import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { AttemptPopover } from '@/components/persons/sections/results/AttemptPopover';
@@ -763,6 +765,7 @@ function SimilarCompsView({ series, sameCity, isZh, lang }: {
 }
 
 export default function CompDetailPage() {
+  const { zone } = useDisplayTimeZone();
   // Route ships as ONE prerendered sentinel shell ("_") reused for every comp (see
   // page.tsx + next.config rewrite): the real slug can't come from useParams (that
   // yields "_"), so derive it from the browser path. usePathname is the dep so this
@@ -1065,6 +1068,16 @@ export default function CompDetailPage() {
     setExplicitView(viewParam, { history: 'replace' });
   }, [explicitView, data, hasResults, compInfoSettled, viewParam, setExplicitView]);
   const schedView: 'calendar' | 'table' | 'poster' = layoutParam === 'table' || layoutParam === 'poster' ? layoutParam : 'calendar';
+  const [zoneMenuSlug, setZoneMenuSlug] = useState('');
+  const [venue, setVenue] = useState<{ slug: string; zone?: string }>();
+  useEffect(() => {
+    if (!slug || zoneMenuSlug !== slug) return;
+    let active = true;
+    void fetchCompSchedule(slug).then(schedule => {
+      if (active) setVenue({ slug, zone: schedule?.venues[0]?.timezone });
+    });
+    return () => { active = false; };
+  }, [slug, zoneMenuSlug]);
   const [scheduleSettledSlug, setScheduleSettledSlug] = useState('');
   useEffect(() => {
     if (!slug || !isSchedule) return;
@@ -1910,6 +1923,8 @@ export default function CompDetailPage() {
                     endDate: compInfo?.end_date ?? '',
                     location: resolveCompLocation(compInfo, cubingZh, isZh).text,
                   }} />
+                  <DisplayTimeZoneSelect compact venueZone={venue?.slug === slug ? venue?.zone : undefined}
+                    onOpen={() => setZoneMenuSlug(slug)} />
                   {myRegistrationNumber !== null && (
                     <RegistrationNumber key={`registration-${slug}`} number={myRegistrationNumber} cubingSlug={cubingSlug} />
                   )}
@@ -1939,7 +1954,7 @@ export default function CompDetailPage() {
             {isAdmin && !isWca && (
               <span className="comp-detail-fetched">
                 {tr({ zh: '更新于', en: 'Updated'
-                })} {new Date(data.fetchedAt).toLocaleTimeString()}
+                })} {new Date(data.fetchedAt).toLocaleTimeString(isZh ? 'zh-CN' : 'en-US', { timeZone: zone })}
               </span>
             )}
             {isAdmin && !isWca && <LiveIndicator status={wsStatus} isZh={isZh} source={isWcaLive ? 'wca_live' : 'cubing'} />}
@@ -1970,7 +1985,7 @@ export default function CompDetailPage() {
           </div>
         )}
 
-        {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
+        {compInfo && <CompInfoPanel zone={zone} info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
         <div className="comp-view-tabs">
           {hasPodiumTab && (
@@ -2082,6 +2097,7 @@ export default function CompDetailPage() {
         ) : isSchedule ? (
           schedView === 'poster' ? (
             <CompPoster
+              tz={zone}
               slug={slug}
               compName={compNameTitle}
               compIso2={compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug)}
@@ -2090,6 +2106,7 @@ export default function CompDetailPage() {
             />
           ) : (
             <ScheduleView
+              tz={zone}
               slug={slug}
               isZh={isZh}
               compName={compNameTitle}
@@ -2122,7 +2139,7 @@ export default function CompDetailPage() {
                 </div>
                 <RecentRecordsList
                   isZh={isZh}
-                  showCopy={false}
+                  copyOnOpen={false}
                   filled={recordNews.map((news, index) => ({
                     id: `${slug}-${index}`,
                     eventId: news.event,
@@ -2479,13 +2496,13 @@ function CompAddress({ address, isZh, countryIso2 }: { address: string; isZh: bo
 }
 
 function CompInfoPanel({
-  info, isZh, cubingZh,
-}: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
+  info, isZh, cubingZh, zone,
+}: { zone: string; info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
   const location = resolveCompLocation(info, cubingZh, isZh);
   const cityStr = [info.city ? localizeCity(info.city, isZh, info.country_iso2) : '', country].filter(Boolean).join(tr({ zh: '，', en: ', ' }));
-  const todayIso = toIsoDate(new Date());
+  const todayIso = formatCompDateTime(new Date().toISOString(), zone).slice(0, 10);
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
   const rows: { label: string; value: React.ReactNode; past?: boolean; hideLabel?: boolean; compact?: boolean }[] = [];
   if (dateStr) {
@@ -2495,12 +2512,11 @@ function CompInfoPanel({
   if (info.competitor_limit) {
     rows.push({ label: tr({ zh: '上限', en: 'Limit' }), compact: true, value: info.competitor_limit });
   }
-  const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
-  const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
-  if (regOpenIso && regCloseIso) {
-    // 报名起止精确到秒(本地时区,与 cubing.com 展示对齐);截止侧压缩重复年份
-    const openDt = formatDateTimeLocal(info.registration_open);
-    const closeDt = formatDateTimeLocal(info.registration_close);
+  const openDt = formatCompDateTime(info.registration_open, zone);
+  const closeDt = formatCompDateTime(info.registration_close, zone);
+  if (openDt && closeDt) {
+    const regOpenIso = openDt.slice(0, 10);
+    const regCloseIso = closeDt.slice(0, 10);
     const closeLabel = regCloseIso === regOpenIso ? closeDt.slice(11)
       : regCloseIso.slice(0, 4) === regOpenIso.slice(0, 4) ? `${regCloseIso.slice(5)} ${closeDt.slice(11)}`
       : closeDt;
@@ -2511,20 +2527,20 @@ function CompInfoPanel({
       past: isPast(regCloseIso),
     });
   }
-  // cubing.com 给的是 "2026-08-13 19:00:00" 原样串,展示统一剥秒(全站时间只到时分)
-  const stripSec = (s: string) => s.replace(/(\d{2}:\d{2}):\d{2}\b/, '$1');
   if (cubingZh?.withdrawDeadline) {
-    rows.push({ label: tr({ zh: '退赛截止', en: 'Cancellation deadline' }), value: stripSec(cubingZh.withdrawDeadline), past: isPast(cubingZh.withdrawDeadline) });
+    const value = formatCubingDeadline(cubingZh.withdrawDeadline, zone);
+    if (value) rows.push({ label: tr({ zh: '退赛截止', en: 'Cancellation deadline' }), value, past: isPast(value) });
   }
   if (cubingZh?.reopenAt) {
-    rows.push({ label: tr({ zh: '重开报名', en: 'Registration reopens' }), value: stripSec(cubingZh.reopenAt), past: isPast(cubingZh.reopenAt) });
+    const value = formatCubingDeadline(cubingZh.reopenAt, zone);
+    if (value) rows.push({ label: tr({ zh: '重开报名', en: 'Registration reopens' }), value, past: isPast(value) });
   }
   if (info.event_change_deadline_date) {
-    const d = toIsoDate(new Date(info.event_change_deadline_date));
+    const d = formatCompDateTime(info.event_change_deadline_date, zone);
     rows.push({ label: tr({ zh: '修改截止', en: 'Event change deadline' }), value: d, past: isPast(d) });
   }
   if (info.waiting_list_deadline_date) {
-    const d = toIsoDate(new Date(info.waiting_list_deadline_date));
+    const d = formatCompDateTime(info.waiting_list_deadline_date, zone);
     rows.push({ label: tr({ zh: '候补截止', en: 'Waiting list deadline'
     }), value: d, past: isPast(d) });
   }

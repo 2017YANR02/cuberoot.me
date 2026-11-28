@@ -1,6 +1,8 @@
 // Web adapter over the runtime-neutral ISO date/range helpers shared with Mobile.
 import { formatDateRangeIso, toLocalIsoDate } from '@cuberoot/shared/iso-date';
 
+import { dateKey, timeKey, wallPartsIn } from '@cuberoot/shared/tz';
+
 export { formatDateRangeIso };
 
 export function toIsoDate(d: Date): string {
@@ -20,12 +22,18 @@ export function compLocalDate(nowMs: number, lon: number | null | undefined, cou
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
-/** ISO 时间戳 → 本地时区 'YYYY-MM-DD HH:MM'(报名起止等需要时分的场合,不带秒);非法输入返回 ''。 */
-export function formatDateTimeLocal(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${toIsoDate(d)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+/** Keep official date-only values as calendar dates. Convert timestamped fields at their own instant. */
+export function formatCompDateTime(iso: string, zone: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return '';
+  const wall = wallPartsIn(zone, date);
+  return `${dateKey(wall)} ${timeKey(wall)}`;
+}
+
+/** cubing.com publishes these deadlines as Beijing wall time without a UTC offset. */
+export function formatCubingDeadline(raw: string, zone: string): string {
+  return formatCompDateTime(raw.replace(' ', 'T') + '+08:00', zone);
 }
 
 const WEEKDAY_ZH = ['日', '一', '二', '三', '四', '五', '六'];

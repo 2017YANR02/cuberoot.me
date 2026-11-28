@@ -120,6 +120,21 @@ body:has(.settings-panel) .settings-typography { font-size: 16px !important; }
   box-shadow: none;
   background: transparent;
 }
+.display-time-zone-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.display-time-zone-row .display-time-zone {
+  align-self: center;
+  max-width: 75%;
+}
+.display-time-zone-row .compact-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.compact-select-popup.display-time-zone-popup {
+  width: min(340px, calc(100vw - 24px));
+  box-sizing: border-box;
+  gap: 4px;
+}
 .settings-panel-content .appearance-settings { padding: 0; }
 .settings-panel-content .appearance-setting-rows { gap: 0; padding: 0; overflow: visible; }
 .settings-panel-content .appearance-setting-rows > * {

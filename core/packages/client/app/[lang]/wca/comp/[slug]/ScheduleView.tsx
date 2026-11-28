@@ -38,8 +38,8 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
 // poster = 9:16 分享图(CompPoster,由 CompDetailPage 在赛程 tab 下直接渲染,不进本组件)
 type View = 'calendar' | 'table' | 'poster';
 
-export default function ScheduleView({ slug, isZh, compName, view, detailsExpanded, eventFilter }: {
-  slug: string; isZh: boolean; compName: string;
+export default function ScheduleView({ slug, tz, isZh, compName, view, detailsExpanded, eventFilter }: {
+  slug: string; tz: string; isZh: boolean; compName: string;
   view: View; detailsExpanded: boolean;
   // 项目多选筛选:空集 = 不筛选,展示完整赛程;非空 = 只展示这些项目的轮次
   // (签到/用餐/颁奖等无项目归属的活动始终保留,不受筛选影响)。
@@ -76,7 +76,6 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
     };
   }, [data, eventFilter]);
 
-  const tz = filteredData?.venues[0]?.timezone ?? 'UTC';
   const cols = useMemo(() => (filteredData ? computeDayColumns(filteredData, tz) : null), [filteredData, tz]);
 
   if (loading) {
@@ -98,11 +97,6 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
 
   return (
     <>
-      {filteredData.venues.length > 1 && (
-        <p className="sched-note">
-          {tr({ zh: `本赛程按第一个场地时区(${tz})显示`, en: `Times shown in the first venue's timezone (${tz})` })}
-        </p>
-      )}
       {view === 'calendar' ? (
         <CalendarSection data={filteredData} tz={tz} isZh={isZh} />
       ) : (

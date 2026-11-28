@@ -515,41 +515,37 @@ export function addDaysToKey(dateKey: string, days: number): string {
  *   running past 24:00 so the small hours sit below midnight with no dead gap.
  */
 export function computeCalendarLayout(data: ScheduleData, timeZone: string): CalendarLayout {
-  const acts = data.activities.map(a => {
-    const s = localParts(a.startTime, timeZone);
-    const e = localParts(a.endTime, timeZone);
-    return { sKey: s.dateKey, sMin: s.minutesOfDay, eKey: e.dateKey, eMin: e.minutesOfDay };
-  });
-  if (acts.length === 0) {
-    return { slotMinTime: '08:00:00', slotMaxTime: '20:00:00', dayKeys: [], overnight: false };
-  }
-  const dayKeys = Array.from(new Set(acts.map(a => a.sKey))).sort();
-
-  if (dayKeys.length === 2) {
-    const [d1, d2] = dayKeys;
-    const day1 = acts.filter(a => a.sKey === d1);
-    const day2 = acts.filter(a => a.sKey === d2);
-    const day1LatestEnd = Math.max(...day1.map(a => (a.eKey === d1 ? a.eMin : 24 * 60)));
-    const day2EarliestStart = Math.min(...day2.map(a => a.sMin));
-    const day2LatestEnd = Math.max(...day2.map(a => (a.eKey === d2 ? a.eMin : 24 * 60)));
-    const crossesMidnight = acts.some(a => a.eKey !== a.sKey);
-    // A continuous night: day 1 runs into the late evening (or an activity
-    // crosses midnight) and day 2 both starts and ends before dawn.
-    if (day2EarliestStart < 6 * 60 && day2LatestEnd <= 8 * 60 && (day1LatestEnd >= 22 * 60 || crossesMidnight)) {
-      const earliest = Math.min(...day1.map(a => a.sMin));
-      const minMin = Math.floor(earliest / 60) * 60;
-      const maxMin = Math.min(30 * 60, Math.ceil((day2LatestEnd + 24 * 60 + 10) / 60) * 60);
-      return { slotMinTime: hms(minMin), slotMaxTime: hms(maxMin), dayKeys: [d1], overnight: true };
+  // Include every occupied display day. A venue's afternoon round may span
+  // midnight in the selected zone, even when no other round starts the next day.
+  const bounds = new Map<string, { first: number; last: number }>();
+  for (const a of data.activities) {
+    const start = localParts(a.startTime, timeZone);
+    const end = localParts(a.endTime, timeZone);
+    for (let day = start.dateKey; day <= end.dateKey; day = addDaysToKey(day, 1)) {
+      if (day !== start.dateKey && day === end.dateKey && end.minutesOfDay === 0) break;
+      const first = day === start.dateKey ? start.minutesOfDay : 0;
+      const last = day === end.dateKey ? end.minutesOfDay : 1440;
+      const prev = bounds.get(day);
+      bounds.set(day, { first: Math.min(prev?.first ?? first, first), last: Math.max(prev?.last ?? last, last) });
     }
   }
-
-  let minStart = Infinity;
-  let maxEnd = -Infinity;
-  for (const a of acts) {
-    if (a.sMin < minStart) minStart = a.sMin;
-    const end = a.eKey !== a.sKey || a.eMin <= a.sMin ? 24 * 60 : a.eMin;
-    if (end > maxEnd) maxEnd = end;
+  const dayKeys = [...bounds.keys()].sort();
+  if (!dayKeys.length) {
+    return { slotMinTime: '08:00:00', slotMaxTime: '20:00:00', dayKeys, overnight: false };
   }
+  const [firstDay, secondDay] = dayKeys;
+  if (dayKeys.length === 2 && secondDay === addDaysToKey(firstDay, 1)) {
+    const evening = bounds.get(firstDay)!;
+    const morning = bounds.get(secondDay)!;
+    if (evening.last >= 22 * 60 && morning.first < 6 * 60 && morning.last <= 8 * 60) {
+      const minMin = Math.floor(evening.first / 60) * 60;
+      const maxMin = 1440 + Math.ceil((morning.last + 10) / 60) * 60;
+      return { slotMinTime: hms(minMin), slotMaxTime: hms(maxMin), dayKeys: [firstDay], overnight: true };
+    }
+  }
+  const ranges = [...bounds.values()];
+  const minStart = Math.min(...ranges.map(day => day.first));
+  const maxEnd = Math.max(...ranges.map(day => day.last));
   const minMin = Math.max(0, Math.floor(minStart / 60) * 60);
   // Round the bottom up to the activity's end hour — no extra buffer, so a comp
   // whose last activity ends exactly on the hour (e.g. 颁奖 16:45-17:00) doesn't

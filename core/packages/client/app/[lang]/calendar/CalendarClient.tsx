@@ -27,7 +27,8 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { DateTime } from 'luxon';
 import { tr, useLang } from '@/i18n/tr';
-import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
+import { useDisplayTimeZone } from '@/lib/display-time-zone';
+import { isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { calendarCompetitionId, eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
 import { useEffectiveTheme } from '@/lib/theme';
@@ -90,11 +91,7 @@ export default function CalendarClient() {
     return () => window.clearInterval(timer);
   }, []);
 
-  // 显示时区:偏好里空 = 跟随本机。挂载前一律 UTC,免得 SSG 首帧和客户端对不上。
-  const displayTz = useMemo(() => {
-    if (!mounted) return 'UTC';
-    return prefs.tz && isValidZone(prefs.tz) ? prefs.tz : localZone();
-  }, [mounted, prefs.tz]);
+  const { zone: displayTz } = useDisplayTimeZone();
 
   // ── URL 状态 ────────────────────────────────────────────────────────────
   const [viewParam, setViewParam] = useQueryState(

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
 import { ArrowLeft } from '@app-foundation/icons/lucide';
+import { DisplayTimeZoneSelect } from '@/components/DisplayTimeZoneSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
@@ -53,11 +54,10 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
                 <span>{tr({ zh: '时间格式', en: 'Time format' })}</span>
                 <ListSelect items={[{ value: '24', label: '13:00' }, { value: '12', label: '1:00 PM' }]} value={prefs.hour24 ? '24' : '12'} allLabel="" clearable={false} onChange={(v) => onPrefs({ hour24: v === '24' })} />
               </div>
-              <BoolToggle value={!prefs.tz} label={tr({ zh: '使用设备时区', en: 'Use device time zone' })} onChange={(v) => onPrefs({ tz: v ? '' : displayTz })} />
               <div className="cal-zone-setting">
               <div className="cal-settings-field">
                 <span>{tr({ zh: '主要时区', en: 'Primary time zone' })}</span>
-                <ListSelect items={zoneItems} value={displayTz} allLabel="" clearable={false} searchable searchPlaceholder={tr({ zh: '搜城市 / 时区', en: 'Search city or zone' })} onChange={(tz) => onPrefs({ tz })} />
+                <DisplayTimeZoneSelect />
               </div>
               <label className="cal-settings-field">
                 <span>{tr({ zh: '主要时区标签', en: 'Primary time zone label' })}</span>

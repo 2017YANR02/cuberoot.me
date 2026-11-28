@@ -10,9 +10,10 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import { toBlob } from 'html-to-image';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
+import { calendarZoneLabel } from '@/lib/tz-zones';
 import { tr } from '@/i18n/tr';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { formatDateRangeIso, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
+import { formatDateRangeIso, formatCompDateTime, weekdayRangeLabel } from '@/lib/wca-date';
 import {
   fetchCompSchedule, computeDayColumns, localizeActivityName, eventOfActivity,
   dayHeaderLabel, roundIdOf, getRoundTypeId, roundTypeShort,
@@ -59,6 +60,7 @@ function QrSvg({ text, className }: { text: string; className?: string }) {
 }
 
 interface CompPosterProps {
+  tz: string;
   slug: string;
   compName: string;
   /** 比赛所在国家 iso2(小写) */
@@ -67,7 +69,7 @@ interface CompPosterProps {
   isZh: boolean;
 }
 
-export default function CompPoster({ slug, compName, compIso2, info, isZh }: CompPosterProps) {
+export default function CompPoster({ tz, slug, compName, compIso2, info, isZh }: CompPosterProps) {
   const posterRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<ScheduleData | null>(null);
@@ -98,7 +100,6 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
     return () => ro.disconnect();
   }, []);
 
-  const tz = data?.venues[0]?.timezone ?? 'UTC';
 
   // 项目 → 轮次数(从赛程活动推导,官方项目按 WCA 顺序排,其余排尾)
   const eventRounds = useMemo(() => {
@@ -205,9 +206,9 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
   const dateStr = info?.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const dateWd = info?.start_date ? weekdayRangeLabel(info.start_date, info.end_date, isZh) : '';
   // 报名窗口已过(比赛已结束/临近)就不占版面,与信息面板同口径
-  const regOpenIso = info?.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
-  const regCloseIso = info?.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
-  const regPast = !!regCloseIso && regCloseIso < toIsoDate(new Date());
+  const regOpenIso = info?.registration_open ? formatCompDateTime(info.registration_open, tz).slice(0, 10) : '';
+  const regCloseIso = info?.registration_close ? formatCompDateTime(info.registration_close, tz).slice(0, 10) : '';
+  const regPast = !!regCloseIso && regCloseIso < formatCompDateTime(new Date().toISOString(), tz).slice(0, 10);
   const regStr = regOpenIso && regCloseIso && !regPast ? formatDateRangeIso(regOpenIso, regCloseIso) : '';
   const url = `cuberoot.me${isZh ? '/zh' : ''}/wca/comp/${slug}`;
 
@@ -270,6 +271,10 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
                       <dd>{dateStr}{dateWd ? ` ${dateWd}` : ''}</dd>
                     </div>
                   )}
+                  <div className="comp-poster-fact">
+                    <dt>{tr({ zh: '时区', en: 'Time zone' })}</dt>
+                    <dd>{calendarZoneLabel(tz, isZh, new Date(data?.activities[0]?.startTime ?? Date.now()))}</dd>
+                  </div>
                   {regStr && (
                     <div className="comp-poster-fact">
                       <dt>{tr({ zh: '报名', en: 'Registration' })}</dt>

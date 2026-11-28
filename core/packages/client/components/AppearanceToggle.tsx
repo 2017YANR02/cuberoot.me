@@ -23,6 +23,7 @@ import { AppearanceThemeControl, AppearanceBackdropControls } from '@cuberoot/ap
 import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import { DisplayTimeZoneSelect } from './DisplayTimeZoneSelect';
 import LangToggle from '@/components/LangToggle';
 import AccentColorSelect from '@/components/AccentColorSelect';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
@@ -215,6 +216,9 @@ export default function AppearanceToggle({ className, triggerClassName, triggerL
           <div className="appearance-settings">
             <div className="appearance-sec-label appearance-setting-rows">
               {section !== 'appearance' && <LangToggle variant={embedded ? 'row' : 'menu'} showLabel />}
+              {section !== 'appearance' && embedded && <div className="display-time-zone-row">
+                <span>{t('显示时区', 'Display time zone')}</span><DisplayTimeZoneSelect settingsRow />
+              </div>}
               {section !== 'general' && <><AppearanceThemeControl language={language} theme={theme} palette={palette}
                 onChange={patch => {
                   if (patch.theme) pickTheme(patch.theme);
