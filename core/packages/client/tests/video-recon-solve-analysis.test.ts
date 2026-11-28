@@ -10,7 +10,7 @@ import { buildColorTimeline } from '@/lib/video-recon/engine/cube-colors';
 import { CAMERA_ORIENTATION, CUBE_GRIP_ROTATIONS, initialGripMoves, openingGripView, relativeCubeGrip } from '@/lib/video-recon/engine/cube-orientation';
 import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
-import { analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
+import { singleLayerCross, analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationTimeline } from '@/lib/video-recon/solve-analysis';
 
 const fps = 30;
 const identity: Quaternion = [0, 0, 0, 1];
@@ -42,6 +42,10 @@ describe('video solve reconstruction', () => {
     const { result, crossNotation } = analysis;
     const [original, alternate] = crossNotation!.variants;
     expect(crossNotation?.variants).toHaveLength(2);
+    const single = singleLayerCross(original)!.result;
+    expect(single.lines[0].moves.every(move => /^[URFDLB](?:2'?|')?$/.test(move))).toBe(true);
+    expect(single.lines[0].moveRanges?.map(range => range.ts)).toEqual(original.lines[0].moveRanges?.map(range => range.ts));
+    expect(await checkReconCompletion({ event: '3x3', scramble, solution: single.text })).toEqual({ status: 'solved' });
     expect(result).toBe(alternate);
     expect(original.lines[0].moves.join(' ')).toBe(cross);
     expect(result.text).toContain("R U' r' R' D R' F R U L' D // Y xcross (RG)");

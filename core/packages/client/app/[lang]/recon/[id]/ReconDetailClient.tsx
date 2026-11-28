@@ -448,7 +448,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               onToggleCancellation={line => setExpandedCancellation(expandedCancellationLine === line ? null : { text: baseDisplayText, line })}
               displayScramble={displayScramble} optimalScrambleTag={optimalScrambleTag} solutionText={solutionText}
               displayText={displayText} rawDisplayText={rawDisplayText} solve={solve} playerRef={playerRef}
-              canToggle={canToggle} crossLineIdx={crossLineIdx} crossNormalized={crossNormalized} setCrossNormalized={setCrossNormalized}
+              canToggle={canToggle} crossLineIdx={crossLineIdx} crossNormalized={crossNormalized} onToggleCross={() => setCrossNormalized(v => !v)}
               canRemoveWaste={wasteFreeText !== null} wasteRemoved={wasteRemoved} setWasteRemoved={setWasteRemoved} />
             </div>
           </div>

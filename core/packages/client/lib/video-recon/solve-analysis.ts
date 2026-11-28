@@ -1,5 +1,5 @@
 import { mergeAdjacentMoves, toMoveStringStrict } from '@cuberoot/shared/alg-notation';
-import { findCrossLineIndex, outerTurnSequence } from '@cuberoot/shared/recon-ground-truth';
+import { findCrossLineIndex, hasNormalizableCrossMove, normalizeLines, outerTurnSequence } from '@cuberoot/shared/recon-ground-truth';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import { SLICE_PAIRS } from '@cuberoot/shared/recon-slice';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
@@ -348,6 +348,21 @@ function withVideoLines(result: VideoReconText, lines: ReconTextLine[]): VideoRe
     ...(result.inspection ? [`${result.inspection} // insp`] : []),
     ...lines.map(formatReconLine),
   ].join('\n') };
+}
+
+/** One group per observed gesture keeps split slices on the same video frame. */
+export function singleLayerCross(result: VideoReconText) {
+  const line = result.lines[0];
+  if (!line || findCrossLineIndex(formatReconLine(line)) < 0 || !hasNormalizableCrossMove(result.text)) return;
+  const { prefix, perLine } = normalizeLines([result.inspection.split(/\s+/).filter(Boolean), ...line.moves.map(move => [move])],
+    { expandSlices: true, preserveHalfTurnPrime: true });
+  const inspection = [...prefix, ...perLine[0]].join(' ');
+  const turns = perLine.slice(1).flatMap((moves, index) => moves.map(token => ({ token, index })));
+  const ranges = line.moveRanges;
+  const cross = { ...line, moves: turns.map(turn => turn.token), wasteGroups: undefined, algorithmGroups: undefined,
+    moveRanges: ranges && turns.map(({ token, index }) => ({ ...ranges[index], token })) };
+  return { result: withVideoLines({ ...result, inspection }, [cross, ...result.lines.slice(1)]),
+    sourceIndices: turns.map(turn => turn.index) };
 }
 
 /** Move the wide notation within one cross stage, retaining the recorded

@@ -6,13 +6,13 @@ import { CopySuccessIcon } from './CopySuccessIcon';
 import { ScramblePreview2D } from './ScramblePreview2D';
 import SolutionView from './SolutionView';
 
-export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, playback, openingOrientation, canToggle = false, crossLineIdx = -1, crossNormalized = false, setCrossNormalized, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder, displayScramble, optimalScrambleTag = '', solutionText, displayText, rawDisplayText, solve, playerRef, playback, openingOrientation, canToggle = false, crossLineIdx = -1, crossNormalized = false, onToggleCross, crossControl, canRemoveWaste = false, wasteRemoved = false, setWasteRemoved = () => {}, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   captionHeader: string; scramble: string; scrambleCubeOrder: number | null; displayScramble: string; optimalScrambleTag?: string;
   solutionText: string; displayText: string; rawDisplayText: string; solve: { solutionHtml?: string; event: string; pickupTime?: number | null; putdownTime?: number | null };
   playerRef?: ComponentProps<typeof SolutionView>['playerRef']; playback?: ComponentProps<typeof SolutionView>['playback'];
   openingOrientation?: ComponentProps<typeof SolutionView>['openingOrientation'];
   canToggle?: boolean; crossLineIdx?: number; crossNormalized?: boolean;
-  setCrossNormalized?: (update: (value: boolean) => boolean) => void;
+  onToggleCross?: () => void; crossControl?: ComponentProps<typeof SolutionView>['crossControl'];
   canRemoveWaste?: boolean; wasteRemoved?: boolean; setWasteRemoved?: (update: (value: boolean) => boolean) => void;
   cancellationLines?: ReadonlySet<number>; expandedCancellationLine?: number | null; onToggleCancellation?: (line: number) => void;
 }) {
@@ -62,9 +62,9 @@ export function ReconNotationBlock({ captionHeader, scramble, scrambleCubeOrder,
                 playerRef={playerRef}
                 playback={playback}
                 openingOrientation={openingOrientation}
-                crossLineIdx={canToggle && setCrossNormalized ? crossLineIdx : -1}
+                crossLineIdx={canToggle ? crossLineIdx : -1}
                 crossNormalized={crossNormalized}
-                onToggleCross={setCrossNormalized ? () => setCrossNormalized(v => !v) : undefined}
+                onToggleCross={onToggleCross} crossControl={crossControl}
               />
             )}
   </>;

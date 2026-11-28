@@ -75,7 +75,7 @@ export function ReconReferenceWindow({ source, onClose }: {
       <ReconNotationBlock captionHeader={header} scramble={source.scramble} scrambleCubeOrder={3}
         displayScramble={source.scramble} optimalScrambleTag={tag} solutionText={source.solution}
         displayText={text} rawDisplayText={text} solve={{ event: '333' }} playerRef={playerRef}
-        canToggle={canToggle} crossLineIdx={findCrossLineIndex(text)} crossNormalized={crossNormalized} setCrossNormalized={setCrossNormalized} />
+        canToggle={canToggle} crossLineIdx={findCrossLineIndex(text)} crossNormalized={crossNormalized} onToggleCross={() => setCrossNormalized(v => !v)} />
     </div>
     </div>
     {(['left', 'right', 'top', 'bottom'] as const).map(edge => <ResizeDivider key={edge}

@@ -51,7 +51,7 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, playback, openingOrientation, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
+export default function SolutionView({ text, html, event, scramble = '', sourceText = text, playerRef, playback, openingOrientation, crossLineIdx = -1, crossNormalized = false, onToggleCross, crossControl, autoWaste = false, cancellationLines, expandedCancellationLine, onToggleCancellation }: {
   text: string;
   html?: string;
   event?: string;
@@ -70,6 +70,7 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
   crossLineIdx?: number;
   crossNormalized?: boolean;
   onToggleCross?: () => void;
+  crossControl?: ReactNode;
 }) {
   const preRef = useRef<HTMLPreElement>(null);
   const { t } = useTranslation();
@@ -236,7 +237,7 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
         const lineStart = lineStarts[i];
         const toggle = i === crossLineIdx && onToggleCross ? (
           <ReconCrossToggle normalized={crossNormalized} onToggle={onToggleCross}
-            label={t(crossNormalized ? 'recon.showOriginal' : 'recon.normalizeCross')} tabIndex={-1} />
+            label={t(crossNormalized ? 'recon.showOriginal' : 'recon.normalizeCross')} />
         ) : null;
 
         const links = linkComments ? reconCommentLinks(line, commentCases, set => libraryLinks.get(i)?.get(set)).flatMap(link => {
@@ -252,7 +253,7 @@ export default function SolutionView({ text, html, event, scramble = '', sourceT
           crossColor={crossColor} links={links} colorHref={colors => linkComments ? f2lLinks.get(i)?.get(colors) : undefined}
           inspectionColors={orientation ? undefined : inspectionColors.get(i)} diagram={diagramAt(i)} trailing={<>
             {orientation && <span data-recon-text-length="0">{orientation(inspectionColors.get(i))}</span>}
-            {toggle}
+            {i === crossLineIdx && crossControl ? <span data-recon-text-length="0">{crossControl}</span> : toggle}
             {freePairLines.has(i) && <span className="recon-annotation-badge recon-line-free-pair" data-recon-text-length="0"
               data-label={tr({ zh: '基', en: 'free' })} aria-label={tr({ zh: '基态', en: 'Free pair' })} />}
             {(lineMoveCounts[i] ?? 0) > 0 && <span className="recon-line-move-count" data-recon-text-length="0"

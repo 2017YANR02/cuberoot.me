@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ExternalLink } from '@app-foundation/icons/lucide';
+import { CompactSelect } from '@/components/CompactSelect';
 import AppLink from '@/components/AppLink';
 import { ContentSkeleton } from '@/components/ContentSkeleton';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
@@ -20,7 +21,7 @@ import type { MoveStep } from '@/lib/video-recon/engine/move-search-types';
 import type { MeasuredCubeFrame } from '@/lib/video-recon/engine/projected-cube';
 import { timecode } from '@/lib/video-recon/engine/solve-range';
 import {
-  analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationRanges, videoNotationTimeline, type VideoSolveObservation,
+  singleLayerCross, analyzeVideoSolve, matchVideoOpeningScramble, observeVideoSolve, playerGrip, videoGripOptions, videoNotationRanges, videoNotationTimeline, type VideoSolveObservation,
 } from '@/lib/video-recon/solve-analysis';
 
 import { measuredGestureTimes } from '@/lib/video-recon/gesture-times';
@@ -53,6 +54,7 @@ export interface VideoSolveAnalysisProps {
   };
 }
 
+type CrossMode = 'original' | 'rewrite' | 'single';
 type Analysis = Awaited<ReturnType<typeof analyzeVideoSolve>>;
 
 export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, start, end, position, onSeek, onOpeningView, onAnalysisResolved, draftTarget, inferredScramble,
@@ -70,7 +72,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
   }>();
   const imageRef = useRef<HTMLDivElement>(null);
   const [selectedView, setSelectedView] = useState<{ observation: VideoSolveObservation; view: NotationView }>();
-  const [crossChoice, setCrossChoice] = useState<{ analysis: NonNullable<Analysis>; index: number }>();
+  const [crossChoice, setCrossChoice] = useState<{ analysis: NonNullable<Analysis>; mode: CrossMode }>();
   const notationView = selectedView?.observation === observation ? selectedView.view : 'recon';
   const draftScramble = draftTarget?.scramble;
   const current = analysis?.observation === observation && analysis.grip === selection && analysis.language === language
@@ -140,15 +142,22 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
 
   const value = current?.value;
   const { crossNotation, method, solved, fallback } = value ?? {};
-  const crossIndex = crossChoice && crossChoice.analysis === value ? crossChoice.index : crossNotation?.preferred ?? 0;
-  const result = crossNotation?.variants[crossIndex] ?? value?.result;
+  const original = crossNotation?.variants[0] ?? value?.result;
+  const single = useMemo(() => original && singleLayerCross(original), [original]);
+  const rewrite = crossNotation?.variants[crossNotation.preferred || 1];
+  const mode = crossChoice && crossChoice.analysis === value ? crossChoice.mode : crossNotation?.preferred ? 'rewrite' : 'original';
+  const result = (mode === 'single' ? single?.result : mode === 'rewrite' ? rewrite : original) ?? original;
+  const crossModes = [{ value: 'original' as const, label: t('原始', 'Original') },
+    { value: 'rewrite' as const, label: t('改写', 'Equivalent rewrite'), disabled: !rewrite },
+    { value: 'single' as const, label: t('单层', 'Single-layer notation'), disabled: !single }];
+  const crossLine = crossNotation?.lineIndex ?? 0;
   const verifiedDraft = useMemo(() => {
     const draft = current?.draft;
-    if (!draft || !result || draft.solution === result.text || !crossNotation) return draft;
-    // The selected spelling has identical turn boundaries and stage states.
-    return { ...draft, solution: result.text, cues: draft.cues?.map((cue, index) =>
-      index === crossNotation.lineIndex ? { ...cue, text: formatReconLine(result.lines[index]) } : cue) };
-  }, [current?.draft, result, crossNotation]);
+    if (!draft || !result || draft.solution === result.text) return draft;
+    return { ...draft, solution: result.text, cues: draft.cues?.map((cue, index) => index === crossLine
+      ? { ...cue, text: formatReconLine(result.lines[index]), marks: mode === 'single' && single
+        ? single.sourceIndices.map(i => cue.marks?.[i] ?? null) : cue.marks } : cue) };
+  }, [current?.draft, result, crossLine, mode, single]);
   const verified = !!current?.value?.solved && (draftScramble === undefined || !!verifiedDraft);
   useEffect(() => {
     if (current) onAnalysisResolved?.(verified);
@@ -210,7 +219,7 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
     {!result?.text && openingOrientation?.()}
     {!openingOrientation && <span className="video-recon-muted">{t('起手姿态未拍清，按固定朝向分段。', 'The opening grip is unavailable. Stages use a fixed orientation.')}</span>}
     {!current && <ContentSkeleton variant="text" label={t('正在识别解法和分段…', 'Identifying the method and stages…')} />}
-    {current && !result && <span role="status" className="video-recon-muted">{t('无法生成局面一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
+    {current && !result && <span role="status" className="video-recon-muted">{t('无法生成与识别状态一致的分段复盘。', 'Could not generate a reconstruction consistent with the recognized states.')}</span>}
     {current && !result && fallbackNotation}
     {draftTarget && solved && !verifiedDraft && <span role="status" className="video-recon-muted">
       {t('这份解法与打乱未通过还原校验。', 'The scramble and solution could not be verified together.')}
@@ -236,24 +245,18 @@ export function VideoSolveAnalysis({ scramble, steps, measured, fps, clockFps, s
       <div className="detail-scramble-solution" ref={imageRef} hidden={view !== 'recon'}>
         <ReconNotationBlock openingOrientation={openingOrientation} captionHeader={captionHeader} scramble={displayScramble} scrambleCubeOrder={3}
           displayScramble={displayScramble} solutionText={result.text} displayText={result.text} rawDisplayText={result.text}
+          canToggle={!!(single || rewrite)} crossLineIdx={crossLine + Number(!!result.inspection)}
+          crossControl={value && (single || rewrite) && <CompactSelect<CrossMode> ariaLabel={t('十字记法', 'Cross notation')}
+            value={mode} showArrow={false} keyboardListNavigation unstyledTrigger triggerClassName="recon-annotation-badge"
+            items={crossModes} label={crossModes.find(item => item.value === mode)?.label}
+            onChange={mode => setCrossChoice({ analysis: value, mode })} />}
           solve={{ event: '3x3' }} playback={{ offset: activeOffset, onSeek: offset => {
             const move = timeline.findLast(item => item.offset <= offset);
             onSeek(start + (move?.timestampMs ?? openingMs) / 1000);
           } }} />
       </div>
-      {(applyButton || editorHref || (crossNotation && view === 'recon')) && <div className="video-recon-actions">
+      {(applyButton || editorHref) && <div className="video-recon-actions">
         {applyButton}
-        {crossNotation && value && view === 'recon' && (
-          <select className="btn-secondary" value={crossIndex} aria-label={t('十字记法', 'Cross notation')}
-            onChange={event => setCrossChoice({ analysis: value, index: Number(event.currentTarget.value) })}>
-            <option value={0}>{t('原记法', 'Original notation')}</option>
-            {crossNotation.variants.slice(1).map((variant, index) => (
-              <option key={variant.text} value={index + 1}>{crossNotation.variants.length === 2
-                ? t('等价改写', 'Equivalent notation')
-                : variant.lines[crossNotation.lineIndex].moves.join(' ')}</option>
-            ))}
-          </select>
-        )}
         {editorHref && <AppLink className="btn-secondary" href={editorHref} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={15} aria-hidden />{t('在复盘中编辑', 'Edit in Reconstruction')}
         </AppLink>}
