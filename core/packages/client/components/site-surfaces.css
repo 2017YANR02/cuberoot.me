@@ -285,13 +285,14 @@ body[data-site-scenery] .mem-reminder {
   box-shadow: var(--glass-shadow);
 }
 
-/* Form controls: explicit text/date types exclude checkboxes, radio, ranges,
+/* Form controls sample the image only while a scenery image is visible.
+   Explicit text/date types exclude checkboxes, radio, ranges,
    color swatches, uploads, images, hidden fields and semantic submit buttons.
    Background-color preserves existing select arrows and date-input artwork.
    Important is limited to the neutral fill because legacy pages set it inline.
    The vault title, read-only values and inline playback speed need no field surface.
    Onboarding controls keep their solid field backgrounds. */
-body[data-site-scenery] :is(
+body[data-site-scenery]:where(:not([data-site-scenery='transparent'])) :is(
   select:not(:where(.playback-speed-select)),
   textarea:not(.site-assistant-draft, :where(
     .scramble-manual-inline .scramble-src-manual-input,
@@ -355,9 +356,9 @@ body[data-site-scenery] :is(option, optgroup) {
   color: var(--popover-foreground);
 }
 
-body[data-site-scenery] .date-input__display,
+body[data-site-scenery]:where(:not([data-site-scenery='transparent'])) .date-input__display,
+body[data-site-scenery]:where(:not([data-site-scenery='transparent'])) .compact-select:not(.compact-select--plain) > .compact-select-trigger:not(.compact-select-trigger--unstyled),
 body[data-site-scenery] :is(
-  .compact-select:not(.compact-select--plain) > .compact-select-trigger:not(.compact-select-trigger--unstyled),
   .event-select-trigger,
   .recon-grid-filters .list-select-trigger,
   .region-picker-trigger,

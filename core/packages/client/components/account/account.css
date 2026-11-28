@@ -282,11 +282,10 @@
 .account-name-save { padding: 7px 12px; font-size: 13px; border-radius: 8px; }
 .account-name-actions .auth-textbtn { align-self: auto; }
 .account-basic-profile {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 13px;
-  margin-top: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin: 0;
 }
 .account-basic-profile-privacy { margin: 0; }
 .account-basic-profile-field {
@@ -295,43 +294,110 @@
   align-items: flex-start;
   gap: 6px;
   width: 100%;
+  min-width: 0;
 }
-.account-basic-profile .date-input { max-width: 100%; }
-.account-basic-profile .country-input { width: 100%; }
-.account-basic-profile-select {
-  width: fit-content;
-  align-self: flex-start;
+.account-basic-profile :is(.account-name-field, .country-input, .compact-select) { width: 100%; }
+.account-basic-profile :is(.auth-input, .country-input-field) { box-sizing: border-box; }
+.account-gender-select { display: grid; align-items: center; }
+.account-basic-profile-field > .account-gender-select { width: 100%; }
+.account-gender-select > .account-basic-profile-select {
+  grid-area: 1 / 1;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding-block: 8px;
+  padding-inline-end: 32px;
+  line-height: 1.25;
+}
+.account-gender-select > svg {
+  grid-area: 1 / 1;
+  justify-self: end;
+  margin-inline-end: 12px;
+  color: var(--muted-foreground);
+  pointer-events: none;
+}
+.account-basic-profile .compact-select > .compact-select-trigger {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 500;
 }
 .account-basic-profile-country {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 34px;
+  min-height: 40px;
   font-size: 0.88rem;
 }
 .account-basic-profile-lock { margin: 0; }
-.account-basic-profile-save {
-  align-self: flex-start;
+.account-basic-profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.auth-primary.account-basic-profile-save {
+  min-height: 40px;
+  min-inline-size: 68px;
   padding: 7px 12px;
   border-radius: 8px;
   font-size: 13px;
+}
+.auth-primary.account-basic-profile-save:disabled {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  opacity: 1;
 }
 .account-basic-profile-status {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 18px;
+  margin: 0;
 }
 
-.account-settings-profile { min-width: 0; }
+.account-settings-profile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-width: 0;
+  max-inline-size: 36rem;
+}
+.account-settings-profile > * + * {
+  margin-block-start: 24px;
+  padding-block-start: 24px;
+  border-block-start: 1px solid var(--border-default);
+}
+.account-profile-section { display: grid; gap: 16px; }
+.account-profile-heading { display: flex; align-items: center; gap: 6px; }
+.account-settings-profile .account-creds-title,
+.account-basic-profile .auth-hint,
+.account-basic-profile .auth-error { margin: 0; }
+.account-signature-form { gap: 12px; }
+.account-signature-form > .account-creds-title { margin: 0; }
 
-.account-profile-demographics { display: flex; align-items: flex-start; gap: 24px; width: 100%; grid-column: 1 / -1; }
-.account-basic-profile-field.account-gender-field { width: fit-content; flex-shrink: 0; }
-.account-basic-profile-field.account-birth-date-field { width: auto; min-width: 0; flex: 1; }
-.account-basic-profile-field.account-location-field { grid-column: 1 / -1; }
-.account-location-controls { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 24px; width: 100%; }
-.account-location-country { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: 100%; }
-.account-location-region { max-width: 100%; }
+.account-settings-links {
+  display: grid;
+  gap: 4px;
+}
+.account-settings-links > .account-card {
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  gap: 12px;
+  border: 0;
+  border-radius: 8px;
+}
+
+.account-profile-demographics,
+.account-location-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 12px;
+  width: 100%;
+}
+.account-location-controls { align-items: center; }
+.account-location-country:only-child { grid-column: 1 / -1; }
 .compact-select-popup.account-location-popup { display: flex; flex-direction: column; overflow: hidden; }
 .account-location-menu {
   display: flex;
@@ -375,18 +441,6 @@
     max-width: none;
     min-width: 0;
   }
-  .account-settings-profile .account-basic-profile {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    gap: 18px 24px;
-  }
-  .account-settings-profile .account-basic-profile-field { min-width: 0; }
-  .account-settings-profile .account-name-field { width: 100%; min-width: 0; }
-  .account-settings-profile .account-name-field .auth-input { width: 100%; min-width: 0; }
-  .account-settings-profile .account-basic-profile > p,
-  .account-settings-profile .account-basic-profile-save { grid-column: 1 / -1; }
-  .account-settings-profile .account-basic-profile-save { justify-self: start; }
 }
 
 @media (min-width: 1200px) {

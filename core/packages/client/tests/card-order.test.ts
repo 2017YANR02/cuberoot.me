@@ -4,10 +4,12 @@ import { ACCOUNT_CARD_IDS } from '@cuberoot/shared/site-directory';
 import { applyCardOrder } from '@/lib/card-order';
 
 describe('shared card order', () => {
-  it('keeps the complete account ordering contract aligned with conditional page entries', () => {
+  it('keeps visible account cards in the saved order contract, including legacy IDs', () => {
     const source = readFileSync(new URL('../components/account/AccountSettings.tsx', import.meta.url), 'utf8');
     const keys = [...source.matchAll(/key: '([^']+)'/g)].map(match => match[1]);
-    expect([...ACCOUNT_CARD_IDS]).toEqual(['pet', ...keys]);
+    const active = ['pet', ...keys];
+    expect(ACCOUNT_CARD_IDS.filter(id => active.includes(id)).sort()).toEqual(active.sort());
+    expect(ACCOUNT_CARD_IDS.filter(id => !active.includes(id))).toEqual(['onboarding', 'team', 'enterprise', 'mcp', 'submissions']);
   });
   const cards = [{ id: 'pet' }, { id: 'wca' }, { id: 'progress' }];
   it('uses source order without saved preferences and handles an empty grid', () => {

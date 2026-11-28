@@ -10,6 +10,7 @@ import { getHomeCardOrders, reorderHomeCards } from '@/lib/home-card-order-api';
 import { hasAdminAccess, useIsAdmin, getAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 
+// The ordering API still expects all saved IDs, including cards moved out of My space.
 const ALL_CARDS = ACCOUNT_CARD_IDS.map(id => ({ id }));
 
 export default function AccountCardGrid({ cards }: { cards: { id: string; content: ReactNode }[] }) {

@@ -143,25 +143,6 @@ body:has(.settings-panel) .settings-typography { font-size: 16px !important; }
 .settings-panel-content .account-settings-layout > .account-creds { margin-top: 0; max-width: none; min-width: 0; }
 .settings-panel-content .account-profile-editor { margin-bottom: 16px; }
 .settings-panel-content .account-creds-title { font-size: 18px; margin-bottom: 12px; }
-.account-profile-heading { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
-.account-profile-heading > .account-creds-title { margin: 0; }
-.settings-panel-content .account-settings-profile .account-basic-profile { margin-top: 12px; gap: 12px 16px; }
-.settings-panel-content .account-basic-profile .auth-hint { margin: 0; }
-.settings-panel-content .account-profile-demographics { gap: 16px; }
-.settings-panel-content .account-basic-profile-field.account-birth-date-field { flex: 0 1 220px; max-width: 220px; }
-.settings-panel-content .account-location-controls { gap: 8px 16px; }
-.settings-panel-content .account-settings-profile > .account-card { width: fit-content; max-width: 100%; box-sizing: border-box; margin: 0; padding: 12px 16px; }
-.settings-panel-content .account-basic-profile.account-signature-form {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-top: 16px;
-  gap: 8px;
-}
-.settings-panel-content .account-signature-form > .account-creds-title { margin: 0; }
-.account-signature-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 100%; }
-.account-signature-controls > .account-basic-profile-save { align-self: center; }
-.settings-panel-content .account-signature-form > .account-basic-profile-field { max-width: 320px; }
 @media (min-width: 1200px) {
   .settings-panel-content .account-settings-layout { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; }
 }

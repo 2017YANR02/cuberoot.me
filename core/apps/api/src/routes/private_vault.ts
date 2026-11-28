@@ -180,6 +180,33 @@ async function recipientsEligible(tx: Tx, ownerUserId: number, accesses: AccessI
   return friendships.length === recipientIds.length;
 }
 
+function accessibleVaultItems(userId: number) {
+  return sql`
+    access.recipient_user_id = ${userId}
+    AND (item.owner_user_id = ${userId}
+      OR (item.trashed_at IS NULL AND EXISTS (
+        SELECT 1 FROM user_friendships friendship
+         WHERE friendship.status = 'accepted'
+           AND friendship.user_low_id = LEAST(item.owner_user_id, ${userId}::bigint)
+           AND friendship.user_high_id = GREATEST(item.owner_user_id, ${userId}::bigint)
+      )))`;
+}
+
+privateVaultRoutes.get('/vault/availability', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c), { bucket: 'private-vault-availability', max: 120 });
+  const { userId, canManage } = await vaultIdentity(c);
+  if (canManage) return c.json({ available: true });
+  const [row] = await sql<{ available: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+        FROM vault_item_access access
+        JOIN vault_items item ON item.id = access.item_id
+       WHERE ${accessibleVaultItems(userId)}
+    ) AS available`;
+  return c.json({ available: row?.available === true });
+});
+
 privateVaultRoutes.get('/vault', async (c) => {
   noStore(c);
   checkRateLimit(getIp(c), { bucket: 'private-vault-read', max: 120 });
@@ -195,14 +222,7 @@ privateVaultRoutes.get('/vault', async (c) => {
         FROM vault_item_access access
         JOIN vault_items item ON item.id = access.item_id
         JOIN app_users owner ON owner.id = item.owner_user_id
-       WHERE access.recipient_user_id = ${userId}
-         AND (item.owner_user_id = ${userId}
-           OR (item.trashed_at IS NULL AND EXISTS (
-             SELECT 1 FROM user_friendships friendship
-              WHERE friendship.status = 'accepted'
-                AND friendship.user_low_id = LEAST(item.owner_user_id, ${userId}::bigint)
-                AND friendship.user_high_id = GREATEST(item.owner_user_id, ${userId}::bigint)
-           )))
+       WHERE ${accessibleVaultItems(userId)}
        ORDER BY item.updated_at DESC, item.id`,
     sql<ShareRow[]>`
       SELECT access.item_id, recipient.id AS user_id, recipient.display_name, keys.public_key

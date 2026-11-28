@@ -6,7 +6,8 @@ const sql = vi.hoisted(() => vi.fn());
 vi.mock('../src/db/connection.js', () => ({ sql }));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: () => '127.0.0.1' }));
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: async () => 7 }));
-vi.mock('../src/utils/membership.js', () => ({ hasActiveMembership: async () => false }));
+const hasActiveMembership = vi.hoisted(() => vi.fn(async () => false));
+vi.mock('../src/utils/membership.js', () => ({ hasActiveMembership }));
 vi.mock('../src/utils/recon_helpers.js', () => ({
   checkRateLimit: () => {},
   requireAuth: async () => ({ isAdmin: false }),
@@ -70,5 +71,31 @@ describe('private vault access contract', () => {
     own.version = '2';
     const changed = await privateVaultRoutes.request('/vault/backup-revision');
     expect((await changed.json()).revision).not.toBe(backupRevision);
+  });
+
+  it('returns only vault availability for the signed-in account', async () => {
+    let available = false;
+    sql.mockImplementation((parts: TemplateStringsArray, ...parameters: unknown[]) => {
+      const query = parts.join('?');
+      if (query.includes('AS available')) {
+        expect(query).not.toMatch(/ciphertext|wrapped_key/);
+        return Promise.resolve([{ available }]);
+      }
+      expect(query).toContain("friendship.status = 'accepted'");
+      expect(query).toContain('item.trashed_at IS NULL');
+      expect(parameters).toEqual([7, 7, 7, 7]);
+      return { query };
+    });
+
+    const empty = await privateVaultRoutes.request('/vault/availability?userId=99');
+    expect(empty.headers.get('Cache-Control')).toBe('no-store');
+    expect(await empty.json()).toEqual({ available: false });
+    available = true;
+    expect(await (await privateVaultRoutes.request('/vault/availability')).json()).toEqual({ available: true });
+
+    sql.mockClear();
+    hasActiveMembership.mockResolvedValueOnce(true);
+    expect(await (await privateVaultRoutes.request('/vault/availability')).json()).toEqual({ available: true });
+    expect(sql).not.toHaveBeenCalled();
   });
 });

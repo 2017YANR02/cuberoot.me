@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import AppLink from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
@@ -17,6 +18,7 @@ import {
 } from '@/components/WcaTeacherCell';
 import { useT } from '@/hooks/useT';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
+import { useAuthUser } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   fetchWcaPerson,
@@ -31,6 +33,8 @@ import {
 } from '@/lib/wca-teachers-api';
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult, type ResultKind } from '@/lib/wca-format-result';
+
+const TeacherSignatureEditor = dynamic(() => import('@/components/account/TeacherSignatureEditor'));
 
 interface StudentSeed {
   key: string;
@@ -54,6 +58,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
   mode?: 'overview' | 'manage';
 }) {
   const t = useT();
+  const user = useAuthUser();
   const [relations, setRelations] = useState<WcaTeacher[] | null>(null);
   const [namedStudents, setNamedStudents] = useState<WcaNamedStudent[] | null>(null);
   const [studentMeta, setStudentMeta] = useState<Map<string, StudentMeta>>(() => new Map());
@@ -238,6 +243,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
 
   const canAddStudents = canAddWcaTeacherStudent(teacherWcaId, teacherDirectory);
   const isManagement = mode === 'manage';
+  const canEditOwnSignature = user?.wcaId === teacherWcaId && (canAddStudents || studentSeeds.length > 0);
 
   if (students.length === 0 && !canAddStudents && !isManagement) return null;
 
@@ -452,6 +458,11 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
           </tbody>
         </table>
       </div>
+      {canEditOwnSignature && user?.uid && (
+        <div className="wp-student-signature">
+          <TeacherSignatureEditor key={user.uid} uid={user.uid} name={user.name} />
+        </div>
+      )}
     </section>
   );
 }

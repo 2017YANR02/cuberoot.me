@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { installedPetAvailable } from '@/lib/installed-content';
 import { useEntryRouter as useRouter } from '@/hooks/useEntryRouter';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, Crown, LockKeyhole, LogOut, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Pencil, Upload, X, UserRound, Users } from '@app-foundation/icons/lucide';
+import { Bell, BookOpen, Building2, ChevronDown, ChevronLeft, ChevronRight, Crown, LockKeyhole, LogOut, Rewind, IdCard, GraduationCap, Loader2, Pencil, Upload, X, UserRound, Users } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
 import { ClearButton } from '@/components/ClearButton';
 import FollowedComps from '@/components/FollowedComps';
@@ -68,7 +68,7 @@ import { isMiniProgramCommerceRestricted, notifyMiniProgramLogout } from '@/lib/
 import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
 import AccountCardGrid from './AccountCardGrid';
-import TeacherSignatureEditor from './TeacherSignatureEditor';
+import { useAccountCardAccess } from './useAccountCardAccess';
 import AdminAccountDelete from './AdminAccountDelete';
 import './account.css';
 import { LoadingIndicator } from '@/components/LoadingIndicator';
@@ -378,7 +378,7 @@ function DisplayNameField({
   );
 }
 
-function DisplayNameEditor() {
+function AccountProfileSections() {
   const t = useT();
   const user = useAuthUser();
   if (!user) return null;
@@ -387,9 +387,9 @@ function DisplayNameEditor() {
     if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
   };
   return (
-    <div className="account-profile-editor">
+    <section className="account-profile-section" aria-labelledby="account-profile-title">
       <div className="account-profile-heading">
-        <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
+        <h2 id="account-profile-title" className="account-creds-title">{t('个人资料', 'Profile')}</h2>
         {user.wcaId && <InfoTooltip iconSize={16} ariaLabel={t('资料来源', 'Profile source')}
           content={t('性别和国家来自 WCA 资料。', 'Gender and country come from your WCA profile.')} />}
       </div>
@@ -398,8 +398,7 @@ function DisplayNameEditor() {
         onSave={save}
       />
       <BasicProfileEditor />
-      {user.uid && user.wcaId && <TeacherSignatureEditor key={user.uid} uid={user.uid} name={user.name} />}
-    </div>
+    </section>
   );
 }
 
@@ -563,7 +562,7 @@ function BasicProfileEditor() {
         </p>
       </div>}
       <div className="account-profile-demographics">
-      <div className="account-basic-profile-field account-birth-date-field">
+      <div className="account-basic-profile-field">
         <label className="auth-label" htmlFor="account-birth-date">{t('出生日期', 'Birth date')}</label>
         <DateInput
           id="account-birth-date"
@@ -576,21 +575,24 @@ function BasicProfileEditor() {
           onChange={(value) => updateDraft({ birthDate: value || null })}
         />
       </div>
-      <div className="account-basic-profile-field account-gender-field">
+      <div className="account-basic-profile-field">
         <label className="auth-label" htmlFor="account-gender">{t('性别', 'Gender')}</label>
-        <select
-          id="account-gender"
-          className="auth-input account-basic-profile-select"
-          value={draft.gender ?? ''}
-          disabled={saving}
-          onChange={(event) => updateDraft({ gender: (event.target.value || null) as AccountGender | null })}
-        >
-          <option value="" hidden>{t('未填写', 'Not set')}</option>
-          {genderOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-        </select>
+        <div className="account-gender-select">
+          <select
+            id="account-gender"
+            className="auth-input account-basic-profile-select"
+            value={draft.gender ?? ''}
+            disabled={saving}
+            onChange={(event) => updateDraft({ gender: (event.target.value || null) as AccountGender | null })}
+          >
+            <option value="" hidden>{t('未填写', 'Not set')}</option>
+            {genderOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <ChevronDown size={14} aria-hidden="true" />
+        </div>
       </div>
       </div>
-      <div className="account-basic-profile-field account-location-field">
+      <div className="account-basic-profile-field">
         <label
           className="auth-label"
           id="account-country-label"
@@ -627,6 +629,7 @@ function BasicProfileEditor() {
         <div className="account-location-region">
           <CompactSelect
             id="account-location"
+            showArrow
             ariaLabel={t('地区', 'Location')}
             label={draft.regionCode
               ? [selectedRegion ? regionLabel(selectedRegion) : draft.regionCode, draft.cityName ? cityLabel(draft.cityName) : null].filter(Boolean).join(' / ')
@@ -686,10 +689,12 @@ function BasicProfileEditor() {
       </div>
       {error && <p className="auth-error" role="alert">{error}</p>}
       {saved && <p className="auth-hint" role="status">{t('基本资料已保存。', 'Basic profile saved.')}</p>}
-      <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !dirty}>
-        {saving && <Loader2 size={14} className="auth-spin" />}
-        {t('保存', 'Save')}
-      </button>
+      <div className="account-basic-profile-actions">
+        <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !dirty}>
+          {saving && <Loader2 size={14} className="auth-spin" />}
+          {t('保存', 'Save')}
+        </button>
+      </div>
     </form>
   );
 }
@@ -776,7 +781,7 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
   // The native Apps reuse this page instead of maintaining a second account UI.
   // A provider-tagged system-Browser handoff may expose the canonical SSO buttons;
   // preserve that provider and the PKCE continuation across account-local hops.
-  const accountHref = (nextView?: 'signin' | 'delete' | 'submissions') => {
+  const accountHref = (nextView?: 'signin' | 'delete') => {
     const params = new URLSearchParams(embedded ? { settings: 'account' } : undefined);
     if (nextView) params.set('view', nextView);
     if (linkProvider === 'apple') {
@@ -848,20 +853,15 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isAdmin = hasAdminAccess(user);
+  const cardAccess = useAccountCardAccess(mode === 'me' && view === 'main' && !pendingIdentity ? user : null);
+
   if (mode === 'wait') return <div className="account-page" />;
 
   // 我的公开页入口 —— 只有绑了 WCA 的账号才有;学习进度是本地公式标记,人人都有。
   // 没绑的人在原位看到「绑定 WCA 账号」:注册那步跳过了、或后来才拿到 WCA ID,都从这里回来。
   const wcaId = user?.wcaId;
-  const isAdmin = hasAdminAccess(user);
   const cards = [
-    {
-      key: 'onboarding',
-      href: '/?guide=true',
-      icon: <Lightbulb size={22} className="account-card-icon" />,
-      title: tr({ zh: '新手指南', en: 'Beginner guide' }),
-    },
-
     ...(wcaId ? [
       {
         key: 'wca',
@@ -884,56 +884,42 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
         desc: tr({ zh: '把比赛成绩、个人纪录和复盘接进来', en: 'Bring your results, records and reconstructions here' }),
       },
     ]),
-    { key: 'workspace', href: '/admin/team', icon: <Building2 size={22} className="account-card-icon" />, title: tr({ zh: '工作台', en: 'Workspace' }) },
-    { key: 'team', href: '/dev/team', icon: <Users size={22} className="account-card-icon" />, title: tr({ zh: '团队手册', en: 'Team handbook' }) },
     {
       key: 'progress',
       href: '/alg/progress',
       icon: <GraduationCap size={22} className="account-card-icon" />,
       title: tr({ zh: '学习进度', en: 'Learning Progress' }),
     },
-    {
+    ...(cardAccess.learning ? [{
       key: 'learning-center',
       href: '/learn',
       icon: <BookOpen size={22} className="account-card-icon" />,
       title: tr({ zh: '学习中心', en: 'Learning Center' }),
-    },
-    {
-      key: 'enterprise',
-      href: '/org',
-      icon: <Building2 size={22} className="account-card-icon" />,
-      title: tr({ zh: '企业信息', en: 'Enterprise' }),
-    },
+    }] : []),
     {
       key: 'friends',
       href: '/friends',
       icon: <Users size={22} className="account-card-icon" />,
       title: tr({ zh: '好友', en: 'Friends' }),
     },
-    {
+    ...(cardAccess.vault ? [{
       key: 'vault',
       href: '/vault',
       icon: <LockKeyhole size={22} className="account-card-icon" />,
       title: tr({ zh: '私密资料库', en: 'Private vault' }),
-    },
+    }] : []),
     {
       key: 'notifications',
       href: '/notifications',
       icon: <Bell size={22} className="account-card-icon" />,
       title: tr({ zh: '消息', en: 'Notifications' }),
     },
-    ...(isAdmin ? [
-      {
-        key: 'mcp', href: '/account/mcp', icon: <LockKeyhole size={22} className="account-card-icon" />,
-        title: tr({ zh: 'ChatGPT 只读连接', en: 'ChatGPT read-only connection' }),
-      },
-      {
-        key: 'submissions',
-        href: accountHref('submissions'),
-        icon: <Inbox size={22} className="account-card-icon" />,
-        title: tr({ zh: '公式投稿', en: 'Algorithm submissions' }),
-      },
-    ] : []),
+    ...(cardAccess.workspace ? [{
+      key: 'workspace',
+      href: '/admin/team',
+      icon: <Building2 size={22} className="account-card-icon" />,
+      title: tr({ zh: '工作台', en: 'Workspace' }),
+    }] : []),
   ];
 
   return (
@@ -1006,13 +992,21 @@ export default function AccountSettings({ embedded = false }: { embedded?: boole
 
           {view === 'signin' ? (
             <div className="account-settings-layout">
-              <section className="account-settings-profile">
-              <DisplayNameEditor />
-              <AppLink href="/account/verify" className="account-card account-profile-editor" prefetch={false}>
-                <IdCard size={22} className="account-card-icon" />
-                <span className="account-card-title">{t('实名认证', 'Identity Verification')}</span>
-              </AppLink>
-              </section>
+              <div className="account-settings-profile">
+                <AccountProfileSections />
+                <div className="account-settings-links">
+                  <AppLink href="/account/verify" className="account-card" prefetch={false}>
+                    <IdCard size={20} className="account-card-icon" aria-hidden="true" />
+                    <span className="account-card-body account-card-title">{t('实名认证', 'Identity Verification')}</span>
+                    <ChevronRight size={16} className="account-entry-chevron" aria-hidden="true" />
+                  </AppLink>
+                  <AppLink href="/vault" className="account-card" prefetch={false}>
+                    <LockKeyhole size={20} className="account-card-icon" aria-hidden="true" />
+                    <span className="account-card-body account-card-title">{t('私密资料库', 'Private vault')}</span>
+                    <ChevronRight size={16} className="account-entry-chevron" aria-hidden="true" />
+                  </AppLink>
+                </div>
+              </div>
               <section className="account-creds">
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
               <AccountPanel

@@ -104,7 +104,13 @@ export default function AdminPage() {
           </AppLink>
         ))}
       </nav>}
-      {section === 'system' && view === 'monitoring' && <><AssistantMonitoring /><BootDiagnostics /></>}
+      {section === 'system' && view === 'monitoring' && <>
+        <AppLink href="/account/mcp" className="admin-hub__account-link" prefetch={false}>
+          {t('ChatGPT 只读连接', 'ChatGPT read-only connection')}
+        </AppLink>
+        <AssistantMonitoring />
+        <BootDiagnostics />
+      </>}
       {section === 'system' && view === 'tax' && <section aria-labelledby="admin-tax-title">
         <h2 id="admin-tax-title" className="admin-dashboard__tools-title">{t('税务办理', 'Tax filing')}</h2>
         <nav className="admin-hub__nav" aria-label={t('官方办税入口', 'Official tax portals')}>

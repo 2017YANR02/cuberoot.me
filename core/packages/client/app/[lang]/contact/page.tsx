@@ -11,6 +11,7 @@ import {
   type ContactText,
 } from '@cuberoot/shared/contact';
 import BackHome from '@/components/BackHome';
+import AppLink from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import ContactDetails from '@/components/ContactDetails';
 import { useHashHighlight } from '@/hooks/useHashHighlight';
@@ -55,6 +56,7 @@ export default function ContactPage() {
       <section id="contact-details" className="contact-profile">
         <div className="contact-profile-copy">
           <ContactDetails />
+          <p><AppLink href="/?guide=true" prefetch={false}>{tr({ zh: '新手指南', en: 'Beginner guide' })}</AppLink></p>
         </div>
       </section>
 

@@ -673,6 +673,7 @@ html[data-theme=dark] .wp-page {
 .wp-students-table .wp-th-student,
 .wp-students-table .wp-cell-student { width: 1px; padding-left: 16px; }
 .wp-student-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 16px 4px; }
+.wp-student-signature { max-width: 28rem; margin: 24px 16px 0; }
 .wp-student-event-filter { --evsel-margin: 4px 0; }
 .wp-student-heading { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; transform: translateY(1px); }
 .wp-student-manage-link {
