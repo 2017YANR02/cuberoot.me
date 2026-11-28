@@ -6,17 +6,17 @@ import { InstalledSignIn } from './InstalledSignIn';
 import './credential-forms.css';
 import './account-home.css';
 
-export type AccountPage = 'home' | 'sign-in' | 'profile' | 'security' | 'membership';
+export type AccountPage = 'home' | 'sign-in' | 'recover-password' | 'profile' | 'security' | 'membership';
 
-export function AccountBack({ language, onBack }: { language: SupportedLanguage; onBack: () => void }) {
-  return <button className="installed-account-back" aria-label={{ zh: '返回「我的」', en: 'Back to My account' }[language]}
+export function AccountBack({ language, onBack, label }: { language: SupportedLanguage; label?: string; onBack: () => void }) {
+  return <button className="installed-account-back" aria-label={label ?? { zh: '返回「我的」', en: 'Back to My account' }[language]}
     type="button" onClick={onBack}><ChevronLeft aria-hidden="true" size={22} /></button>;
 }
 
 export function AccountHome({ auth, language, page, onNavigate, onSettings, onLogout, openPolicy }: {
   auth: InstalledAppAuth;
   language: SupportedLanguage;
-  page: 'home' | 'sign-in';
+  page: 'home' | 'sign-in' | 'recover-password';
   onNavigate: (page: AccountPage) => void;
   onSettings: () => void;
   onLogout: () => void;
@@ -26,14 +26,16 @@ export function AccountHome({ auth, language, page, onNavigate, onSettings, onLo
   const user = auth.session?.user;
   const avatar = user?.avatar;
   const avatarUrl = avatar?.startsWith('/') && !avatar.startsWith('//') ? `https://cuberoot.me${avatar}` : avatar;
-  if (page === 'sign-in') {
-    return <section className="installed-account" aria-label={t('登录 / 注册', 'Sign in / up')}>
+  if (page !== 'home') {
+    const recovering = page === 'recover-password';
+    const title = recovering ? t('找回密码', 'Reset password') : t('登录 / 注册', 'Sign in / up');
+    return <section className="installed-account" aria-label={title}>
       <div className="installed-account-content">
         <header className="installed-account-header">
-          <AccountBack language={language} onBack={() => onNavigate('home')} />
-          <h1>{t('登录 / 注册', 'Sign in / up')}</h1>
+          <AccountBack language={language} label={recovering ? t('返回登录', 'Back to sign-in') : undefined} onBack={() => onNavigate(recovering ? 'sign-in' : 'home')} />
+          <h1>{title}</h1>
         </header>
-        <InstalledSignIn auth={auth} language={language} onClose={() => onNavigate('home')} openPolicy={openPolicy} />
+        <InstalledSignIn recovering={recovering} onRecoveryChange={open => onNavigate(open ? 'recover-password' : 'sign-in')} auth={auth} language={language} onClose={() => onNavigate('home')} openPolicy={openPolicy} />
       </div>
     </section>;
   }

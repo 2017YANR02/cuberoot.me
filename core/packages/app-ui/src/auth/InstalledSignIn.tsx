@@ -21,7 +21,9 @@ const PROVIDER_NAMES = {
 type AccountChoice = PendingIdentity & { stage: 'choose' | 'authenticate' | 'confirm'; expiresAt: number };
 type Providers = Awaited<ReturnType<typeof installedAuthProviders>>;
 
-export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
+export function InstalledSignIn({ auth, language, onClose, openPolicy, recovering, onRecoveryChange }: {
+  recovering: boolean;
+  onRecoveryChange: (open: boolean) => void;
   auth: InstalledAppAuth;
   language: SupportedLanguage;
   onClose: () => void;
@@ -171,8 +173,11 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
   };
 
   const forms = <CredentialFormsProvider t={t} port={port} autoFocus={false}>
-    <FirstPartyLogin existingOnly={verifyExisting} key={verifyExisting ? 'existing' : 'sign-in'} email={providers.email} phone={providers.phone} onDone={completeCredentials} />
-    {providers.social.length > 0 && (
+    <FirstPartyLogin recovering={recovering} onRecoveryChange={open => {
+      if (!open) candidate.current = null;
+      onRecoveryChange(open);
+    }} existingOnly={verifyExisting} key={verifyExisting ? 'existing' : 'sign-in'} email={providers.email} phone={providers.phone} onDone={completeCredentials} />
+    {!recovering && providers.social.length > 0 && (
       <>
         {(providers.email || providers.phone) && <div className="auth-divider"><span>{t('或', 'or')}</span></div>}
         <div className="auth-sso-list">

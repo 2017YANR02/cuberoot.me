@@ -52,7 +52,14 @@ export default function SettingsPanel({ embedded = false, onClose }: { embedded?
   return <section className={`settings-panel${embedded ? ' settings-panel-embedded' : ' settings-panel-page'}`} data-site-surface="panel" aria-labelledby={accountShell && !inlineSettings ? undefined : titleId} aria-label={accountShell && !inlineSettings ? t('设置', 'Settings') : undefined}>
     {(!accountShell || inlineSettings) && <header className="settings-panel-header">
       <div className="settings-panel-heading">
-        {!embedded && !accountShell && <PageBackLink className="settings-panel-back" label={t('返回', 'Back')} miniProgramTarget="account" />}
+        {!embedded && !accountShell && <PageBackLink className="settings-panel-back" label={t('返回', 'Back')} miniProgramTarget="account"
+          onClick={event => {
+            const recovery = contentRef.current?.querySelector<HTMLElement>('[data-password-recovery]');
+            if (!general && recovery && recovery.dataset.passwordRecovery === window.history.state?.accountPasswordRecovery) {
+              event.preventDefault();
+              window.history.back();
+            }
+          }} />}
         <h1 id={titleId}>{t('设置', 'Settings')}</h1>
       </div>
       {onClose && <button type="button" className="settings-panel-close" aria-label={t('关闭设置', 'Close settings')} onClick={onClose}><X size={20} aria-hidden="true" /></button>}

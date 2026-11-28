@@ -4,7 +4,8 @@ import type { AccountTranslate } from './credential-forms';
 
 export function accountChoiceCopy(provider: PendingIdentity['provider'], t: AccountTranslate) {
   const label = ACCOUNT_PROVIDER_LABELS[provider];
-  const name = t(label.zh, label.en);
+  const name = provider === 'email' ? t('邮箱', 'email')
+    : provider === 'phone' ? t('手机号', 'phone number') : t(label.zh, label.en);
   return {
     keepAccount: t('保留原账号的会员和资料。', 'Keep your existing membership and profile.'),
     verify: t(`请用原来的登录方式验证账号，再绑定${name}。不会创建新账号。`,

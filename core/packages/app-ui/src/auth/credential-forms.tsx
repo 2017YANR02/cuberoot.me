@@ -103,12 +103,17 @@ function CodeCells({ value, onChange, disabled }: {
  *   replace  换掉当前账号已有的那条(邮箱 / 手机号)—— 发码与 link 同一条链路,只有最后落库不同
  *   reset    仅手机找回密码;验证码和登录用途隔离,验证后签出 10 分钟重置授权
  */
-export function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace' | 'reset'; onDone: OnSignedIn }) {
+export function CodeFlow({ channel, mode, onDone, identifier }: {
+  channel: Channel; mode: 'login' | 'link' | 'replace' | 'reset'; onDone: OnSignedIn;
+  identifier?: { value: string; change: (value: string) => void };
+}) {
   const { t, port, autoFocus } = useCredentialForms();
   const targetId = useId();
-  const [target, setTarget] = useState('');
+  const [localTarget, setLocalTarget] = useState('');
+  const target = identifier?.value ?? localTarget;
+  const setTarget = identifier?.change ?? setLocalTarget;
   useEffect(() => {
-    if (mode === 'login' || mode === 'reset') setTarget(readRememberedLogin(channel));
+    if (mode === 'login' || mode === 'reset') setLocalTarget(readRememberedLogin(channel));
   }, [channel, mode]);
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'input' | 'code'>('input');
@@ -452,72 +457,62 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
  * 直接落到「设置新密码」表单(免旧密码,后端认这个 grant)。等价于别家的重置邮件链接,
  * 但不必再发第二种邮件、也不必再造一个 /reset-password 页。
  */
-function EmailAuth({ onDone, alternatives, existingOnly }: { onDone: OnSignedIn; alternatives: ReactNode; existingOnly: boolean }) {
-  const { t } = useCredentialForms();
-  const [email, setEmail] = useState('');
-  useEffect(() => { setEmail(readRememberedLogin('email')); }, []);
-  const [mode, setMode] = useState<'code' | 'password' | 'reset'>('code');
-  const [newPw, setNewPw] = useState(false); // 重置流验证通过,待设新密码
-
-  if (newPw) {
-    return (
-      <div className="auth-flow">
-        <p className="auth-hint">{t('邮箱已验证。设置一个新密码,下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')}</p>
-        <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
-        <button className="auth-textbtn" onClick={() => onDone()}>{t('跳过', 'Skip')}</button>
-      </div>
-    );
-  }
-  if (mode === 'password') {
-    return (
-      <>
-      <EmailPasswordFlow
-        email={email} setEmail={setEmail} onDone={onDone}
-        toCode={() => setMode('code')}
-        onForgot={() => setMode('reset')}
-      />
-      {alternatives}
-      </>
-    );
-  }
-  return (
-    <>
-    {!existingOnly && mode === 'code' && <RegistrationHint />}
-    <EmailCodeFlow alternatives={alternatives}
-      email={email} setEmail={setEmail}
-      reset={mode === 'reset'}
-      onDone={(info) => (mode === 'reset' ? setNewPw(true) : onDone(info))}
-      toPassword={() => setMode('password')}
-    />
-    </>
-  );
+interface RecoveryNavigation {
+  recovering: boolean;
+  onRecoveryChange: (open: boolean) => void;
 }
 
-/** 手机登录及独立的找回密码用途。普通登录码不能获得重置权限。 */
-function PhoneAuth({ onDone }: { onDone: OnSignedIn }) {
+function PasswordRecovery({ channel, onDone, children }: {
+  channel: Channel; onDone: OnSignedIn; children: (onVerified: () => void) => ReactNode;
+}) {
   const { t } = useCredentialForms();
-  const [reset, setReset] = useState(false);
-  const [newPw, setNewPw] = useState(false);
+  const [verified, setVerified] = useState(false);
+  if (!verified) return children(() => setVerified(true));
+  return <div className="auth-flow">
+    <p className="auth-hint">{channel === 'email'
+      ? t('邮箱已验证。设置一个新密码，下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')
+      : t('手机号已验证。现在可以为账号设置新密码。', 'Phone number verified. You can now set a new account password.')}</p>
+    <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
+    {channel === 'email' && <button className="auth-textbtn" onClick={() => onDone()}>{t('跳过', 'Skip')}</button>}
+  </div>;
+}
 
-  if (newPw) {
-    return (
-      <div className="auth-flow">
-        <p className="auth-hint">{t('手机号已验证。现在可以为账号设置新密码。', 'Phone number verified. You can now set a new account password.')}</p>
-        <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
-      </div>
-    );
-  }
+function EmailAuth({ onDone, alternatives, existingOnly, recovering, onRecoveryChange }: RecoveryNavigation & {
+  onDone: OnSignedIn; alternatives: ReactNode; existingOnly: boolean;
+}) {
+  const [email, setEmail] = useState('');
+  useEffect(() => { setEmail(readRememberedLogin('email')); }, []);
+  const [password, setPassword] = useState(false);
+  if (recovering) return <PasswordRecovery channel="email" onDone={onDone}>{onVerified =>
+    <EmailCodeFlow reset email={email} setEmail={setEmail} onDone={onVerified} toPassword={() => onRecoveryChange(false)} />
+  }</PasswordRecovery>;
+  if (password) return <>
+    <EmailPasswordFlow email={email} setEmail={setEmail} onDone={onDone}
+      toCode={() => setPassword(false)} onForgot={() => onRecoveryChange(true)} />
+    {alternatives}
+  </>;
+  return <>
+    {!existingOnly && <RegistrationHint />}
+    <EmailCodeFlow email={email} setEmail={setEmail} onDone={onDone}
+      alternatives={alternatives} toPassword={() => setPassword(true)} />
+  </>;
+}
 
-  return (
-    <>
-      {reset && <p className="auth-hint">{t('给已绑定的手机号发一个验证码,验证后即可设置新密码。', "We'll text your linked phone number a code — verify it and you can set a new password.")}</p>}
-      <CodeFlow key={reset ? 'reset' : 'login'} channel="phone" mode={reset ? 'reset' : 'login'} onDone={reset ? () => setNewPw(true) : onDone} />
-      <p className="auth-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
-      <button className="auth-textbtn" onClick={() => setReset((value) => !value)}>
-        {reset ? t('返回手机号登录', 'Back to phone sign-in') : t('用手机号重置密码', 'Reset password with phone')}
-      </button>
-    </>
-  );
+function PhoneAuth({ onDone, recovering, onRecoveryChange }: RecoveryNavigation & { onDone: OnSignedIn }) {
+  const { t } = useCredentialForms();
+  const [phone, setPhone] = useState('');
+  useEffect(() => { setPhone(readRememberedLogin('phone')); }, []);
+  const identifier = { value: phone, change: setPhone };
+  if (recovering) return <PasswordRecovery channel="phone" onDone={onDone}>{onVerified => <>
+    <p className="auth-hint">{t('给已绑定的手机号发一个验证码，验证后即可设置新密码。', "We'll text your linked phone number a code to reset your password.")}</p>
+    <CodeFlow channel="phone" mode="reset" identifier={identifier} onDone={onVerified} />
+    <button className="auth-textbtn" onClick={() => onRecoveryChange(false)}>{t('返回手机号登录', 'Back to phone sign-in')}</button>
+  </>}</PasswordRecovery>;
+  return <>
+    <CodeFlow channel="phone" mode="login" identifier={identifier} onDone={onDone} />
+    <p className="auth-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
+    <button className="auth-textbtn" onClick={() => onRecoveryChange(true)}>{t('用手机号重置密码', 'Reset password with phone')}</button>
+  </>;
 }
 
 /**
@@ -601,7 +596,7 @@ function RegistrationHint() {
   )}</p>;
 }
 
-export function FirstPartyLogin({ email, phone, onDone, existingOnly = false }: {
+export function FirstPartyLogin({ email, phone, onDone, existingOnly = false, ...recovery }: RecoveryNavigation & {
   email: boolean; phone: boolean; onDone: OnSignedIn; existingOnly?: boolean;
 }) {
   const { t } = useCredentialForms();
@@ -613,11 +608,11 @@ export function FirstPartyLogin({ email, phone, onDone, existingOnly = false }: 
       {channel === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}
     </button>
   );
-  if (channel === 'email') return <EmailAuth existingOnly={existingOnly} onDone={onDone} alternatives={switchChannel} />;
+  if (channel === 'email') return <EmailAuth {...recovery} existingOnly={existingOnly} onDone={onDone} alternatives={switchChannel} />;
   if (channel === 'phone') return <>
-    {!existingOnly && <RegistrationHint />}
-    <PhoneAuth onDone={onDone} />
-    {switchChannel}
+    {!existingOnly && !recovery.recovering && <RegistrationHint />}
+    <PhoneAuth {...recovery} onDone={onDone} />
+    {!recovery.recovering && switchChannel}
   </>;
   return null;
 }

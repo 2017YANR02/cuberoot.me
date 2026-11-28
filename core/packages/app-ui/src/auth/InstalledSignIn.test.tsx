@@ -55,7 +55,7 @@ async function render(handler: (path: string, body: Record<string, unknown>) => 
     busy: false, error: false, loading: false, session: null,
   };
   const onClose = vi.fn();
-  await act(async () => root.render(<InstalledSignIn auth={auth} language="en" onClose={onClose} openPolicy={vi.fn()} />));
+  await act(async () => root.render(<InstalledSignIn recovering={false} onRecoveryChange={vi.fn()} auth={auth} language="en" onClose={onClose} openPolicy={vi.fn()} />));
   return { auth, onClose, request };
 }
 

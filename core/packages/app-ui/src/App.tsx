@@ -391,8 +391,8 @@ const TOOLS_PRELOAD_DELAY_MS = 250;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
-function isAccountDetailsPage(page: AccountPage): page is Exclude<AccountPage, 'home' | 'sign-in'> {
-  return page !== 'home' && page !== 'sign-in';
+function isAccountDetailsPage(page: AccountPage): page is Exclude<AccountPage, 'home' | 'sign-in' | 'recover-password'> {
+  return page === 'security' || page === 'membership' || page === 'profile';
 }
 
 type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings' | 'appearance';
@@ -494,7 +494,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [view, setView] = useState<AppView>('timer');
   const [accountPage, setAccountPage] = useState<AccountPage>('home');
   const accountPageRef = useRef<AccountPage>('home');
-  const [accountFramePage, setAccountFramePage] = useState<Exclude<AccountPage, 'home' | 'sign-in'>>('profile');
+  const [accountFramePage, setAccountFramePage] = useState<Exclude<AccountPage, 'home' | 'sign-in' | 'recover-password'>>('profile');
   const accountDetails = isAccountDetailsPage(accountPage);
   const [accountDetailsReady, setAccountDetailsReady] = useState(false);
   const appearanceReturnRef = useRef<Exclude<AppView, 'appearance'>>('account');
@@ -2462,7 +2462,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       if (toolsBlePickerRef.current) { toolsBlePickerRef.current.cancel(); return; }
       const current = viewRef.current;
       if (current === 'account' && accountPageRef.current !== 'home' && webDepthRef.current.account === 0) {
-        navigateAccount('home');
+        navigateAccount(accountPageRef.current === 'recover-password' ? 'sign-in' : 'home');
         return;
       }
       if (current === 'appearance') { setView(appearanceReturnRef.current); return; }
@@ -4265,7 +4265,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const toolsSearchExpanded = canShowToolsSearch && toolsSearchOpen;
   const searchKeyboardVisible = toolsSearchExpanded && dockedKeyboardTop !== null;
   const [accountInputViewport, setAccountInputViewport] = useState<number | null>(null);
-  const signingIn = view === 'account' && accountPage === 'sign-in';
+  const signingIn = view === 'account' && (accountPage === 'sign-in' || accountPage === 'recover-password');
   useEffect(() => {
     if (!signingIn || host.addDockedKeyboardListener) return;
     const focused = () => {
@@ -5197,7 +5197,7 @@ children: <>
           />
         )}
 
-        {view === 'account' && (accountPage === 'home' || accountPage === 'sign-in') && (
+        {view === 'account' && !isAccountDetailsPage(accountPage) && (
           <div style={{ '--account-nav-clearance': `${embeddedBottom}px` } as CSSProperties}>
             <AccountHome auth={auth} language={language} page={accountPage} onNavigate={navigateAccount}
               onSettings={openAppAppearance} onLogout={() => void logoutEverywhere()}

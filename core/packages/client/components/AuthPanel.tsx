@@ -10,7 +10,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 //  2. AccountPanel —— 已绑定身份 + 绑定新方式 + 设/改密码 + 解绑。同样只渲染于账户设置。
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { CopySuccessIcon } from '@/components/CopySuccessIcon';
 import { Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from '@app-foundation/icons/lucide';
 import { providerGlyphs } from '@cuberoot/app-ui/account-forms';
@@ -279,7 +279,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
       <LoginFormFields existingOnly firstPartyOnly={firstPartyOnly} onDone={authenticated} />
     </> : <>
       <h2 className="auth-title">{choiceCopy.title}</h2>
-      <p className="auth-hint">{matches && user ? accountLinkTarget(user.name, user.uid) : t('当前账号已更改，请重新登录要绑定的账号。', 'Your account changed. Sign in to the account you want to link.')}</p>
+      <p className="auth-hint">{matches && pending.expectedUid ? accountLinkTarget(user?.name, pending.expectedUid) : t('当前账号已更改，请重新登录要绑定的账号。', 'Your account changed. Sign in to the account you want to link.')}</p>
       <button type="button" className="auth-primary" disabled={busy || !matches} onClick={() => void complete('link')}>{t('确认绑定', 'Confirm linking')}</button>
       <button type="button" className="auth-textbtn" disabled={busy} onClick={() => updateIdentityChoice(pending.ticket, { stage: 'authenticate', expectedUid: undefined })}>{t('使用其他账号', 'Use another account')}</button>
     </>}
@@ -299,6 +299,22 @@ function LoginFormFields({
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const recoveryId = useId();
+  const [recovering, setRecovering] = useState(false);
+  useEffect(() => {
+    const restore = () => setRecovering(window.history.state?.accountPasswordRecovery === recoveryId);
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, [recoveryId]);
+  const changeRecovery = (open: boolean) => {
+    if (open) {
+      window.history.pushState({ ...window.history.state, accountPasswordRecovery: recoveryId }, '');
+      setRecovering(true);
+    } else {
+      if (window.history.state?.accountPasswordRecovery === recoveryId) window.history.back();
+      setRecovering(false);
+    }
+  };
   const loginWithWca = authActions.loginWithWca;
   const refresh = authActions.refresh;
   // 服务端已配置的登录方式:未配的(email/sms env 缺、google/三方没配)对应入口隐藏,配好 env 一
@@ -382,13 +398,15 @@ function LoginFormFields({
 
   const activeSocials = SOCIALS.filter((s) => s.key === 'apple' ? avail.apple : !!avail.social[s.key]);
   const hasCred = avail.email || avail.phone;
-  const hasSso = !firstPartyOnly && (avail.wca || googleOn || activeSocials.length > 0);
+  const hasSso = !recovering && !firstPartyOnly && (avail.wca || googleOn || activeSocials.length > 0);
 
   return (
     <>
-      <h2 className="auth-title">{t('登录 / 注册', 'Sign in / up')}</h2>
+      <h2 className="auth-title" data-password-recovery={recovering ? recoveryId : undefined}>
+        {recovering ? t('找回密码', 'Reset password') : t('登录 / 注册', 'Sign in / up')}
+      </h2>
 
-      <WebCredentialForms><FirstPartyLogin existingOnly={existingOnly} email={avail.email} phone={avail.phone} onDone={onDone} /></WebCredentialForms>
+      <WebCredentialForms><FirstPartyLogin recovering={recovering} onRecoveryChange={changeRecovery} existingOnly={existingOnly} email={avail.email} phone={avail.phone} onDone={onDone} /></WebCredentialForms>
 
       {hasCred && hasSso && <OrDivider />}
 
