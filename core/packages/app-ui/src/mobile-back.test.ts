@@ -74,7 +74,7 @@ describe('Android Back priority', () => {
     expect(app).toContain('onBlockingChange={setHistoryModalOpen}');
     expect(app).toContain('historyWorkspaceRef.current?.dismiss()');
     expect(app).toContain('if (statsOpenRef.current) { setStatsOpen(false); return; }');
-    expect(app).toContain('openOverlay !== null || statsOpen || historyModalOpen');
+    expect(app).toContain('const timerOverlayBlocking = timerPanelBlocking || openOverlay !== null');
     expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('<TimerSmartCubeDeviceModal');
     expect(app).toContain('overlayOpen: openOverlayRef.current !== null');

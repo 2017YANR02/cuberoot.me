@@ -673,7 +673,13 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const layoutEditingRef = useRef(false);
   const finishLayoutEditing = useCallback(() => { layoutEditingRef.current = false; setLayoutEditing(false); }, []);
   useEffect(() => { if (view !== 'timer' || timerMode !== 1) finishLayoutEditing(); }, [view, timerMode, finishLayoutEditing]);
-  const timerOverlayBlocking = layoutEditing || solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
+  const timerPanelBlocking = layoutEditing || solverBlocking || statsOpen || historyModalOpen || replayBlocking;
+  const timerOverlayBlocking = timerPanelBlocking || openOverlay !== null;
+  const topbarPickerOpen = openOverlay === TIMER_OVERLAY_IDS.practiceContent
+    || openOverlay === TIMER_OVERLAY_IDS.practiceMethod
+    || openOverlay === TIMER_OVERLAY_IDS.puzzlePicker
+    || openOverlay === TIMER_OVERLAY_IDS.scrambleSource;
+  const timerCoversNavigation = timerPanelBlocking || (openOverlay !== null && !topbarPickerOpen);
   const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay);
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
   const changeSolverSheet = useCallback((open: boolean) => {
@@ -2557,7 +2563,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [announce, closeHistorySolveDetail, copy.finishAttemptFirst, host, navigateAccount]);
 
   useEffect(() => {
-    const onFullscreenChange = () => setFullscreen(document.fullscreenElement !== null);
+    const onFullscreenChange = () => setFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener('fullscreenchange', onFullscreenChange);
     onFullscreenChange();
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
@@ -4259,7 +4265,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   const hideRunningChrome = timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings);
   const canShowNavigation = Boolean(store && !fullscreen && !hideRunningChrome && (!floatingNavigation
-    || (view !== 'settings' && !timerOverlayBlocking && !manualEntryOpen && !toolsBlePicker)));
+    || (view !== 'settings' && !timerCoversNavigation && !manualEntryOpen && !toolsBlePicker)));
   const canShowToolsSearch = Boolean(floatingNavigation && (toolsSearchReady || webChrome.tools) && canShowNavigation && view === 'tools'
     && connection === 'online' && webSurfaceStatus.tools === 'ready');
   const toolsSearchExpanded = canShowToolsSearch && toolsSearchOpen;

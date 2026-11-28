@@ -153,6 +153,20 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('keeps floating navigation and its clearance while the content picker is open', async () => {
+    vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} });
+    await act(async () => root.render(<App host={{ ...host, floatingNavigation: 'draggable' }} />));
+    const shell = container.querySelector('.app-shell[data-floating-navigation]')!;
+    const trigger = shell.querySelector<HTMLButtonElement>('.timer-practice-control--content button')!;
+    expect(shell.hasAttribute('data-navigation-covered')).toBe(false);
+    await act(async () => trigger.click());
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(shell.hasAttribute('data-navigation-covered')).toBe(false);
+    await act(async () => backListener?.());
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(shell.hasAttribute('data-navigation-covered')).toBe(false);
+  });
+
   it.each([false, true])('stops from the visible button and saves one DNF (disconnected: %s)', async (disconnected) => {
     const stopButton = () => [...container.querySelectorAll<HTMLButtonElement>('button')]
       .find(button => button.getAttribute('aria-label') === 'Stop (DNF)');

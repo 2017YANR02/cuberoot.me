@@ -139,7 +139,12 @@ export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, 
       const reserved = footer.hasAttribute('data-nav-clearance');
       const obstacles = Array.from(footer.querySelectorAll(
         '.shell-stat-rail, .shell-device-center, .timer-stage-rankings, .timer-stage-preview',
-      ), element => element.getBoundingClientRect())
+      ), element => {
+        const { left, right, top, bottom, width, height } = element.getBoundingClientRect();
+        // The stats button already includes 8px of horizontal padding around its text.
+        const inlineGap = element.classList.contains('shell-stat-rail') ? 0 : gap;
+        return { left: left - inlineGap, right: right + inlineGap, top, bottom, width, height };
+      })
         // Keep checking horizontal fit once the footer has moved above the capsule.
         .filter(rect => rect.width > 0 && rect.height > 0 &&
           (reserved || (rect.bottom + gap > top && rect.top - gap < bottom)))
@@ -147,7 +152,7 @@ export function useTimerNavigationAvoidance(nav: RefObject<HTMLElement | null>, 
 
       let left = center;
       for (const rect of obstacles) {
-        if (left < rect.right + gap && left + width > rect.left - gap) left = rect.right + gap;
+        if (left < rect.right && left + width > rect.left) left = rect.right;
       }
       const reserve = left > center && (keepCentered || left + width > frame.right - safeRight - gap);
       footer.toggleAttribute('data-nav-clearance', reserve);

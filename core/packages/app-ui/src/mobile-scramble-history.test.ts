@@ -239,7 +239,7 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('histForward(scrambleHistoryRef.current)');
     expect(app).toContain('const { wheelRef: gestureWheelRef } = useGestureWheel({');
     expect(app).toMatch(/active: storeLoaded\s+&& view !== 'settings'\s+&& timerVisible\s+&& !timerOverlayBlocking\s+&& !manualEntryOpen/);
-    expect(app).toContain('const timerOverlayBlocking = layoutEditing || solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking');
+    expect(app).toContain('const timerPanelBlocking = layoutEditing || solverBlocking || statsOpen || historyModalOpen || replayBlocking');
     expect(app).toMatch(/const modalState = \(\) => timerSoloModalState\(\s+layoutEditingRef\.current \|\| viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
     expect(app).toContain('|| statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current');
     expect(app).toContain('<GestureWheel ref={gestureWheelRef}');
