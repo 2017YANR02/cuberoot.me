@@ -171,6 +171,9 @@ describe('installed App GAN lifecycle integration', () => {
   it.each([false, true])('stops from the visible button and saves one DNF (disconnected: %s)', async (disconnected) => {
     const stopButton = () => [...container.querySelectorAll<HTMLButtonElement>('button')]
       .find(button => button.getAttribute('aria-label') === 'Stop (DNF)');
+    await vi.waitFor(() => {
+      expect(container.querySelector('.scramble-moves')?.textContent?.trim()).toBe('R');
+    }, { timeout: 3_000 });
     expect(stopButton()).toBeUndefined();
     await act(async () => move('R', 1_000));
     await act(async () => move('U', 2_000));

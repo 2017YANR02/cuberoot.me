@@ -19,6 +19,7 @@
     "{packages/client,apps/web}": {
       "entry": [
         "postcss.config.{js,mjs}",
+        "components/glass-utilities.css",
         "app/**/timer/_lib/bluetooth/{legacy_session,types}.ts",
         "app/**/timer/_lib/scramble/kociemba/{coords,kociemba.worker,randomstate}.ts",
         "lib/video-recon/engine/{capture,inference,move-search,move-search-side,pose}.worker.ts",
@@ -35,7 +36,7 @@
       "ignoreDependencies": ["playwright"]
     },
     "apps/desktop": {
-      "entry": ["src-tauri/src/tools-input.js"]
+      "entry": ["src-tauri/src/tools-input.js", "src/startup.css"]
     },
     "apps/harmony": {
       "entry": ["hvigorfile.ts", "entry/hvigorfile.ts"],
@@ -59,7 +60,8 @@
       "ignore": [
         "android/app/build/**",
         "android/app/src/main/assets/public/**",
-        "ios/App/App/public/**"
+        "ios/App/App/public/**",
+        "scripts/watch-tnoodle/build/**"
       ]
     },
     "packages/app-ui": {
