@@ -52,7 +52,8 @@ const snapshotLocation = staticVhost.match(/    location \^~ \/stats\/comp\/ \{[
 assert.ok(snapshotLocation, 'static snapshot location missing');
 mkdirSync(dir + '/stats/comp', { recursive: true });
 writeFileSync(dir + '/stats/comp/A.json', '{}');
-writeFileSync(dir+'/nginx.conf',`daemon off; pid ${dir}/nginx.pid; error_log ${dir}/error.log; events {} http { lua_package_path "/www/server/nginx/lib/lua/?.lua;;"; access_log off; proxy_cache_path ${dir}/cache keys_zone=mock:1m; set_real_ip_from 127.0.0.1; real_ip_header X-Test-IP; map $http_x_test_cn $cuberoot_cn_exempt { default 0; 1 1; } ${maps} server { listen 127.0.0.1:${port}; server_name cuberoot.me; if ($cuberoot_lightpanda_denied) { return 403; } ${inc} root ${dir}; ${snapshotLocation}
+// Keep the loopback fixture and its private cache under the invoking user's UID.
+writeFileSync(dir+'/nginx.conf',`daemon off; master_process off; pid ${dir}/nginx.pid; error_log ${dir}/error.log; events {} http { lua_package_path "/www/server/nginx/lib/lua/?.lua;;"; access_log off; proxy_cache_path ${dir}/cache keys_zone=mock:1m; set_real_ip_from 127.0.0.1; real_ip_header X-Test-IP; map $http_x_test_cn $cuberoot_cn_exempt { default 0; 1 1; } ${maps} server { listen 127.0.0.1:${port}; server_name cuberoot.me; if ($cuberoot_lightpanda_denied) { return 403; } ${inc} root ${dir}; ${snapshotLocation}
   location ^~ /api/comp/ {
     proxy_cache mock;
     add_header X-Cache $upstream_cache_status;
@@ -67,6 +68,7 @@ writeFileSync(dir+'/nginx.conf',`daemon off; pid ${dir}/nginx.pid; error_log ${d
   }
   location / { content_by_lua_block { ngx.say('mock page') } } } }`);
 execFileSync('nginx',['-t','-p',dir+'/','-c',dir+'/nginx.conf']);const child=spawn('nginx',['-p',dir+'/','-c',dir+'/nginx.conf']);
+const nginxExited = once(child, 'exit');
 async function get(path,headers={}){return new Promise((resolve,reject)=> {const req=request({host:'127.0.0.1',port,path,headers:{host:'cuberoot.me',...headers}},res=>{res.resume();res.on('end',()=>resolve({status:res.statusCode,headers:res.headers}));});req.on('error',reject);req.end();});}
 try {
 for(let n=0;n<40;n++){try{await get('/ready');break;}catch{await new Promise(r=>setTimeout(r,50));}}
@@ -173,4 +175,4 @@ for (const path of ['/zh', '/zh/timer', '/robots.txt', '/api/comp/access', '/sta
   assert.equal((await get(path, listed)).status, 200, path);
 }
 console.log('PASS: site verification, global competition snapshots and verified access, expiry, and scoped permanent source denies');
-} finally { child.kill('SIGQUIT');await once(child,'exit');await new Promise(r=>auth.close(r));}
+} finally { child.kill('SIGQUIT');await nginxExited;await new Promise(r=>auth.close(r));}
