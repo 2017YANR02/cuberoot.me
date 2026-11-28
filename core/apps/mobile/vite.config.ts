@@ -48,6 +48,9 @@ export default defineConfig({
       });
     },
     generateBundle() {
+      if (process.env.CUBEROOT_IOS_BUILD === '1') {
+        this.emitFile({ type: 'asset', fileName: 'guest-tour.js', source: readFileSync(resolve('@cuberoot/app-ui/guest-tour.js'), 'utf8') });
+      }
       this.emitFile({ type: 'asset', fileName: 'startup-mark.svg', source: startupMark });
       this.emitFile({
         type: 'asset',

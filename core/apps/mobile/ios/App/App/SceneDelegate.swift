@@ -87,6 +87,30 @@ final class NativeFilesPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 }
 
+// WebKit gives the cross-site Tools frame session-only localStorage. Mirror
+// just the website's guest tour flag across launches. Accounts use the API.
+private final class GuestTourPreference: NSObject, WKScriptMessageHandler {
+    private static let key = "tools.guestTourSeen"
+    private static let handler = "cuberootGuestTourSeen"
+
+    static func install(in controller: WKUserContentController) {
+        controller.add(GuestTourPreference(), contentWorld: .defaultClient, name: handler)
+        let seen = UserDefaults.standard.bool(forKey: key)
+        guard let url = Bundle.main.url(forResource: "guest-tour", withExtension: "js", subdirectory: "public"),
+              let body = try? String(contentsOf: url, encoding: .utf8) else { return }
+        let script = "((seen) => {\n" + body + "\n})(\(seen));"
+        controller.addUserScript(WKUserScript(source: script, injectionTime: .atDocumentStart,
+                                              forMainFrameOnly: false, in: .defaultClient))
+    }
+
+    func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+        let frame = message.frameInfo
+        guard !frame.isMainFrame, frame.securityOrigin.protocol == "https",
+              frame.securityOrigin.host == "cuberoot.me", message.body as? Bool == true else { return }
+        UserDefaults.standard.set(true, forKey: Self.key)
+    }
+}
+
 private final class EmbeddedSearchKeyboard: NSObject, WKScriptMessageHandler {
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
         let frame = message.frameInfo
@@ -130,6 +154,9 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
         if #available(iOS 16.4, *) { bridge?.webView?.isInspectable = true }
         #endif
         bridge?.registerPluginInstance(viewportPlugin)
+        if let controller = bridge?.webView?.configuration.userContentController {
+            GuestTourPreference.install(in: controller)
+        }
         if let controller = bridge?.webView?.configuration.userContentController,
            let asset = Bundle.main.url(forResource: "embedded-layout", withExtension: "js", subdirectory: "public"),
            let script = try? String(contentsOf: asset, encoding: .utf8) {

@@ -145,8 +145,9 @@ pub fn run() {
             #[cfg(target_os = "macos")]
             if let Some(window) = _app.get_webview_window("main") {
                 window.with_webview(|view| {
-                    unsafe extern "C" { fn cuberoot_install_tools_search(view: *mut std::ffi::c_void); }
-                    unsafe { cuberoot_install_tools_search(view.inner()); }
+                    unsafe extern "C" { fn cuberoot_install_tools_search(view: *mut std::ffi::c_void, guest_tour: *const std::ffi::c_char); }
+                    let script = concat!(include_str!("../../../../packages/app-ui/src/guest-tour.js"), "\0");
+                    unsafe { cuberoot_install_tools_search(view.inner(), script.as_ptr().cast()); }
                 })?;
             }
             Ok(())
