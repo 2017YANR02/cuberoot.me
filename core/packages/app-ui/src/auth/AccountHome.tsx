@@ -51,9 +51,9 @@ export function AccountHome({ auth, language, page, onNavigate, onSettings, onLo
                 : <span className="installed-account-avatar"><UserRound aria-hidden="true" size={25} /></span>}
               <div><strong>{user.name || t('CubeRoot 用户', 'CubeRoot user')}</strong>
                 <span>{user.wcaId || `ID ${user.uid}`}</span></div>
-              <button className="installed-account-back installed-account-membership" type="button"
-                aria-label={t('订阅 Pro', 'Subscribe to Pro')} onClick={() => onNavigate('membership')}>
-                <Crown aria-hidden="true" size={22} />
+              <button className="installed-account-membership" type="button" onClick={() => onNavigate('membership')}>
+                <Crown aria-hidden="true" size={19} />
+                {t('订阅 Pro', 'Subscribe to Pro')}
               </button>
             </div>
           ) : <button className="auth-primary installed-account-login" type="button" onClick={() => onNavigate('sign-in')}>

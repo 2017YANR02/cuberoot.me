@@ -23,7 +23,23 @@
 .installed-account-detail-header { position: relative; z-index: 2; display: flex; flex: 0 0 auto; align-items: center; gap: 6px; padding-inline: 6px; border-bottom: 1px solid var(--border-default); }
 .installed-account-identity { display: flex; align-items: center; gap: 12px; padding-block: 4px 18px; }
 .installed-account-identity > div { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
-.installed-account-membership { color: var(--accent); }
+.installed-account-membership {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 44px;
+  margin-inline-start: auto;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.installed-account-membership svg { flex-shrink: 0; }
 .installed-account-identity > div > span { color: var(--muted-foreground); font-size: 0.9rem; }
 .installed-account-avatar {
   display: grid;
