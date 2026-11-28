@@ -61,6 +61,7 @@ const nextConfig: NextConfig = {
   // one barely-used helper drags the whole bundle. This hint tells Next
   // to rewrite imports per-symbol so unused branches drop.
   experimental: {
+    ...(!isProd && process.env.CUBEROOT_DEV_MEMORY_CACHE === "1" && { turbopackFileSystemCacheForDev: false }),
     optimizePackageImports: ["three", "maplibre-gl", "katex"],
     // Vercel's 8 GB builder shares memory between Turbopack and Next's workers.
     // A one-shot build can discard the persistent dependency graph after compilation.
