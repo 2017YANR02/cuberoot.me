@@ -154,7 +154,7 @@ afterEach(async () => {
 
 describe('installed App GAN lifecycle integration', () => {
   it('keeps floating navigation and its clearance while the content picker is open', async () => {
-    vi.stubGlobal('IntersectionObserver', class { observe() {} disconnect() {} });
+    vi.stubGlobal('IntersectionObserver', class { observe() {} unobserve() {} disconnect() {} });
     await act(async () => root.render(<App host={{ ...host, floatingNavigation: 'draggable' }} />));
     const shell = container.querySelector('.app-shell[data-floating-navigation]')!;
     const trigger = shell.querySelector<HTMLButtonElement>('.timer-practice-control--content button')!;
@@ -277,6 +277,184 @@ describe('installed App GAN lifecycle integration', () => {
     expect(container.querySelector('.installed-account-signin')).toBe(form);
     expect(container.querySelector('iframe')).toBeNull();
     expect(container.textContent).toContain('Account sign-in is temporarily unavailable. Try again.');
+  });
+
+  it.each(['My space', 'Account & security'])('opens %s after one web handoff retry without losing native sign-in', async (label) => {
+    const logout = vi.fn(async () => undefined);
+    const refreshAccountSession = vi.fn(async () => undefined);
+    const issueWebSessionTicket = vi.fn(async () => ({ ticket: 'a'.repeat(43), expiresIn: 90 }));
+    const accountHost: InstalledAppHost = { ...host, getNetworkStatus: async () => true,
+      useAuth: () => ({ ...host.useAuth('en'), logout, refreshAccountSession,
+        issueWebSessionTicket,
+        session: { token: 'test-session', user: {
+        uid: 7, wcaId: null, name: 'Test', avatar: '', avatarSource: 'auto', avatarPreset: null, isAdmin: false,
+      } } }),
+    };
+    await act(async () => root.render(<App host={accountHost} />));
+    await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!.click());
+    const detail = [...container.querySelectorAll<HTMLButtonElement>('.installed-account-action')]
+      .find(button => button.textContent?.trim() === label)!;
+    await act(async () => detail.click());
+    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
+    const post = vi.spyOn(frame.contentWindow!, 'postMessage');
+    const send = (data: object, source = frame.contentWindow) => act(async () => window.dispatchEvent(new MessageEvent('message', {
+      origin: 'https://cuberoot.me', source, data,
+    })));
+    expect(issueWebSessionTicket).toHaveBeenCalledOnce();
+    expect(frame.getAttribute('aria-hidden')).toBe('true');
+    expect(frame.closest('section')?.querySelector('[role="status"]')).not.toBeNull();
+    const clear = { type: 'cuberoot:mobile:auth-clear', surface: 'account' };
+    const navigation = { type: 'cuberoot:mobile:navigation', surface: 'account', href: frame.src, depth: 0 };
+    await send(clear);
+    expect(container.querySelector('.web-surface--account iframe')).toBe(frame);
+    await send(navigation);
+    const handoff = post.mock.calls.find(([data]) => data.type === 'cuberoot:mobile:web-session')?.[0];
+    expect(handoff?.requestId).toBeDefined();
+    await act(async () => frame.dispatchEvent(new Event('load')));
+    await send({ type: 'cuberoot:mobile:navigation', surface: 'account', href: frame.src, depth: 0 });
+    expect(issueWebSessionTicket).toHaveBeenCalledOnce();
+    expect(post.mock.calls.filter(([data]) => data.type === 'cuberoot:mobile:web-session')).toHaveLength(1);
+    expect(frame.getAttribute('aria-hidden')).toBe('true');
+
+    const firstSource = frame.contentWindow;
+    await send(clear, firstSource);
+    const retriedFrame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
+    expect(retriedFrame).not.toBe(frame);
+    expect(issueWebSessionTicket).toHaveBeenCalledTimes(2);
+    expect(retriedFrame.getAttribute('aria-hidden')).toBe('true');
+    expect(logout).not.toHaveBeenCalled();
+
+    const retryPost = vi.spyOn(retriedFrame.contentWindow!, 'postMessage');
+    const retrySource = retriedFrame.contentWindow;
+    const loadingMark = retriedFrame.closest('section')?.querySelector('.loading-brand-mark');
+    const documentStarted = (accountDocumentId: string) => send({
+      type: 'cuberoot:mobile:embedded-top-ready', surface: 'account', accountDocumentId,
+    }, retrySource);
+    const ownPage = label === 'My space' ? 'profile' : 'security';
+    const contentReady = (documentId: string, page = ownPage) => {
+      const href = new URL(retriedFrame.src);
+      if (page === 'security') href.searchParams.set('view', 'signin');
+      else href.searchParams.delete('view');
+      return send({ type: 'cuberoot:mobile:embedded-account-content-ready', documentId, page, href: href.href }, retrySource);
+    };
+    const originalDocument = 'a'.repeat(36);
+    const stableDocument = label === 'My space' ? 'b'.repeat(36) : originalDocument;
+    await documentStarted(originalDocument);
+    await send(navigation, retrySource);
+    const retryHandoff = retryPost.mock.calls.find(([data]) => data.type === 'cuberoot:mobile:web-session')?.[0];
+    expect(retryHandoff?.requestId).not.toBe(handoff.requestId);
+    await send({ type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: handoff.requestId, ok: true }, firstSource);
+    expect(retriedFrame.getAttribute('aria-hidden')).toBe('true');
+    await send({ type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: retryHandoff.requestId, ok: true,
+      ...(stableDocument === originalDocument && { keepsDocument: true }) }, retrySource);
+    expect(retriedFrame.getAttribute('aria-hidden')).toBe('true');
+    if (stableDocument !== originalDocument) {
+      await contentReady(originalDocument);
+      expect(retriedFrame.getAttribute('aria-hidden')).toBe('true');
+      await documentStarted(stableDocument);
+    }
+    expect(loadingMark).toBeTruthy();
+    expect(retriedFrame.closest('section')?.querySelector('.loading-brand-mark')).toBe(loadingMark);
+    await contentReady(stableDocument);
+    expect(retriedFrame.getAttribute('aria-hidden')).toBe('false');
+
+    const backToMe = () => act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Back to My account"]')!.click());
+    const openDetail = (name: string) => act(async () => [...container.querySelectorAll<HTMLButtonElement>('.installed-account-action')]
+      .find(button => button.textContent?.trim() === name)!.click());
+    await backToMe();
+    await openDetail(label);
+    expect(container.querySelector('.web-surface--account iframe')).toBe(retriedFrame);
+    expect(retriedFrame.getAttribute('aria-hidden')).toBe('false');
+    expect(issueWebSessionTicket).toHaveBeenCalledTimes(2);
+
+    await backToMe();
+    const otherPage = ownPage === 'profile' ? 'security' : 'profile';
+    const otherLabel = otherPage === 'security' ? 'Account & security' : 'My space';
+    await openDetail(otherLabel);
+    expect(retriedFrame.closest('section')?.hidden).toBe(true);
+    expect(retryPost).toHaveBeenCalledWith({
+      type: 'cuberoot:mobile:embedded-account-switch', surface: 'account', documentId: stableDocument, page: otherPage,
+    }, 'https://cuberoot.me');
+    await contentReady(stableDocument, otherPage);
+    expect(retriedFrame.closest('section')?.hidden).toBe(false);
+    expect(retriedFrame.closest('section')?.querySelector('header strong')?.textContent).toBe(otherLabel);
+
+    await send(clear, retriedFrame.contentWindow);
+    expect(logout).not.toHaveBeenCalled();
+    expect(issueWebSessionTicket).toHaveBeenCalledTimes(2);
+    expect(retriedFrame.closest('section')?.querySelector('[role="alert"] button')?.textContent).toBe('Try again');
+    await send({ ...clear, reason: 'user-action' }, retriedFrame.contentWindow);
+    expect(logout).toHaveBeenCalledOnce();
+    expect(refreshAccountSession).toHaveBeenCalledTimes(2);
+    expect(retriedFrame.closest('section')?.hidden).toBe(true);
+  });
+
+  it('keeps the Pro loading screen through the legacy reload until membership content is ready', async () => {
+    const issueWebSessionTicket = vi.fn(async () => ({ ticket: 'a'.repeat(43), expiresIn: 90 }));
+    const accountHost: InstalledAppHost = { ...host, getNetworkStatus: async () => true,
+      useAuth: () => ({ ...host.useAuth('en'), issueWebSessionTicket,
+        session: { token: 'test-session', user: {
+          uid: 7, wcaId: null, name: 'Test', avatar: '', avatarSource: 'auto', avatarPreset: null, isAdmin: false,
+        } },
+      }),
+    };
+    await act(async () => root.render(<App host={accountHost} />));
+    await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button[aria-label="Me"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.installed-account-membership')!.click());
+    const frame = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe')!;
+    const source = frame.contentWindow!;
+    const post = vi.spyOn(source, 'postMessage');
+    const logo = frame.closest('section')?.querySelector('.loading-brand-mark');
+    const send = (data: object) => act(async () => window.dispatchEvent(new MessageEvent('message', {
+      origin: 'https://cuberoot.me', source, data,
+    })));
+    const documentStarted = (accountDocumentId: string) => send({
+      type: 'cuberoot:mobile:embedded-top-ready', surface: 'account', accountDocumentId,
+    });
+    const initialDocument = 'a'.repeat(36);
+    const settledDocument = 'b'.repeat(36);
+    await documentStarted(initialDocument);
+    await send({ type: 'cuberoot:mobile:navigation', surface: 'account', href: frame.src, depth: 0 });
+    const handoff = post.mock.calls.find(([data]) => data.type === 'cuberoot:mobile:web-session')?.[0];
+    await send({ type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: handoff.requestId, ok: true });
+    await documentStarted(settledDocument);
+    expect(frame.getAttribute('aria-hidden')).toBe('true');
+    expect(frame.closest('section')?.querySelector('.loading-brand-mark')).toBe(logo);
+
+    const content = { type: 'cuberoot:mobile:embedded-account-content-ready', documentId: settledDocument };
+    await send({ ...content, page: 'profile', href: 'https://cuberoot.me/en/account' });
+    expect(frame.getAttribute('aria-hidden')).toBe('true');
+    await send({ ...content, page: 'membership', href: frame.src });
+    expect(frame.getAttribute('aria-hidden')).toBe('false');
+
+    const back = () => act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Back to My account"]')!.click());
+    const openPro = () => act(async () => container.querySelector<HTMLButtonElement>('.installed-account-membership')!.click());
+    await back();
+    await openPro();
+    expect(container.querySelector('.web-surface--account iframe:not([hidden])')).toBe(frame);
+    expect(issueWebSessionTicket).toHaveBeenCalledOnce();
+
+    await back();
+    await act(async () => [...container.querySelectorAll<HTMLButtonElement>('.installed-account-action')]
+      .find(button => button.textContent?.trim() === 'My space')!.click());
+    const profile = container.querySelector<HTMLIFrameElement>('.web-surface--account iframe:not([hidden])')!;
+    expect(profile).not.toBe(frame);
+    expect(frame.hidden).toBe(true);
+    const postProfile = vi.spyOn(profile.contentWindow!, 'postMessage');
+    const sendProfile = (data: object) => act(async () => window.dispatchEvent(new MessageEvent('message', {
+      origin: 'https://cuberoot.me', source: profile.contentWindow, data,
+    })));
+    await sendProfile({ type: 'cuberoot:mobile:embedded-top-ready', surface: 'account', accountDocumentId: initialDocument });
+    await sendProfile({ type: 'cuberoot:mobile:navigation', surface: 'account', href: profile.src, depth: 0 });
+    const profileHandoff = postProfile.mock.calls.find(([data]) => data.type === 'cuberoot:mobile:web-session')?.[0];
+    await sendProfile({ type: 'cuberoot:mobile:web-session-result', surface: 'account', requestId: profileHandoff.requestId, ok: true, keepsDocument: true });
+    await sendProfile({ ...content, documentId: initialDocument, page: 'profile', href: profile.src });
+    await back();
+    await openPro();
+    expect(container.querySelector('.web-surface--account iframe:not([hidden])')).toBe(frame);
+    expect(frame.getAttribute('aria-hidden')).toBe('false');
+    expect(profile.hidden).toBe(true);
+    expect(issueWebSessionTicket).toHaveBeenCalledTimes(2);
   });
 
   it('clears the website session when signing out after returning from account details', async () => {

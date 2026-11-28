@@ -388,11 +388,16 @@ function isEmbeddedTopBarRoute(surface: MobileEmbedSurface, pathname: string) {
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
 const MOBILE_EMBED_WEB_SESSION_ACK_TIMEOUT_MS = 15_000;
+const ACCOUNT_CACHED_ROUTE_TIMEOUT_MS = 1_200;
 const TOOLS_PRELOAD_DELAY_MS = 250;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
 const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve), createNetOutboxStorage());
 
-function isAccountDetailsPage(page: AccountPage): page is Exclude<AccountPage, 'home' | 'sign-in' | 'recover-password'> {
+type AccountDetailPage = Extract<AccountPage, 'profile' | 'security' | 'membership'>;
+type AccountDocument = { frame: Window; id: string; contentReady: boolean; page?: AccountDetailPage };
+type ParkedAccountFrame = { page: AccountDetailPage; revision: number; src: string; override: string | null };
+
+function isAccountDetailsPage(page: AccountPage): page is AccountDetailPage {
   return page === 'security' || page === 'membership' || page === 'profile';
 }
 
@@ -495,7 +500,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   const [view, setView] = useState<AppView>('timer');
   const [accountPage, setAccountPage] = useState<AccountPage>('home');
   const accountPageRef = useRef<AccountPage>('home');
-  const [accountFramePage, setAccountFramePage] = useState<Exclude<AccountPage, 'home' | 'sign-in' | 'recover-password'>>('profile');
+  const [accountFramePage, setAccountFramePage] = useState<AccountDetailPage>('profile');
+  const [parkedAccountFrame, setParkedAccountFrame] = useState<ParkedAccountFrame | null>(null);
   const accountDetails = isAccountDetailsPage(accountPage);
   const [accountDetailsReady, setAccountDetailsReady] = useState(false);
   const appearanceReturnRef = useRef<Exclude<AppView, 'appearance'>>('account');
@@ -655,7 +661,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     tools: false,
   });
   const accountManagementRequestRef = useRef<string | null>(null);
-  const accountDocumentRef = useRef<{ frame: Window; id: string; contentReady: boolean } | null>(null);
+  const accountDocumentRef = useRef<AccountDocument | null>(null);
+  const parkedAccountSessionRef = useRef<{ document: AccountDocument; token: string; href: string; inlineSettings: boolean } | null>(null);
+  const restoredAccountUrlRef = useRef<string | null>(null);
+  const accountCachedRouteRef = useRef<{ page: 'profile' | 'security'; timeout: number } | null>(null);
   const accountSyncInFlightRef = useRef<{
     requestId: string; token: string; ticket: string | null; sent: boolean;
     entryDocument: string | null; confirmed: boolean; keepsDocument: boolean;
@@ -717,9 +726,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     ? siteRouteUrl(language, toolsEntryRoute)
     : siteUrl(language), language);
   const accountEntryLocale = accountFrameLocale ?? language;
-  const accountWebUrl = installedWebEntryUrl(accountFramePage === 'membership'
+  const accountEntryUrl = useCallback((page: AccountDetailPage) => installedWebEntryUrl(page === 'membership'
     ? siteRouteUrl(accountEntryLocale, '/membership')
-    : accountUrl(accountEntryLocale, accountFramePage === 'security' ? 'signin' : undefined), accountEntryLocale);
+    : accountUrl(accountEntryLocale, page === 'security' ? 'signin' : undefined), accountEntryLocale), [accountEntryLocale]);
+  const accountWebUrl = accountEntryUrl(accountFramePage);
   const auth = host.useAuth(language);
   const activeAuthSession = wcaAutoMarkLiveSession(auth.session, auth.busy);
   const authSessionRef = useRef(auth.session);
@@ -1963,27 +1973,111 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     accountSyncTimeoutRef.current = null;
   }, []);
 
-  const navigateAccount = useCallback((page: AccountPage) => {
-    if (page === accountPageRef.current) return;
-    if (page === 'home' && (accountPageRef.current === 'profile' || accountPageRef.current === 'security')
-      && authSessionRef.current) void auth.refreshAccountSession().catch(() => undefined);
-    accountPageRef.current = page;
-    webDepthRef.current.account = 0;
-    setAccountPage(page);
-    clearAccountSyncTimeout();
-    accountSyncInFlightRef.current = null;
+  const clearAccountCachedRoute = useCallback(() => {
+    if (!accountCachedRouteRef.current) return;
+    window.clearTimeout(accountCachedRouteRef.current.timeout);
+    accountCachedRouteRef.current = null;
+  }, []);
+
+  const loadAccountDetails = useCallback((page: AccountDetailPage) => {
     accountSyncedTokenRef.current = null;
-    // Keep the trusted account frame available for explicit web-session cleanup on sign-out.
-    if (!isAccountDetailsPage(page)) return;
     accountHandoffRetriedRef.current = false;
     setAccountFramePage(page);
     webBridgeReadyRef.current.account = false;
+    webSurfaceLoadedRef.current.account = false;
     setWebSurfaceStatus(current => ({ ...current, account: 'loading' }));
     setWebSurfaceReloadUrl(current => ({ ...current, account: null }));
     setWebSurfaceRevision(current => ({ ...current, account: current.account + 1 }));
     setAccountDetailsReady(false);
     setOpenedWebViews(current => ({ ...current, account: true }));
-  }, [auth.refreshAccountSession, clearAccountSyncTimeout]);
+  }, []);
+
+  const navigateAccount = useCallback((page: AccountPage) => {
+    const previousPage = accountPageRef.current;
+    if (page === previousPage) return;
+    if (accountCachedRouteRef.current) {
+      if (accountCachedRouteRef.current.page === page) return;
+      clearAccountCachedRoute();
+      accountSyncedTokenRef.current = null;
+    }
+    if (page === 'home' && (previousPage === 'profile' || previousPage === 'security')
+      && authSessionRef.current) void auth.refreshAccountSession().catch(() => undefined);
+    webDepthRef.current.account = 0;
+    clearAccountSyncTimeout();
+    accountSyncInFlightRef.current = null;
+
+    let document = accountDocumentRef.current;
+    const token = authSessionRef.current?.token;
+    let reusable = previousPage === 'home' && connection === 'online'
+      && accountDetailsReady && webSurfaceStatus.account === 'ready' && !!token
+      && accountSyncedTokenRef.current === token && !!document?.page
+      && document.frame === webFrameRefs.current.account?.contentWindow
+      && accountEntryUrl(document.page) === webLastHrefRef.current.account;
+
+    if (isAccountDetailsPage(page) && (page === 'membership') !== (accountFramePage === 'membership')) {
+      const parked = parkedAccountSessionRef.current;
+      const savedFrame = parkedAccountFrame;
+      if (reusable && document && token) {
+        setParkedAccountFrame({
+          page: accountFramePage, revision: webSurfaceRevision.account,
+          src: webSurfaceReloadUrl.account ?? accountWebUrl, override: webSurfaceReloadUrl.account,
+        });
+        parkedAccountSessionRef.current = {
+          document, token, href: webLastHrefRef.current.account, inlineSettings: accountInlineSettingsRef.current,
+        };
+      } else {
+        setParkedAccountFrame(null);
+        parkedAccountSessionRef.current = null;
+      }
+
+      reusable = !!parked && !!savedFrame && parked.token === token && !!parked.document.page
+        && connection === 'online' && accountEntryUrl(parked.document.page) === parked.href;
+      if (reusable && parked && savedFrame) {
+        document = parked.document;
+        accountDocumentRef.current = document;
+        accountSyncedTokenRef.current = parked.token;
+        accountInlineSettingsRef.current = parked.inlineSettings;
+        webLastHrefRef.current.account = parked.href;
+        webBridgeReadyRef.current.account = true;
+        webSurfaceLoadedRef.current.account = true;
+        restoredAccountUrlRef.current = accountEntryUrl(savedFrame.page);
+        setAccountFramePage(savedFrame.page);
+        setWebSurfaceRevision(current => ({ ...current, account: savedFrame.revision }));
+        setWebSurfaceReloadUrl(current => ({ ...current, account: savedFrame.override }));
+        setWebSurfaceStatus(current => ({ ...current, account: 'ready' }));
+        setAccountDetailsReady(true);
+      }
+    }
+
+    if (reusable && document && isAccountDetailsPage(page)) {
+      if (document.page === page) {
+        accountPageRef.current = page;
+        setAccountPage(page);
+      } else if (page !== 'membership') {
+        // Leave Me visible until the retained document has rendered the requested view.
+        const timeout = window.setTimeout(() => {
+          accountCachedRouteRef.current = null;
+          accountSyncedTokenRef.current = null;
+          if (viewRef.current !== 'account' || accountPageRef.current !== 'home') return;
+          accountPageRef.current = page;
+          setAccountPage(page);
+          loadAccountDetails(page);
+        }, ACCOUNT_CACHED_ROUTE_TIMEOUT_MS);
+        accountCachedRouteRef.current = { page, timeout };
+        document.frame.postMessage({
+          type: 'cuberoot:mobile:embedded-account-switch', surface: 'account', documentId: document.id, page,
+        }, SITE_ORIGIN);
+      }
+      return;
+    }
+
+    accountPageRef.current = page;
+    setAccountPage(page);
+    // Keep the trusted account frame available for explicit web-session cleanup on sign-out.
+    if (isAccountDetailsPage(page)) loadAccountDetails(page);
+  }, [accountDetailsReady, accountEntryUrl, accountFramePage, accountWebUrl, auth.refreshAccountSession,
+    clearAccountCachedRoute, clearAccountSyncTimeout, connection, loadAccountDetails, parkedAccountFrame,
+    webSurfaceReloadUrl.account, webSurfaceRevision.account, webSurfaceStatus.account]);
 
   useEffect(() => {
     if (accountDetails && !auth.loading && !auth.session) navigateAccount('home');
@@ -2087,7 +2181,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   useEffect(() => () => {
     for (const surface of MOBILE_EMBED_SURFACES) clearWebSurfaceHandshake(surface);
     clearAccountSyncTimeout();
-  }, [clearAccountSyncTimeout, clearWebSurfaceHandshake]);
+    clearAccountCachedRoute();
+  }, [clearAccountCachedRoute, clearAccountSyncTimeout, clearWebSurfaceHandshake]);
 
   useEffect(() => {
     webLastHrefRef.current.tools = toolsWebUrl;
@@ -2103,6 +2198,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [toolsWebUrl]);
 
   useEffect(() => {
+    if (restoredAccountUrlRef.current === accountWebUrl) {
+      restoredAccountUrlRef.current = null;
+      return;
+    }
     clearAccountSyncTimeout();
     webBridgeReadyRef.current.account = false;
     accountInlineSettingsRef.current = false;
@@ -2170,6 +2269,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [clearAccountSyncTimeout]);
 
   const logoutEverywhere = useCallback(async () => {
+    setParkedAccountFrame(null);
+    parkedAccountSessionRef.current = null;
+    clearAccountCachedRoute();
     clearAccountSyncTimeout();
     accountSyncInFlightRef.current = null;
     accountSyncedTokenRef.current = null;
@@ -2182,7 +2284,7 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
     );
     await auth.logout();
     navigateAccount('home');
-  }, [auth.logout, clearAccountSyncTimeout, navigateAccount]);
+  }, [auth.logout, clearAccountCachedRoute, clearAccountSyncTimeout, navigateAccount]);
   logoutEverywhereRef.current = logoutEverywhere;
 
   const selectPrimaryView = useCallback((next: PrimaryView) => {
@@ -2314,17 +2416,53 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
       const authClear = decodeMobileEmbedAuthClear(event.data);
       const explicitAuthClear = authClear?.reason === 'user-action';
-      if (accountSource && !isAccountDetailsPage(accountPageRef.current) && !explicitAuthClear) return;
-      if (event.data?.type === 'cuberoot:mobile:embedded-search-blur') {
-        if (event.source === webFrameRefs.current.tools?.contentWindow) setDockedKeyboardTop(null);
+      if (authClear && parkedAccountSessionRef.current?.document.frame === event.source) {
+        parkedAccountSessionRef.current = null;
+        setParkedAccountFrame(null);
         return;
       }
       if (accountSource && event.data?.type === 'cuberoot:mobile:embedded-account-content-ready') {
         const accountDocument = accountDocumentRef.current;
-        if (accountDocument && accountDocument.frame === event.source && accountDocument.id === event.data.documentId) {
-          accountDocument.contentReady = true;
-          revealAccountWebSession();
+        if (!accountDocument || accountDocument.frame !== event.source || accountDocument.id !== event.data.documentId) return;
+        const page = event.data.page;
+        if ((accountPageRef.current === 'membership' || page === 'membership')
+          && (accountPageRef.current !== 'membership' || page !== 'membership'
+            || event.data.href !== installedWebEntryUrl(siteRouteUrl(accountEntryLocale, '/membership'), accountEntryLocale))) return;
+        accountDocument.contentReady = true;
+        if (page === 'membership') accountDocument.page = page;
+        if (page === 'profile' || page === 'security') {
+          const expectedUrl = accountEntryUrl(page);
+          if (event.data.href === expectedUrl) {
+            accountDocument.page = page;
+            webLastHrefRef.current.account = expectedUrl;
+            if (accountCachedRouteRef.current?.page === page && accountSyncedTokenRef.current
+              && accountSyncedTokenRef.current === authSessionRef.current?.token
+              && viewRef.current === 'account' && accountPageRef.current === 'home') {
+              clearAccountCachedRoute();
+              accountPageRef.current = page;
+              setAccountPage(page);
+            }
+          }
         }
+        revealAccountWebSession();
+        return;
+      }
+      if (accountSource && !isAccountDetailsPage(accountPageRef.current) && !explicitAuthClear) {
+        if (authClear) accountSyncedTokenRef.current = null;
+        return;
+      }
+      if (accountSource && event.data?.type === 'cuberoot:mobile:embedded-account-restore-missing') {
+        const pending = accountSyncInFlightRef.current;
+        const document = accountDocumentRef.current;
+        // After a legacy reload the website can stay on its hidden login shell
+        // without emitting a session failure. Only recover that replacement document.
+        if (pending?.confirmed && !pending.keepsDocument && pending.entryDocument
+          && document?.frame === event.source && document?.id === event.data.documentId
+          && document.id !== pending.entryDocument && !document.contentReady) recoverAccountHandoff();
+        return;
+      }
+      if (event.data?.type === 'cuberoot:mobile:embedded-search-blur') {
+        if (event.source === webFrameRefs.current.tools?.contentWindow) setDockedKeyboardTop(null);
         return;
       }
       if (event.data?.type === 'cuberoot:mobile:embedded-top-ready') {
@@ -2408,6 +2546,9 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
           }
           return;
         }
+        setParkedAccountFrame(null);
+        parkedAccountSessionRef.current = null;
+        clearAccountCachedRoute();
         clearAccountSyncTimeout();
         accountSyncInFlightRef.current = null;
         accountSyncedTokenRef.current = null;
@@ -2489,8 +2630,10 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
   }, [
     announce,
     accountEntryLocale,
+    accountEntryUrl,
     auth.login,
     auth.logout,
+    clearAccountCachedRoute,
     clearAccountSyncTimeout,
     copy.actionFailed,
     copy.authError,
@@ -2518,6 +2661,8 @@ export function App({ host, loadingMark }: { host: InstalledAppHost; loadingMark
 
   useEffect(() => {
     if (!auth.session) {
+      parkedAccountSessionRef.current = null;
+      setParkedAccountFrame(null);
       clearAccountSyncTimeout();
       accountSyncInFlightRef.current = null;
       accountSyncedTokenRef.current = null;
@@ -5329,15 +5474,30 @@ children: <>
                   )}
                 </div>
               )}
-              <iframe
+              {[
+                { key: `${surface}-${surface === 'account' && accountFramePage === 'membership' ? 'pro-' : ''}${webSurfaceRevision[surface]}`,
+                  src: frameUrl, parked: false },
+                ...(surface === 'account' && parkedAccountFrame ? [
+                  { key: `account-${parkedAccountFrame.page === 'membership' ? 'pro-' : ''}${parkedAccountFrame.revision}`,
+                    src: parkedAccountFrame.src, parked: true },
+                ] : []),
+              ].sort((left, right) => Number(left.key.startsWith('account-pro-')) - Number(right.key.startsWith('account-pro-')))
+                .map(({ key, src, parked }) => (
+                <iframe
                 allow={surface === 'tools'
                   ? `clipboard-write; fullscreen; camera; microphone${host.listenDesktopNavigation ? '; focus-without-user-activation https://cuberoot.me' : ''}`
                   : 'clipboard-write; fullscreen'}
-                aria-hidden={showState}
-                inert={showState && (surface === 'account' || host.generativeAiDisabled)}
-                key={`${surface}-${webSurfaceRevision[surface]}`}
+                aria-hidden={parked || showState}
+                hidden={parked}
+                inert={parked || (showState && (surface === 'account' || host.generativeAiDisabled))}
+                key={key}
                 name={(host.generativeAiDisabled ? MOBILE_EMBED_NO_GENERATIVE_AI_FRAME_NAMES : MOBILE_EMBED_FRAME_NAMES)[surface]}
                 onLoad={() => {
+                  if (parked) {
+                    parkedAccountSessionRef.current = null;
+                    setParkedAccountFrame(null);
+                    return;
+                  }
                   if (surface === 'account') {
                     if (connection !== 'online' || !isAccountDetailsPage(accountPageRef.current)) return;
                     // Frames can acknowledge init before all their resources finish loading.
@@ -5368,20 +5528,21 @@ children: <>
                   beginWebSurfaceHandshake(surface);
                 }}
                 onError={() => {
-                  if (connection !== 'online') return;
+                  if (parked || connection !== 'online') return;
                   clearWebSurfaceHandshake(surface);
                   webBridgeReadyRef.current[surface] = false;
                   webSurfaceLoadedRef.current[surface] = false;
                   setWebSurfaceStatus((current) => ({ ...current, [surface]: 'error' }));
                 }}
                 ref={(frame) => {
-                  webFrameRefs.current[surface] = frame;
+                  if (!parked) webFrameRefs.current[surface] = frame;
                 }}
                 referrerPolicy="strict-origin-when-cross-origin"
-                src={frameUrl}
-                tabIndex={showState ? -1 : undefined}
+                src={src}
+                tabIndex={parked || showState ? -1 : undefined}
                 title={title}
               />
+              ))}
             </section>
           );
         })}

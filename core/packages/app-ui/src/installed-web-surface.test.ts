@@ -80,8 +80,8 @@ describe('installed website surfaces', () => {
   });
 
   it('keeps both browsing contexts mounted and gates Android Back on a live bridge', () => {
-    expect(app).toContain('aria-hidden={showState}');
-    expect(app).toContain('tabIndex={showState ? -1 : undefined}');
+    expect(app).toContain('aria-hidden={parked || showState}');
+    expect(app).toContain('tabIndex={parked || showState ? -1 : undefined}');
     expect(app).toContain("if (previous === 'online' || connection !== 'online') return");
     const frameLoad = app.match(/onLoad=\{\(\) => \{([\s\S]*?)\n\s*onError=/)?.[1];
     expect(frameLoad).toMatch(/if \(surface === 'account'\) \{[\s\S]*?return;\s*\}\s*void revokeToolsBle\(\);/);
