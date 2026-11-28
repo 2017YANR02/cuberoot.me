@@ -603,8 +603,8 @@ export function SetPasswordForm({ needCurrent, label, onDone }: {
 function RegistrationHint() {
   const { t } = useCredentialForms();
   return <p className="auth-registration-hint">{t(
-    '已有账号可直接登录。第一次来？用验证码验证后即可选择创建账号。',
-    'Already registered? Sign in below. New here? Verify with a code, then choose to create an account.',
+    '第一次来？用验证码验证后即可选择注册账号',
+    'New here? Verify with a code, then choose to create an account.',
   )}</p>;
 }
 
