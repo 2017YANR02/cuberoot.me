@@ -58,6 +58,7 @@ import { TIMER_SCRAMBLE_SOURCE_COPY, TIMER_WCA_COMPETITION_PERIODS, availableTim
   type TimerWcaCompetition, type TimerWcaCompetitionPeriod, type TimerWcaCompetitionScramble } from '@cuberoot/shared/timer/wca-source-config';
 import { timerEventNxnSize, timerFullPracticeContent, timerSupportsRealWcaScrambles, timerWcaScrambleEventId } from '@cuberoot/shared/timer/event-catalog';
 import { miniProgramApi } from './platform';
+import { SITE_ORIGIN } from './runtime-config';
 import { applyNativeAppearance } from './appearance';
 import { tr, getMiniProgramLocale, type BilingualText, type MiniProgramLocale } from './i18n';
 import { getSmartCubeSession, type SmartCubeSessionSnapshot } from './smart-cube/session';
@@ -240,6 +241,14 @@ function buildCopy(language: MiniProgramLocale) {
   loading: tr({ en: 'Generating scramble…', zh: '正在生成打乱…' }), retry: tr({ en: 'Retry', zh: '重试' }),
   cube: tr({ en: 'Follow the scramble; the first turn starts timing and solving stops it.', zh: '按打乱转动魔方，匹配后首转开始，还原自动停止。' }),
   close: tr({ en: 'Close', zh: '关闭' }), export: tr({ en: 'Copy CSV', zh: '复制 CSV' }),
+  recordVideo: tr({ en: 'Record live', zh: '现场录制' }), importVideo: tr({ en: 'Choose a video', zh: '选择已有视频' }),
+  frontCamera: tr({ en: 'Front camera', zh: '前置摄像头' }), backCamera: tr({ en: 'Rear camera', zh: '后置摄像头' }),
+  videoScopeUnavailable: tr({ en: 'Video access is not enabled in this mini program. You can use the web review link.', zh: '此小程序尚未开通视频权限，可复制网址在浏览器复盘。' }),
+  recordUnavailable: tr({ en: 'Camera unavailable. Check camera permissions or choose a video.', zh: '摄像头不可用，请检查相机权限或选择已有视频。' }),
+  videoUnavailable: tr({ en: 'Could not open this video. Choose another video.', zh: '无法打开视频，请重新选择。' }),
+  saveVideo: tr({ en: 'Save to album', zh: '保存到相册' }), videoSaved: tr({ en: 'Saved to album', zh: '已保存到相册' }),
+  videoLink: tr({ en: 'Copy automatic review link', zh: '复制自动复盘网址' }),
+  videoLinkCopied: tr({ en: 'Open the copied link in your browser and choose the video from your album.', zh: '在浏览器打开已复制的网址，选择相册里的视频即可自动复盘。' }),
   bulkTitle: tr(TIMER_MORE_ACTION_COPY['more.bulk']),
   bulkCount: tr(TIMER_BULK_SCRAMBLE_COPY.count),
   bulkGenerate: tr(TIMER_BULK_SCRAMBLE_COPY.generate),
@@ -382,7 +391,7 @@ function buildCopy(language: MiniProgramLocale) {
   rankCountry: tr(TIMER_SETTING_FIELD_CONTRACTS.find(f => f.storagePath === 'rankCountry')!.copy),
   };
   return { ...labels, sheetTitles: {
-    solver: labels.solver, content: labels.content, difficulty: labels.difficultyTitle, devices: labels.devices,
+    video: tr({ en: 'Video review', zh: '视频复盘' }), solver: labels.solver, content: labels.content, difficulty: labels.difficultyTitle, devices: labels.devices,
     bulk: labels.bulkTitle, wca: labels.source, source: labels.source, project: labels.event, settings: labels.settings, manual: labels.manualEntry,
     create: labels.newSession, rename: labels.rename, comment: labels.comment,
     'net-history': TIMER_ROOM_HISTORY_COPY[language].title,
@@ -417,6 +426,7 @@ interface NativePage {
   ticker?: ReturnType<typeof setInterval>;
   unsubscribe?: () => void;
   sheet?: string;
+  videoPicker?: symbol;
   active?: boolean;
   localBattle?: ReturnType<typeof createNativeTimerLocalBattle>;
   soloViewport?: ReturnType<typeof nativeContentViewport>;
@@ -1655,7 +1665,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       cancelHold(p); if (p.ticker) clearInterval(p.ticker); p.ticker = undefined; p.unsubscribe?.(); p.unsubscribe = undefined;
       this.setData({ generating: false, bulkGenerating: false, bulkProjectMenu: null, solverLoading: false, layoutEditing: false, trainerBusy: false });
     },
-    onUnload() { this.onHide?.(); const p = this as unknown as NativePage; p.liveShare?.dispose(); p.netBattle?.dispose(); const t = p.nativeTimer; if (t) { t.onChange = undefined; t.onPersistedSolve = undefined; t.onCubeMove = undefined; t.onCubePose = undefined; t.dispose(); } void getSmartCubeSession().stopLocal(); },
+    onUnload() { this.onHide?.(); const p = this as unknown as NativePage; p.videoPicker = undefined; p.liveShare?.dispose(); p.netBattle?.dispose(); const t = p.nativeTimer; if (t) { t.onChange = undefined; t.onPersistedSolve = undefined; t.onCubeMove = undefined; t.onCubePose = undefined; t.dispose(); } void getSmartCubeSession().stopLocal(); },
     startLiveShare() {
       const p = this as unknown as NativePage;
       if (p.active && p.sheet === 'settings') void p.liveShare?.start();
@@ -1826,6 +1836,70 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       p.nativeTimer?.setAutoReadyBlocked(Boolean(p.sheet || p.layoutEditing));
       refresh(p);
     },
+    pickReviewVideo(e: WechatMiniprogram.TouchEvent) {
+      const p = this as unknown as NativePage;
+      const source = e.currentTarget.dataset.source;
+      if (p.sheet !== 'video' || p.videoPicker || (source !== 'camera' && source !== 'album')) return;
+      const api = miniProgramApi();
+      const labels = copy(p.locale);
+      const token = p.videoPicker = Symbol();
+      const scramble = p.nativeTimer?.scramble ?? '';
+      const event = p.nativeTimer?.event;
+      const finish = (patch: Record<string, unknown> = {}) => {
+        if (p.videoPicker !== token) return;
+        p.videoPicker = undefined;
+        this.setData({ reviewVideoBusy: false, ...patch });
+      };
+      const failed = (error: { errMsg?: string; errorCode?: number }) => {
+        if (error.errorCode === 119779 || /scope is not declared/i.test(error.errMsg ?? '')) {
+          finish({ reviewVideoError: labels.videoScopeUnavailable });
+          return;
+        }
+        const message = source === 'camera' ? labels.recordUnavailable : labels.videoUnavailable;
+        finish({ reviewVideoError: /cancel/i.test(error.errMsg ?? '') ? '' : message });
+      };
+      this.setData({ reviewVideoBusy: true, reviewVideoError: '' });
+      const choose = (camera: 'back' | 'front') => {
+        if (p.videoPicker !== token) return;
+        if (!api.chooseVideo) { failed({}); return; }
+        api.chooseVideo({
+          sourceType: [source], camera, compressed: false, maxDuration: 1800,
+          success: video => video.tempFilePath
+            ? finish({ reviewVideoPath: video.tempFilePath, reviewVideoScramble: scramble, reviewVideoEvent: event,
+                reviewVideoRecorded: source === 'camera', reviewVideoSaved: false })
+            : failed({}),
+          fail: failed,
+        });
+      };
+      // The iOS host accepts a preferred lens. Android uses its native recorder UI.
+      if (source === 'camera' && api.getSystemInfoSync?.().platform === 'ios') {
+        api.showActionSheet({ itemList: [labels.backCamera, labels.frontCamera],
+          success: result => choose(result.tapIndex === 1 ? 'front' : 'back'), fail: failed });
+      } else choose('back');
+    },
+    reviewVideoPlaybackError() {
+      this.setData({ reviewVideoError: copy().videoUnavailable });
+    },
+    saveReviewVideo() {
+      const path = this.data.reviewVideoPath;
+      if (typeof path !== 'string' || !path || this.data.reviewVideoSaved) return;
+      miniProgramApi().saveVideoToPhotosAlbum({ filePath: path,
+        success: () => { if (this.data.reviewVideoPath === path) this.setData({ reviewVideoSaved: true, reviewVideoError: '' }); },
+        fail: () => { if (this.data.reviewVideoPath === path) this.setData({ reviewVideoError: copy().dataTransferError }); },
+      });
+    },
+    copyReviewVideoLink() {
+      const p = this as unknown as NativePage;
+      const event = this.data.reviewVideoEvent ?? p.nativeTimer?.event ?? '333';
+      const scramble = this.data.reviewVideoScramble ?? p.nativeTimer?.scramble ?? '';
+      const path = getMiniProgramLocale() === 'zh' ? '/zh/timer' : '/timer';
+      const api = miniProgramApi(), labels = copy(p.locale);
+      api.setClipboardData({
+        data: `${SITE_ORIGIN}${path}?video=true&event=${encodeURIComponent(String(event))}&scramble=${encodeURIComponent(String(scramble))}`,
+        success: () => api.showModal({ title: labels.sheetTitles.video, content: labels.videoLinkCopied, showCancel: false }),
+        fail: () => this.setData({ reviewVideoError: labels.dataTransferError }),
+      });
+    },
     openSheet(e: { currentTarget: { dataset: { sheet?: string } } }) {
       const p = this as unknown as NativePage;
       if (p.nativeTimer?.busy || p.layoutEditing || p.localBattle?.snapshot().active || p.netBattle?.snapshot().active) return;
@@ -1957,6 +2031,10 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       // Dismiss only taps originating on the backdrop; inner controls retain their defaults.
       if (e?.currentTarget.id === 'nt-backdrop' && e.target.id !== 'nt-backdrop') return;
       const p = this as unknown as NativePage;
+      if (p.sheet === 'video') {
+        p.videoPicker = undefined;
+        this.setData({ reviewVideoBusy: false, reviewVideoError: '' });
+      }
       if (e && p.sheet === 'solver' && this.data.solverScrambleEditing) {
         this.cancelSolverScrambleEdit();
         return;

@@ -179,6 +179,10 @@
       <image class="nt-icon nt-icon-light" src="/assets/tabbar/lightbulb-light.png" aria-hidden="true" />
       <image class="nt-icon nt-icon-dark" src="/assets/tabbar/lightbulb-dark.png" aria-hidden="true" />
     </button>
+    <button id="nt-tool-video" class="nt-tool" bindtap="openSheet" data-sheet="video" disabled="{{busy || layoutEditing}}" aria-label="{{copy.sheetTitles.video}}" hover-class="press-feedback">
+      <image class="nt-icon nt-icon-light" src="/assets/tabbar/video-light.png" aria-hidden="true" />
+      <image class="nt-icon nt-icon-dark" src="/assets/tabbar/video-dark.png" aria-hidden="true" />
+    </button>
     <button id="nt-tool-devices" class="nt-tool" bindtap="openDeviceCenter" disabled="{{busy || layoutEditing || !deviceCenter.visible}}" aria-label="{{deviceCenter.ariaLabel || copy.devices}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/bluetooth.png" aria-hidden="true" /></button>
     <button id="nt-tool-project" class="nt-tool" bindtap="openSheet" data-sheet="project" disabled="{{busy || layoutEditing || generating}}" aria-label="{{copy.event}} · {{eventName}}" aria-expanded="{{sheet === 'project'}}" hover-class="press-feedback">
       <image wx:if="{{eventIcon}}" class="nt-icon" src="/assets/tabbar/project-{{eventIcon}}.png" aria-hidden="true" /><text wx:else class="nt-project-tag">{{eventTextLabel}}</text>
@@ -414,7 +418,7 @@
   </block>
   <template wx:if="{{sheet === 'device-management' && deviceManagement.kind === 'smart-cube'}}" is="nt-smart-cube-device" data="{{device: deviceManagement, error: deviceError || deviceManagement.error}}" />
   <view wx:elif="{{sheet}}" id="nt-backdrop" class="nt-backdrop {{toolbarMenu ? 'nt-backdrop--popover' : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-backdrop' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-backdrop' : ''}} {{sheet === 'settings' ? 'nt-settings-backdrop' : ''}} {{sheet === 'bulk' ? 'nt-bulk-backdrop' : ''}} {{sheet === 'solver' ? 'nt-solver-screen-backdrop' : ''}} {{sheet === 'device-management' ? 'nt-device-backdrop nt-smart-timer-backdrop' : ''}} {{sheet === 'device-management' && deviceManagement.kind === 'stackmat' ? 'nt-stackmat-backdrop' : ''}}" bindtap="closeSheet">
-    <view class="nt-sheet {{toolbarMenu ? 'nt-sheet--popover nt-sheet--' + sheet : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-dialog' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-panel' : ''}} {{sheet === 'settings' ? 'nt-settings' : ''}} {{sheet === 'bulk' ? 'nt-bulk-dialog' : ''}} {{sheet === 'solver' ? 'nt-solver-screen' : ''}} {{sheet === 'device-management' ? 'nt-device-dialog' : ''}}" style="{{toolbarMenuStyle}}">
+    <view class="nt-sheet {{toolbarMenu ? 'nt-sheet--popover nt-sheet--' + sheet : ''}} {{sheet === 'statistics' && !resultsWorkspace ? 'nt-statistics-dialog' : ''}} {{resultsWorkspace && (sheet === 'history' || sheet === 'statistics') ? 'nt-results-panel' : ''}} {{sheet === 'settings' ? 'nt-settings' : ''}} {{sheet === 'bulk' ? 'nt-bulk-dialog' : ''}} {{sheet === 'video' ? 'nt-video-dialog' : ''}} {{sheet === 'solver' ? 'nt-solver-screen' : ''}} {{sheet === 'device-management' ? 'nt-device-dialog' : ''}}" style="{{toolbarMenuStyle}}">
       <view wx:if="{{resultsWorkspace && (sheet === 'history' || sheet === 'statistics')}}" class="shell-panel-tabs">
         <button class="shell-panel-tab {{sheet === 'history' ? 'active' : ''}}" data-sheet="history" bindtap="switchResultsTab" aria-pressed="{{sheet === 'history'}}" hover-class="press-feedback">{{copy.resultsPanel.times}}</button>
         <button class="shell-panel-tab {{sheet === 'statistics' ? 'active' : ''}}" data-sheet="statistics" bindtap="switchResultsTab" aria-pressed="{{sheet === 'statistics'}}" hover-class="press-feedback">{{copy.resultsPanel.stats}}</button>
@@ -616,7 +620,20 @@
           </scroll-view>
         </view>
       </view>
-      <scroll-view wx:if="{{sheet !== 'solver' || solverView !== 0}}" scroll-y="{{sheet !== 'difficulty' || !!difficultyOptionPanel}}" scroll-into-view="{{sheet === 'settings' ? 'nt-settings-top-' + settingsCategory : ''}}" class="nt-sheet-content {{sheet === 'solver' ? 'nt-steps-scroll' : ''}} {{sheet === 'statistics' ? 'nt-statistics-scroll' : ''}} {{sheet === 'settings' ? 'nt-settings-scroll' : ''}} {{sheet === 'bulk' ? 'nt-bulk-content' : ''}}">
+      <view wx:if="{{sheet === 'video'}}">
+        <video wx:if="{{reviewVideoPath}}" id="nt-review-player" class="nt-review-player" src="{{reviewVideoPath}}" controls="{{true}}" object-fit="contain" binderror="reviewVideoPlaybackError" />
+        <text wx:if="{{reviewVideoPath && reviewVideoScramble}}" class="nt-video-scramble" selectable="{{true}}">{{reviewVideoScramble}}</text>
+        <view class="nt-video-actions">
+          <button class="nt-control nt-bulk-button" data-source="camera" bindtap="pickReviewVideo" disabled="{{reviewVideoBusy}}" hover-class="press-feedback">{{copy.recordVideo}}</button>
+          <button class="nt-control nt-bulk-button" data-source="album" bindtap="pickReviewVideo" disabled="{{reviewVideoBusy}}" hover-class="press-feedback">{{copy.importVideo}}</button>
+        </view>
+        <view wx:if="{{reviewVideoPath || reviewVideoError}}" class="nt-video-actions">
+          <button wx:if="{{reviewVideoRecorded}}" class="nt-control" bindtap="saveReviewVideo" disabled="{{reviewVideoSaved}}" hover-class="press-feedback">{{reviewVideoSaved ? copy.videoSaved : copy.saveVideo}}</button>
+          <button class="nt-control" bindtap="copyReviewVideoLink" hover-class="press-feedback">{{copy.videoLink}}</button>
+        </view>
+        <text wx:if="{{reviewVideoError}}" class="nt-error" aria-role="alert">{{reviewVideoError}}</text>
+      </view>
+      <scroll-view wx:elif="{{sheet !== 'solver' || solverView !== 0}}" scroll-y="{{sheet !== 'difficulty' || !!difficultyOptionPanel}}" scroll-into-view="{{sheet === 'settings' ? 'nt-settings-top-' + settingsCategory : ''}}" class="nt-sheet-content {{sheet === 'solver' ? 'nt-steps-scroll' : ''}} {{sheet === 'statistics' ? 'nt-statistics-scroll' : ''}} {{sheet === 'settings' ? 'nt-settings-scroll' : ''}} {{sheet === 'bulk' ? 'nt-bulk-content' : ''}}">
       <block wx:if="{{sheet === 'settings'}}">
         <view id="nt-settings-top-{{settingsCategory}}" class="nt-settings-body">
         <view wx:if="{{settingsCategory === 'appearance'}}" class="nt-settings-preview">

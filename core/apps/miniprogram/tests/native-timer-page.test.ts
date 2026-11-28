@@ -9,6 +9,8 @@ import { timer333StepNotation } from '@cuberoot/puzzle-solvers/timer-333-step';
 const clipboard = vi.hoisted(() => ({
   write: vi.fn<(options: { data: string; success?: () => void; fail?: () => void }) => void>(),
   toast: vi.fn(),
+  chooseVideo: vi.fn<(options: WechatMiniprogram.ChooseVideoOption) => void>(),
+  showActionSheet: vi.fn<(options: WechatMiniprogram.ShowActionSheetOption) => void>(),
 }));
 
 vi.mock('../src/lib/native-timer-wca', () => ({
@@ -23,6 +25,8 @@ vi.mock('../src/lib/native-timer-wca', () => ({
 }));
 vi.mock('../src/lib/platform', async importOriginal => ({
   ...await importOriginal<typeof import('../src/lib/platform')>(), miniProgramApi: () => ({
+    chooseVideo: clipboard.chooseVideo, showActionSheet: clipboard.showActionSheet,
+    getSystemInfoSync: () => ({ platform: 'ios' }),
     openBluetoothAdapter: vi.fn(), setClipboardData: clipboard.write, showToast: clipboard.toast, setNavigationBarTitle: vi.fn(),
   }),
 }));
@@ -56,6 +60,8 @@ function fixture(useWca = false, now?: () => number) {
     markAttemptSplit(event: WechatMiniprogram.TouchEvent): void;
     openSheet(event: WechatMiniprogram.TouchEvent): void;
     openDeviceCenter(): void;
+    pickReviewVideo(event: WechatMiniprogram.TouchEvent): void;
+    copyReviewVideoLink(): void;
     clearWca(event: WechatMiniprogram.TouchEvent): void;
     closeSheet(): void;
     chooseSource(event: WechatMiniprogram.TouchEvent): void;
@@ -153,6 +159,31 @@ describe('native timer source sheet lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(nativeCompetitionCatalog.load).mockResolvedValue([]);
+  });
+
+  it('uses the chosen lens, preserves the recorded scramble, and ignores a dismissed picker', () => {
+    const { page, timer } = fixture();
+    timer.scramble = "U R'";
+    page.openSheet(event({ sheet: 'video' }));
+    page.pickReviewVideo(event({ source: 'camera' }));
+    const lensSheet = clipboard.showActionSheet.mock.lastCall![0];
+    expect(lensSheet.itemList).toHaveLength(2);
+    lensSheet.success?.({ tapIndex: 1, errMsg: 'ok' });
+    const camera = clipboard.chooseVideo.mock.lastCall![0];
+    expect(camera).toMatchObject({ camera: 'front', sourceType: ['camera'] });
+    timer.scramble = 'L2';
+    camera.success?.({ tempFilePath: 'ttfile://review.mp4' } as WechatMiniprogram.ChooseVideoSuccessCallbackResult);
+    expect(page.data).toMatchObject({ reviewVideoPath: 'ttfile://review.mp4', reviewVideoScramble: "U R'", reviewVideoBusy: false });
+    page.copyReviewVideoLink();
+    const url = new URL(clipboard.write.mock.lastCall![0].data);
+    expect(url.searchParams.get('scramble')).toBe("U R'");
+    expect(url.searchParams.get('video')).toBe('true');
+    page.pickReviewVideo(event({ source: 'album' }));
+    const album = clipboard.chooseVideo.mock.lastCall![0];
+    expect(album.sourceType).toEqual(['album']);
+    page.closeSheet();
+    album.success?.({ tempFilePath: 'ttfile://stale.mp4' } as WechatMiniprogram.ChooseVideoSuccessCallbackResult);
+    expect(page.data.reviewVideoPath).toBe('ttfile://review.mp4');
   });
 
   it('opens the inline manual queue and accepts its first line without a second submit', () => {

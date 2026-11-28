@@ -1,6 +1,6 @@
 .native-timer { padding: 16rpx 28rpx calc(32rpx + env(safe-area-inset-bottom)); min-height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; background: var(--cr-bg); color: var(--cr-text); }
 .nt-toolbar, .nt-footer, .nt-stats, .nt-sheet-header, .nt-setting { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
-.nt-toolbar { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 0; width: 100%; max-width: 480px; margin: 0 auto; }
+.nt-toolbar { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 0; width: 100%; max-width: 480px; margin: 0 auto; }
 .nt-tool { display: flex; width: 100%; height: 84rpx; max-height: 48px; align-items: center; justify-content: center; padding: 0; white-space: nowrap; font-size: 27rpx; font-weight: 650; }
 .nt-tool-active { color: var(--cr-accent); }
 .nt-tool-editing { background: var(--cr-accent-soft); border-radius: 14rpx; }
@@ -56,6 +56,11 @@
 }
 .nt-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--cr-text) 35%, transparent); z-index: 100; display: flex; align-items: flex-end; }
 .nt-sheet { width: 100%; background: var(--cr-surface); color: var(--cr-text); padding: 24rpx 32rpx calc(36rpx + env(safe-area-inset-bottom)); border-radius: 28rpx 28rpx 0 0; box-sizing: border-box; }
+.nt-sheet.nt-video-dialog { max-width: 620px; max-height: 92vh; overflow-y: auto; margin: 0 auto; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); }
+.nt-video-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+.nt-video-actions button { flex: 1 1 144px; min-height: 44px; }
+.nt-review-player { display: block; width: 100%; height: clamp(100px, 32vh, 320px); }
+.nt-video-scramble { display: block; overflow-wrap: anywhere; padding-top: 8px; }
 .nt-sheet-header { font-size: 36rpx; font-weight: 650; }
 .nt-setting { border-bottom: 1rpx solid var(--cr-line); min-height: 100rpx; }
 .nt-slide-row .nt-setting { min-height: 62rpx; border-bottom: 0; }

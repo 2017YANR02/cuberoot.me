@@ -55,7 +55,7 @@ export async function buildDouyinTimerIcons(outputRoot, selectedColor) {
     await sharp(Buffer.from(tinted)).resize(81, 81).png().toFile(join(directory, `project-${name}.png`));
   }));
   const toolbarColors = { bluetooth: '#0082fc', 'chevron-left': selectedColor, 'chevron-right': selectedColor };
-  for (const icon of ['settings', 'lightbulb', 'layout-template', 'grip-horizontal', 'move-diagonal-2', 'rotate-ccw', 'check',
+  for (const icon of ['settings', 'lightbulb', 'video', 'layout-template', 'grip-horizontal', 'move-diagonal-2', 'rotate-ccw', 'check',
     'layout-dashboard', 'calendar-days', 'bar-chart-3', 'layers', 'x', 'chevron-left', 'chevron-right', 'chevron-down', 'bluetooth', 'timer', 'mic', 'arrow-left', 'arrow-right', 'pencil', 'sliders-horizontal', 'skip-back', 'skip-forward', 'play', 'pause',
     'dices', 'trophy', 'palette', 'volume-2', 'database', 'keyboard', 'download', 'info', 'circle-help', 'copy', 'target', 'circle-check', 'flame', 'arrow-right-left',
     'search', 'ellipsis', 'refresh-cw', 'loader-circle']) {
