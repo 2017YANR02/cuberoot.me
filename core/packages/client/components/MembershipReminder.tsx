@@ -5,7 +5,7 @@
  * 点击关闭后在当前浏览器按会员账号隐藏。点击续费只隐藏当前到期日的提醒。
  * /membership 页自身不显示(那里有更完整的状态块)。
  */
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { Crown, X } from '@app-foundation/icons/lucide';
 import AppLink from '@/components/AppLink';
@@ -18,45 +18,52 @@ import './membership-reminder.css';
 const DISMISSED_FOR_EXPIRY_KEY = 'cuberoot_mem_reminder_dismissed';
 const DISMISSED_BY_MEMBER_PREFIX = 'cuberoot_mem_reminder_dismissed:';
 
+const changeEvent = 'membership-reminder-change';
+const unsaved = new Map<string, string>();
+
+function readMarker(key: string) {
+  if (unsaved.has(key)) return unsaved.get(key);
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function writeMarker(key: string, value: string) {
+  if (persistItem(key, value)) unsaved.delete(key);
+  else unsaved.set(key, value);
+  window.dispatchEvent(new Event(changeEvent));
+}
+
+function subscribe(notify: () => void) {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === null || event.key === DISMISSED_FOR_EXPIRY_KEY || event.key.startsWith(DISMISSED_BY_MEMBER_PREFIX)) notify();
+  };
+  window.addEventListener(changeEvent, notify);
+  window.addEventListener('storage', onStorage);
+  window.addEventListener('pageshow', notify);
+  document.addEventListener('visibilitychange', notify);
+  return () => {
+    window.removeEventListener(changeEvent, notify);
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener('pageshow', notify);
+    document.removeEventListener('visibilitychange', notify);
+  };
+}
+
 export default function MembershipReminder() {
   const { membership } = useMembership();
   const pathname = usePathname();
   const memberId = membership?.wcaId;
   const dismissKey = memberId ? DISMISSED_BY_MEMBER_PREFIX + memberId : null;
-  const [dismissal, setDismissal] = useState<{
-    key: string;
-    dismissed: boolean;
-    dismissedForExpiry: string | null;
-  } | null>(null);
+  const expiresAt = membership?.expiresAt ?? '';
+  const dismissed = useSyncExternalStore(subscribe, () =>
+    !dismissKey || readMarker(dismissKey) === '1' || readMarker(DISMISSED_FOR_EXPIRY_KEY) === expiresAt,
+  () => true);
 
-  useEffect(() => {
-    if (!dismissKey) return;
-    let dismissed = false;
-    let dismissedForExpiry: string | null = null;
-    try {
-      dismissed = localStorage.getItem(dismissKey) === '1';
-      dismissedForExpiry = localStorage.getItem(DISMISSED_FOR_EXPIRY_KEY);
-    } catch { /* ignore */ }
-    setDismissal({ key: dismissKey, dismissed, dismissedForExpiry });
-  }, [dismissKey]);
-
-  if (!membership || !dismissal || dismissal.key !== dismissKey || dismissal.dismissed) return null;
-  if (pathname?.includes('/membership')) return null;
+  if (!membership || !dismissKey || dismissed || pathname?.includes('/membership')) return null;
   const exp = membershipExpiry(membership);
   if (!exp || (!exp.expiringSoon && !exp.expired)) return null;
 
-  const expiresAt = membership.expiresAt ?? '';
-  if (dismissal.dismissedForExpiry === expiresAt) return null;
-
-  const dismiss = () => {
-    persistItem(dismissal.key, '1');
-    setDismissal({ ...dismissal, dismissed: true });
-  };
-
-  const dismissForRenewal = () => {
-    persistItem(DISMISSED_FOR_EXPIRY_KEY, expiresAt);
-    setDismissal({ ...dismissal, dismissedForExpiry: expiresAt });
-  };
+  const dismiss = () => writeMarker(dismissKey, '1');
+  const dismissForRenewal = () => writeMarker(DISMISSED_FOR_EXPIRY_KEY, expiresAt);
 
   return (
     <div className={`mem-reminder${exp.expired ? ' is-expired' : ''}`} role="status">

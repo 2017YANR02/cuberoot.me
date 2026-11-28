@@ -77,3 +77,20 @@ it('keeps renewal dismissal tied to the current expiry', async () => {
   await render({ ...expiredMembership, expiresAt: '2020-03-01' });
   expect(host.querySelector('[role="status"]')).not.toBeNull();
 });
+
+it('updates an already mounted App page when another page dismisses the reminder', async () => {
+  await render();
+  const key = 'cuberoot_mem_reminder_dismissed:' + expiredMembership.wcaId;
+  await act(async () => {
+    localStorage.setItem(key, '1');
+    window.dispatchEvent(new StorageEvent('storage', { key, newValue: '1', storageArea: localStorage }));
+  });
+  expect(host.querySelector('[role="status"]')).toBeNull();
+});
+
+it('rechecks dismissal when restoring a page that missed the storage event', async () => {
+  await render();
+  localStorage.setItem('cuberoot_mem_reminder_dismissed:' + expiredMembership.wcaId, '1');
+  await act(async () => { window.dispatchEvent(new Event('pageshow')); });
+  expect(host.querySelector('[role="status"]')).toBeNull();
+});
