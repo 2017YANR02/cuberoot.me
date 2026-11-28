@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({ embedded: false, wechat: false, copy: vi.fn(),
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/miniprogram-bridge', () => ({ isMiniProgramCommerceRestricted: async () => mocks.embedded, openMiniProgramOrderPayment: vi.fn() }));
 vi.mock('@/lib/wechat-share', () => ({ isInWeChat: () => mocks.wechat }));
-vi.mock('@/lib/page-share', () => ({ copyPageLink: mocks.copy }));
+vi.mock('@/lib/clipboard', () => ({ writeClipboardText: mocks.copy }));
 vi.mock('@/lib/auth-store', async importOriginal => ({
   ...await importOriginal<typeof import('@/lib/auth-store')>(),
   useAuthUser: () => ({ uid: 1 }),
@@ -27,7 +27,7 @@ describe('order checkout controls', () => {
   beforeEach(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     mocks.embedded = false; mocks.wechat = false;
-    mocks.pay.mockReset().mockResolvedValue(attempt); mocks.copy.mockReset().mockResolvedValue(true);
+    mocks.pay.mockReset().mockResolvedValue(attempt); mocks.copy.mockReset().mockResolvedValue(undefined);
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Desktop Browser');
     entity = { id: 'order', title: 'Order', status: 'pending_payment', data: { status: 'pending_payment', totalAmountMinor: 5800, currency: 'CNY',
       paymentChannels: { alipay: true, wechatNative: true, wechatH5: true, wechatMiniProgram: false } } };

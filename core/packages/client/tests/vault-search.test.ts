@@ -3,7 +3,7 @@ import { act, createElement, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import VaultPage from '@/app/[lang]/vault/page';
-import { copyClipboardText } from '@/lib/clipboard';
+import { writeClipboardText } from '@/lib/clipboard';
 import type { VaultEntry } from '@/lib/vault-crypto';
 import { splitVaultLicenses } from '@/lib/vault-license';
 
@@ -20,7 +20,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => user, authActions: { login: vi.fn() },
   useAuthStore: () => vi.fn() }));
 vi.mock('@/components/BackHome', () => ({ default: () => null }));
-vi.mock('@/lib/clipboard', () => ({ copyClipboardText: vi.fn() }));
+vi.mock('@/lib/clipboard', () => ({ writeClipboardText: vi.fn() }));
 vi.mock('@/hooks/usePinnedCountries', () => ({ usePinnedCountries: () => [[], vi.fn()] }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path, directApiUrl: (path: string) => path }));
@@ -65,7 +65,7 @@ const unlockAndEdit = async () => {
 beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.useFakeTimers(); writes.length = 0; updates.length = 0;
-  vi.mocked(copyClipboardText).mockReset().mockResolvedValue(true);
+  vi.mocked(writeClipboardText).mockReset().mockResolvedValue(undefined);
   vi.stubGlobal('fetch', vi.fn((path: string, options?: RequestInit) => {
     if (path === '/v1/vault') return Promise.resolve(response({
       userId: 1, canManage: true, keyProfile: { publicKey: {}, encryptedPrivateKey: {} },
@@ -578,15 +578,15 @@ it('drags whole account groups and retains their order after saving', async () =
   const check = (button: HTMLButtonElement) => button.querySelector('.vault-copy-feedback .filled-status-mark[data-variant="success"]');
   expect(firstAccountValues.every((button) => !check(button))).toBe(true);
   await act(async () => firstAccountValues[0].click());
-  expect(copyClipboardText).toHaveBeenLastCalledWith('first');
+  expect(writeClipboardText).toHaveBeenLastCalledWith('first');
   expect(check(firstAccountValues[0])).not.toBeNull();
   expect(check(firstAccountValues[0])?.parentElement?.previousElementSibling?.textContent).toBe('first');
-  vi.mocked(copyClipboardText).mockResolvedValueOnce(false);
+  vi.mocked(writeClipboardText).mockRejectedValueOnce(new Error('Clipboard unavailable'));
   await act(async () => firstAccountValues[1].click());
-  expect(copyClipboardText).toHaveBeenLastCalledWith('fixture-first');
+  expect(writeClipboardText).toHaveBeenLastCalledWith('fixture-first');
   expect(check(firstAccountValues[1])).toBeNull();
   await act(async () => firstAccountValues[2].click());
-  expect(copyClipboardText).toHaveBeenLastCalledWith('First notes');
+  expect(writeClipboardText).toHaveBeenLastCalledWith('First notes');
   expect(check(firstAccountValues[0])).toBeNull();
   expect(check(firstAccountValues[2])).not.toBeNull();
   await advance(1_200);
