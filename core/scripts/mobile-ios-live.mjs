@@ -13,7 +13,7 @@ const cache = fileURLToPath(new URL('../../.tmp/cache/ios-live/', import.meta.ur
 const bundleId = 'me.cuberoot.app';
 const watchBundleId = `${bundleId}.watchkitapp`;
 const simulatorProducts = join(tmpdir(), 'cuberoot-mobile-ios-derived-data/Build/Products');
-const pairedPreviewBuild = 7;
+const pairedPreviewBuild = 10;
 // The API already permits this loopback origin for installed-client development.
 const port = '1420';
 const url = `http://127.0.0.1:${port}`;
@@ -87,12 +87,12 @@ function findSimulator(selected) {
   throw new Error('请在 Device Hub 中创建或启动一个 iPhone Duo 模拟器。');
 }
 
-function listeners(address) {
-  const selector = isIPv6(address) ? `-i6TCP@[${address}]:${port}` : `-i4TCP@${address}:${port}`;
+function listeners(address, listenPort = port) {
+  const selector = isIPv6(address) ? `-i6TCP@[${address}]:${listenPort}` : `-i4TCP@${address}:${listenPort}`;
   const listener = spawnSync('/usr/sbin/lsof', ['-nP', selector, '-sTCP:LISTEN', '-t'], { encoding: 'utf8' });
   if (listener.error) throw listener.error;
   if (listener.status === 1 && !listener.stdout.trim() && !listener.stderr.trim()) return [];
-  if (listener.status !== 0) throw new Error(`无法检查端口 ${port}。`);
+  if (listener.status !== 0) throw new Error(`无法检查端口 ${listenPort}。`);
   return listener.stdout.trim().split(/\s+/);
 }
 
@@ -190,31 +190,34 @@ function pairedTunnel(udid) {
   throw new Error('暂时无法连接 iPhone。请解锁手机后再试一次。');
 }
 
-function forwardPairedDevice(host, peer) {
+function forwardPairedDevice(host, peer, listenPort) {
+  if (![port, '3000'].includes(listenPort)) throw new Error('未知的开发预览端口。');
   const server = createServer(client => {
     if (client.remoteAddress !== peer) {
       client.destroy();
       return;
     }
-    const upstream = createConnection({ host: '127.0.0.1', port: Number(port) });
+    const upstream = createConnection({ host: '127.0.0.1', port: Number(listenPort) });
     client.on('error', () => upstream.destroy());
     upstream.on('error', () => client.destroy());
     client.on('close', () => upstream.destroy());
     upstream.on('close', () => client.destroy());
     client.pipe(upstream).pipe(client);
   });
-  server.listen({ host, port: Number(port), ipv6Only: true });
+  server.listen({ host, port: Number(listenPort), ipv6Only: true });
   setInterval(() => {
     const addresses = Object.values(networkInterfaces()).flat();
     if (!addresses.some(address => address.address === host)) process.exit();
   }, 10_000).unref();
 }
 
-async function startPairedProxy({ host, peer }) {
+async function startPairedProxy({ host, peer }, listenPort = port) {
   const args = [script, '--paired-proxy', host, peer];
-  if (!listeners(host).length) await startDetached(process.execPath, args, join(cache, 'duo-device.log'));
+  // Older launchers already forward 1420 with these same arguments.
+  if (listenPort !== port) args.push(listenPort);
+  if (!listeners(host, listenPort).length) await startDetached(process.execPath, args, join(cache, 'duo-device.log'));
   for (let attempt = 0; attempt < 30; attempt++) {
-    const [pid] = listeners(host);
+    const [pid] = listeners(host, listenPort);
     if (pid) {
       const command = run('/bin/ps', ['-p', pid, '-o', 'command=']);
       if (command.endsWith(args.join(' '))) return;
@@ -222,11 +225,11 @@ async function startPairedProxy({ host, peer }) {
     }
     await delay(200);
   }
-  throw new Error('iPhone 的预览连接未能启动。请重试一次。');
+  throw new Error(`iPhone 的 ${listenPort} 端口转发未能启动。`);
 }
 
 function installOnPhoneIfNeeded(udid) {
-  // Build 7 keeps the preview on the iPhone's stable loopback origin.
+  // The paired build includes the native high-frame-rate camera.
   const { result } = JSON.parse(device('device', 'info', 'apps', '--device', udid, '--timeout', '15',
     '--filter', `bundleIdentifier == '${bundleId}'`, '--quiet', '--json-output', '-'));
   const installed = result.apps[0];
@@ -248,11 +251,13 @@ async function launchPairedPhone(selected) {
   const phone = selected ? phones.find(({ id }) => id === selected) : defaultPhone;
   if (!phone) throw new Error('请选择一台已配对的 iPhone。首次连接请先在 Device Hub 中配对。');
   const udid = phone.id;
-  // A device details request opens the tunnel when a paired phone is reachable.
-  const tunnel = pairedTunnel(udid);
   await startServer();
-  await startPairedProxy(tunnel);
   installOnPhoneIfNeeded(udid);
+  // Xcode may switch the pairing transport while building or installing.
+  // Read its current address immediately before starting the phone session.
+  const tunnel = pairedTunnel(udid);
+  await startPairedProxy(tunnel);
+  await startPairedProxy(tunnel, '3000');
   const environment = JSON.stringify({ CUBEROOT_IOS_LIVE_URL: `http://[${tunnel.host}]:${port}` });
   console.log(device('device', 'process', 'launch', '--device', udid, '--terminate-existing', '--timeout', '20',
     '--environment-variables', environment, bundleId));
@@ -275,9 +280,9 @@ async function launchSimulator(selected) {
 }
 
 try {
-  const [mode, host, peer] = process.argv.slice(2);
+  const [mode, host, peer, listenPort = port] = process.argv.slice(2);
   if (mode === '--paired-proxy') {
-    forwardPairedDevice(host, peer);
+    forwardPairedDevice(host, peer, listenPort);
   } else if (mode === '--list-simulators') {
     console.log(JSON.stringify(simulatorTargets()));
   } else if (mode === '--list-apple-devices') {

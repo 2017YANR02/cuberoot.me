@@ -139,11 +139,14 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
 
     override func instanceDescriptor() -> InstanceDescriptor {
         let descriptor = super.instanceDescriptor()
-        // The launcher passes this URL only for a paired-device debugging session.
-        if let value = ProcessInfo.processInfo.environment["CUBEROOT_IOS_LIVE_URL"],
-           let proxy = PairedPreviewProxy(remoteURL: value) {
+        let key = "CubeRootPairedPreviewURL"
+        let launchedURL = ProcessInfo.processInfo.environment["CUBEROOT_IOS_LIVE_URL"]
+        if let value = launchedURL ?? UserDefaults.standard.string(forKey: key),
+           let proxy = PairedPreviewProxy(remoteURL: value),
+           launchedURL != nil || proxy.hasLiveApp() {
             previewProxy = proxy
             descriptor.serverURL = PairedPreviewProxy.localURL
+            if launchedURL != nil { UserDefaults.standard.set(value, forKey: key) }
         }
         return descriptor
     }
