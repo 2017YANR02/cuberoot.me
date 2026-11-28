@@ -621,15 +621,13 @@
         </view>
       </view>
       <view wx:if="{{sheet === 'video'}}">
-        <video wx:if="{{reviewVideoPath}}" id="nt-review-player" class="nt-review-player" src="{{reviewVideoPath}}" controls="{{true}}" object-fit="contain" binderror="reviewVideoPlaybackError" />
+        <video wx:if="{{reviewVideoPath}}" id="nt-review-player" class="nt-review-player" src="{{reviewVideoPath}}" style="--nt-review-ratio: {{reviewVideoRatio || 1.77778}}" data-path="{{reviewVideoPath}}" controls="{{true}}" object-fit="contain" bindloadedmetadata="reviewVideoLoaded" binderror="reviewVideoPlaybackError" />
         <text wx:if="{{reviewVideoPath && reviewVideoScramble}}" class="nt-video-scramble" selectable="{{true}}">{{reviewVideoScramble}}</text>
         <view class="nt-video-actions">
-          <button class="nt-control nt-bulk-button" data-source="camera" bindtap="pickReviewVideo" disabled="{{reviewVideoBusy}}" hover-class="press-feedback">{{copy.recordVideo}}</button>
-          <button class="nt-control nt-bulk-button" data-source="album" bindtap="pickReviewVideo" disabled="{{reviewVideoBusy}}" hover-class="press-feedback">{{copy.importVideo}}</button>
-        </view>
-        <view wx:if="{{reviewVideoPath || reviewVideoError}}" class="nt-video-actions">
+          <button class="nt-control" data-source="camera" bindtap="pickReviewVideo" disabled="{{reviewVideoBusy}}" hover-class="press-feedback">{{copy.recordVideo}}</button>
+          <button class="nt-control" data-source="album" bindtap="pickReviewVideo" disabled="{{reviewVideoBusy}}" hover-class="press-feedback">{{copy.importVideo}}</button>
           <button wx:if="{{reviewVideoRecorded}}" class="nt-control" bindtap="saveReviewVideo" disabled="{{reviewVideoSaved}}" hover-class="press-feedback">{{reviewVideoSaved ? copy.videoSaved : copy.saveVideo}}</button>
-          <button class="nt-control" bindtap="copyReviewVideoLink" hover-class="press-feedback">{{copy.videoLink}}</button>
+          <button wx:if="{{reviewVideoPath || reviewVideoError}}" class="nt-control" bindtap="copyReviewVideoLink" hover-class="press-feedback">{{copy.videoLink}}</button>
         </view>
         <text wx:if="{{reviewVideoError}}" class="nt-error" aria-role="alert">{{reviewVideoError}}</text>
       </view>

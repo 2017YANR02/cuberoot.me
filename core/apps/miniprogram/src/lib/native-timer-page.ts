@@ -221,7 +221,7 @@ function buildCopy(language: MiniProgramLocale) {
   loading: tr({ en: 'Generating scramble…', zh: '正在生成打乱…' }), retry: tr({ en: 'Retry', zh: '重试' }),
   cube: tr({ en: 'Follow the scramble; the first turn starts timing and solving stops it.', zh: '按打乱转动魔方，匹配后首转开始，还原自动停止。' }),
   close: tr({ en: 'Close', zh: '关闭' }), export: tr({ en: 'Copy CSV', zh: '复制 CSV' }),
-  recordVideo: tr({ en: 'Record live', zh: '现场录制' }), importVideo: tr({ en: 'Choose a video', zh: '选择已有视频' }),
+  recordVideo: tr({ en: 'Record', zh: '录制' }), importVideo: tr({ en: 'Choose video', zh: '选视频' }),
   frontCamera: tr({ en: 'Front camera', zh: '前置摄像头' }), backCamera: tr({ en: 'Rear camera', zh: '后置摄像头' }),
   videoScopeUnavailable: tr({ en: 'Video access is not enabled in this mini program. You can use the web review link.', zh: '此小程序尚未开通视频权限，可复制网址在浏览器复盘。' }),
   recordUnavailable: tr({ en: 'Camera unavailable. Check camera permissions or choose a video.', zh: '摄像头不可用，请检查相机权限或选择已有视频。' }),
@@ -1842,6 +1842,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
           sourceType: [source], camera, compressed: false, maxDuration: 1800,
           success: video => video.tempFilePath
             ? finish({ reviewVideoPath: video.tempFilePath, reviewVideoScramble: scramble, reviewVideoEvent: event,
+                reviewVideoRatio: video.width > 0 && video.height > 0 ? video.width / video.height : null,
                 reviewVideoRecorded: source === 'camera', reviewVideoSaved: false })
             : failed({}),
           fail: failed,
@@ -1852,6 +1853,12 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
         api.showActionSheet({ itemList: [labels.backCamera, labels.frontCamera],
           success: result => choose(result.tapIndex === 1 ? 'front' : 'back'), fail: failed });
       } else choose('back');
+    },
+    reviewVideoLoaded(e: WechatMiniprogram.CustomEvent<{ width: number; height: number }>) {
+      const { width, height } = e.detail;
+      if (e.currentTarget.dataset.path === this.data.reviewVideoPath && width > 0 && height > 0 && width / height !== this.data.reviewVideoRatio) {
+        this.setData({ reviewVideoRatio: width / height });
+      }
     },
     reviewVideoPlaybackError() {
       this.setData({ reviewVideoError: copy().videoUnavailable });
