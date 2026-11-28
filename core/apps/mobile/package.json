@@ -16,7 +16,7 @@
     "cap:add:android": "cap add android",
     "cap:sync": "pnpm cap:sync:android",
     "cap:sync:android": "pnpm build && cap sync android",
-    "cap:sync:ios": "pnpm build && cap sync ios",
+    "cap:sync:ios": "CUBEROOT_IOS_BUILD=1 pnpm build && cap sync ios",
     "android:open": "cap open android",
     "android:push:check": "node scripts/android-push-config.ts",
     "push:acceptance:dev": "vite --config vite.push-acceptance.config.ts --mode push-acceptance",

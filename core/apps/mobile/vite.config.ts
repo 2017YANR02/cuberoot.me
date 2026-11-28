@@ -10,6 +10,11 @@ const embeddedStyles = readFileSync(resolve('@cuberoot/app-ui/embedded-layout.cs
 const embeddedLayoutScript = readFileSync(resolve('@cuberoot/app-ui/embedded-layout.js'), 'utf8');
 
 export default defineConfig({
+  resolve: {
+    alias: process.env.CUBEROOT_IOS_BUILD === '1'
+      ? { '@cuberoot/timer-ui/typography.css': resolve('@cuberoot/timer-ui/typography-system.css') }
+      : {},
+  },
   build: {
     // Keep older Android syntax and iOS WebKit prefixes (notably user-select).
     cssTarget: ['chrome103', 'safari15'],
