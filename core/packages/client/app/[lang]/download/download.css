@@ -104,3 +104,6 @@
   .download-alternative { min-height: 0; }
   .download-upcoming { margin-top: 24px; gap: 8px; }
 }
+
+.download-frame-counter-builds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
+.download-frame-counter-builds .download-requirement { margin-top: .5rem; }

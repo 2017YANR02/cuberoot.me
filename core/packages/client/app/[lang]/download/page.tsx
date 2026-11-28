@@ -12,7 +12,7 @@ import BackHome from '@/components/BackHome';
 import AppLink from '@/components/AppLink';
 import { Tooltip } from '@/components/Tooltip';
 import { tr, useLang } from '@/i18n/tr';
-import { ANDROID_APK_URL, APP_STORE_URL, GOOGLE_PLAY_URL, MAC_APP_STORE_NATIVE_URL, MAC_APP_STORE_WEB_URL, trackDownload } from '@/lib/app-downloads';
+import { FRAME_COUNT_MAC_DMG, FRAME_COUNT_WINDOWS_ZIP, ANDROID_APK_URL, APP_STORE_URL, GOOGLE_PLAY_URL, MAC_APP_STORE_NATIVE_URL, MAC_APP_STORE_WEB_URL, trackDownload } from '@/lib/app-downloads';
 import { useIsAdmin } from '@/lib/auth-store';
 import './download.css';
 
@@ -142,6 +142,23 @@ export default function DownloadPage() {
           </details>
         </> : platforms}
       </div>
+      <section id="frame-count-desktop" className="download-platform-section" data-site-surface="panel" aria-labelledby="download-frame-count-title">
+        <h2 id="download-frame-count-title">{tr({ zh: '数帧离线桌面版', en: 'Offline frame counter' })}</h2>
+        <div className="download-frame-counter-builds">
+          {FRAME_COUNT_MAC_DMG && <div>
+            <a className="download-button download-button-primary" download href={FRAME_COUNT_MAC_DMG}><Download size={18} aria-hidden />
+              {tr({ zh: '下载 Mac 版 DMG', en: 'Download Mac DMG' })}
+            </a>
+            <p className="download-requirement">{tr({ zh: 'Apple 芯片 · macOS 12 或以上。打开 DMG，将 LosslessCut 拖入「应用程序」。当前构建未经 Apple 公证。', en: 'Apple silicon · macOS 12 or later. Open the DMG and drag LosslessCut into Applications. This build is not notarized by Apple.' })}</p>
+          </div>}
+          <div>
+            <a className="download-button download-button-primary" href={FRAME_COUNT_WINDOWS_ZIP}><Download size={18} aria-hidden />
+              {tr({ zh: '下载 Windows 版 ZIP', en: 'Download Windows ZIP' })}
+            </a>
+            <p className="download-requirement">{tr({ zh: 'Windows x64。解压后打开 LosslessCut.exe。', en: 'Windows x64. Extract the ZIP and open LosslessCut.exe.' })}</p>
+          </div>
+        </div>
+      </section>
       <section className="download-upcoming" aria-labelledby="download-upcoming-title">
         <h2 id="download-upcoming-title">{tr({ zh: '更多平台', en: 'More platforms' })}</h2>
         <p><span className="download-upcoming-platforms"><span>HarmonyOS NEXT</span></span><span className="download-version">{tr({ zh: '暂未发布', en: 'Not yet available' })}</span></p>

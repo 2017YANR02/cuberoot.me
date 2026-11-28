@@ -199,3 +199,6 @@ core/packages/client/public/maplibre/
 # Video reconstruction workers are bundled from the checked-in engine.
 /core/packages/client/public/vendor/video-recon/workers/
 /core/packages/client/public/vendor/video-recon/runtime/
+
+# Locally verified desktop release artifacts are distributed separately from source.
+/core/packages/client/public/downloads/frame-count/*.dmg

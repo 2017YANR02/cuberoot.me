@@ -1,5 +1,12 @@
 [
   {
+    "name": "LosslessCut / mifi",
+    "url": "https://github.com/mifi/lossless-cut",
+    "zh": "离线数帧桌面版基于 GPL-2.0 许可的 LosslessCut 开发。",
+    "en": "The offline frame counter is based on the GPL-2.0-licensed LosslessCut video editor.",
+    "section": "practice"
+  },
+  {
     "name": "Liquid Glass Studio / Charles Yin",
     "url": "https://github.com/iyinchao/liquid-glass-studio",
     "zh": "网页液态玻璃通过 App Foundation 移植 Liquid Glass Studio 的边缘折射、色散和反光计算。上游采用 MIT 许可。",
@@ -26,6 +33,13 @@
     "url": "https://github.com/joongpa/magic-stew",
     "zh": "视频复盘使用 Magic Stew 的识别内核、ONNX 模型和 Rust/WASM 姿态拟合与动作搜索。界面由 CubeRoot 实现，复制公式时包含起手转体。",
     "en": "Video Reconstruction uses Magic Stew’s recognition engine, ONNX models, and Rust/WASM pose fitting and move search. CubeRoot provides the interface and includes the initial grip in copied reconstructions.",
+    "section": "practice"
+  },
+  {
+    "name": "Silkscreen / The Silkscreen Project Authors",
+    "url": "https://github.com/googlefonts/silkscreen",
+    "zh": "复盘视频字幕使用 Silkscreen Bold 像素字体，通过 Fontsource 分发，遵循 SIL OFL 1.1 许可。",
+    "en": "Reconstruction video captions use Silkscreen Bold, distributed through Fontsource under SIL OFL 1.1.",
     "section": "practice"
   },
   {

@@ -72,11 +72,10 @@ export default function VideoToolsPage({ title }: { title: string }) {
           <Icon size={16} aria-hidden />{label}
         </button>)}
       </div>
-      {counting && <a className="fc-offline-link" href="https://github.com/RuiminYan/lossless-cut-framecount"
-        target="_blank" rel="noopener noreferrer" aria-label={t('离线桌面版', 'Offline desktop app')}>
+      {counting && <Link className="fc-offline-link" href="/download#frame-count-desktop" aria-label={t('离线桌面版', 'Offline desktop app')}>
         <MonitorDown size={15} strokeWidth={1.75} aria-hidden />
         <span>{t('离线桌面版', 'Offline desktop app')}</span>
-      </a>}
+      </Link>}
       <HeaderToggles />
     </header>
     {(counting || hasOpenedFrames) && <FrameCountPage active={counting} onReconstruct={next => {

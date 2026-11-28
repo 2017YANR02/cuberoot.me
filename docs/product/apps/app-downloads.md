@@ -111,3 +111,7 @@ pnpm --filter @cuberoot/server typecheck
 - Play 独立 [build-only run 41162189074](https://github.com/2017YANR02/cuberoot.me/actions/runs/41162189074) 成功：`1.0.2 / 1000002` AAB 在云端生成，以既有上传证书签名，验证包名、版本、完整签名和固定证书指纹；未上传 Play、未送审，不消耗官网最新指针。Play 服务账号的正式提交权限和商店审核仍不得从本次 build-only 推断已通过。
 - 官网管理员版本管理页已读到真实 Actions 状态；下载页顶部版本管理图标替换设置图标，移除原文字按钮。Web 自有服务器与 Vercel 均部署成功，线上确认版本信息、三项下载链接及图标跳转。
 - 发布契约 16 项、下载页定向 4 项、client typecheck 与 Knip 检查通过；首次常规 CI 的 gh 外部命令登记问题已修复。Windows 按维护者选择保持未签名，本轮未验证 Android/Windows 实机安装、覆盖升级或业务功能，不把云端发布成功记作设备验收。
+
+数帧页的「离线桌面版」进入本站下载页的 `#frame-count-desktop` 区块。Windows x64 ZIP 使用最后一次已发布的固定版本，地址集中在 `FRAME_COUNT_WINDOWS_ZIP`。新版本获准发布后更新该常量。
+
+数帧 Mac 版为 Apple 芯片的 macOS 12+ DMG。两机在 `.local-data/releases/frame-count/3.68.1/` 保留安装包；本地下载页通过 `client/public/downloads/frame-count/` 提供同一文件。公开分发前完成 Developer ID 签名、公证及静态托管，核验后将 `NEXT_PUBLIC_FRAME_COUNT_MAC_DMG_URL` 指向已发布的不可变地址。当前本地测试版为 ad hoc 签名。
