@@ -86,7 +86,6 @@
 
 .recent-records-row {
   display: block;
-  padding: 0.3rem 0.4rem;
   border-radius: 8px;
   transition: background 0.12s;
 }
@@ -95,30 +94,9 @@
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
-.recent-records-copy {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.4rem;
-  height: 1.4rem;
-  margin-right: 0.4rem;
-  vertical-align: middle;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: color 0.12s, background 0.12s;
-}
-
-.recent-records-copy:hover {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
 .recent-records-body {
-  display: inline;
+  display: block;
+  padding: 0.3rem 0.4rem;
   color: var(--foreground);
   text-decoration: none;
   font-size: 0.88rem;
@@ -151,10 +129,8 @@
   .recent-records {
     margin-bottom: 1.75rem;
   }
-  .recent-records-row {
-    padding: 0.3rem 0.25rem;
-  }
   .recent-records-body {
+    padding: 0.3rem 0.25rem;
     font-size: 0.84rem;
   }
 }

@@ -4,8 +4,6 @@
 // Text rendering reuses the API's Bark formatter (id-cached).
 import { useEffect, useState, useMemo } from 'react';
 import Link from '@/components/AppLink';
-import { CopySuccessIcon } from '@/components/CopySuccessIcon';
-import { Copy } from '@app-foundation/icons/lucide';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps, compRecordHref } from '@/lib/comp-link';
@@ -17,7 +15,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { WcaPersonIdentity } from '@/components/WcaPersonIdentity';
 import { usePinnedCountries } from '@/hooks/usePinnedCountries';
-import { useCopy } from '@/hooks/useCopy';
+import { copyClipboardText } from '@/lib/clipboard';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
 import './recent_records.css';
 import { tr } from '@/i18n/tr';
@@ -235,35 +233,27 @@ type RecordListEntry = RecentRecord | {
 
 // Headless list — rendered inside the OngoingComps shared scroll panel (no own
 // header / max-height; the panel owns the title tab and the scrollbar).
-export function RecentRecordsList({ filled, isZh, showCopy = true }: {
-  filled: RecordListEntry[]; isZh: boolean; showCopy?: boolean;
+export function RecentRecordsList({ filled, isZh, copyOnOpen = true }: {
+  filled: RecordListEntry[]; isZh: boolean; copyOnOpen?: boolean;
 }) {
-  const recordCopy = useCopy();
-
   function handleCopy(r: RecordListEntry) {
     const text = (isZh ? r.formattedCn : r.formattedEn) || ('href' in r ? '' : fallbackText(r, isZh));
     if (!text) return;
-    recordCopy.copy(text, r.id);
+    void copyClipboardText(text);
   }
 
   return (
     <ul className="recent-records-list">
       {filled.map(r => {
         const text = isZh ? r.formattedCn : r.formattedEn;
-        const copied = recordCopy.copiedKey === r.id;
         return (
           <li key={r.id} className="recent-records-row">
-            {showCopy && <button
-              type="button"
-              className="recent-records-copy"
-              onClick={() => handleCopy(r)}
-              title={copied ? tr({ zh: '已复制', en: 'Copied' }) : tr({ zh: '复制', en: 'Copy' })}
-              aria-label={tr({ zh: '复制', en: 'Copy'
-            })}
+            <Link
+              {...compLinkProps(r.competitionId)}
+              href={'href' in r ? r.href : compRecordHref({ ...r, eventId: toWcaEventId(r.eventId) })}
+              onNavigate={copyOnOpen ? () => handleCopy(r) : undefined}
+              className="recent-records-body"
             >
-              {copied ? <CopySuccessIcon size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
-            </button>}
-            <Link {...compLinkProps(r.competitionId)} href={'href' in r ? r.href : compRecordHref({ ...r, eventId: toWcaEventId(r.eventId) })} className="recent-records-body">
               <EventIcon event={r.eventId} />{' '}
               {text
                 ? renderFormatted(shortenEvent(stripRecordNewsPrefix(text), r.eventId, isZh))
