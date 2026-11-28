@@ -4,3 +4,4 @@ export { CodeFlow, CredentialFormsProvider, FirstPartyLogin, SetPasswordForm,
 export { PasswordInput, type PasswordInputProps } from './PasswordInput';
 export { RegistrationConsent } from './RegistrationConsent';
 export { providerGlyphs } from './provider-glyphs';
+export { accountChoiceCopy, accountLinkTarget } from './account-choice';

@@ -3,7 +3,7 @@ import type { MobileAuthProvider, PendingIdentity, WebSession } from '@cuberoot/
 import type { SupportedLanguage } from '../copy';
 import type { InstalledAppAuth } from '../platform';
 import {
-  authErrorText, providerGlyphs, CredentialFormsProvider, FirstPartyLogin, RegistrationConsent,
+  accountChoiceCopy, accountLinkTarget, authErrorText, providerGlyphs, CredentialFormsProvider, FirstPartyLogin, RegistrationConsent,
   type CredentialFormPort,
 } from './account-forms';
 import { accountRequest, credentialSession, installedAuthProviders, InstalledAccountChoiceRequired } from './credential-api';
@@ -30,7 +30,7 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
   const t = (zh: string, en: string) => ({ zh, en })[language];
   const [providers, setProviders] = useState<Providers>({ email: true, phone: true, social: ['wca'] });
   const [choice, setChoice] = useState<AccountChoice | null>(null);
-  const [candidateName, setCandidateName] = useState('');
+  const choiceCopy = choice && accountChoiceCopy(choice.provider, t);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -71,7 +71,6 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
     if (choice?.stage !== 'authenticate' || !auth.session || !externalChoice.current) return;
     externalChoice.current = false;
     candidate.current = auth.session;
-    setCandidateName(auth.session.user.name || String(auth.session.user.uid));
     setChoice({ ...choice, stage: 'confirm' });
   }, [auth.session, choice]);
   useEffect(() => {
@@ -154,7 +153,6 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
     const session = candidate.current;
     if (choice?.stage === 'authenticate' && session) {
       externalChoice.current = false;
-      setCandidateName(session.user.name || String(session.user.uid));
       setChoice({ ...choice, stage: 'confirm' });
       return;
     }
@@ -201,6 +199,7 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
         : choice?.stage === 'choose' ? (
           <div className="auth-flow">
             <h2 className="auth-title">{t('你有 CubeRoot 账号吗？', 'Do you have a CubeRoot account?')}</h2>
+            <p className="auth-hint">{choiceCopy?.keepAccount}</p>
             <button className="auth-primary" type="button" onClick={() => setChoice({ ...choice, stage: 'authenticate' })}>
               {t('登录已有账号', 'Sign in to an existing account')}
             </button>
@@ -212,8 +211,8 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
           </div>
         ) : choice?.stage === 'confirm' ? (
           <div className="auth-flow">
-            <h2 className="auth-title">{t('确认绑定登录方式', 'Confirm sign-in method')}</h2>
-            <p className="auth-hint">{candidateName}</p>
+            <h2 className="auth-title">{choiceCopy?.title}</h2>
+            <p className="auth-hint">{candidate.current && accountLinkTarget(candidate.current.user.name, candidate.current.user.uid)}</p>
             <button className="auth-primary" type="button" onClick={() => void saveSession('link')}>{t('确认绑定', 'Confirm linking')}</button>
             <button className="auth-textbtn" type="button" onClick={() => {
               candidate.current = null;
@@ -223,7 +222,7 @@ export function InstalledSignIn({ auth, language, onClose, openPolicy }: {
           </div>
         ) : (
           <>
-            {verifyExisting && <p className="auth-hint">{t('请用原来的登录方式验证账号。', 'Use a sign-in method already linked to your account.')}</p>}
+            {verifyExisting && <p className="auth-hint">{choiceCopy?.verify}</p>}
             {forms}
           </>
         )}

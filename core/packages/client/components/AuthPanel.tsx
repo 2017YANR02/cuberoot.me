@@ -34,7 +34,7 @@ import {
 import { requestGoogleAssertion } from '@/lib/google-auth';
 import { startSocialLogin, isBlockedWebview } from '@/lib/social-auth';
 import { AccountChoiceRequired, clearIdentityChoice, getIdentityChoice, rememberIdentityChoice, updateIdentityChoice, useIdentityChoice, type IdentityChoice } from '@/lib/identity-choice';
-import { authErrorText, CodeFlow, CredentialFormsProvider, FirstPartyLogin, SetPasswordForm,
+import { accountChoiceCopy, accountLinkTarget, authErrorText, CodeFlow, CredentialFormsProvider, FirstPartyLogin, SetPasswordForm,
   type CredentialFormPort, type SignedIn } from '@cuberoot/app-ui/account-forms';
 import '@cuberoot/app-ui/account-forms.css';
 import './auth-panel.css';
@@ -266,25 +266,20 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
     }
   };
   const matches = !!pending.expectedUid && user?.uid === pending.expectedUid;
-  const providerMeta = SOCIALS.find((provider) => provider.key === pending.provider);
-  const providerName = providerMeta ? t(providerMeta.name.zh, providerMeta.name.en)
-    : pending.provider === 'email' ? t('邮箱', 'email')
-      : pending.provider === 'phone' ? t('手机号', 'phone number')
-        : pending.provider === 'douyin' ? t('抖音', 'Douyin')
-          : pending.provider === 'wca' ? 'WCA' : 'Google';
+  const choiceCopy = accountChoiceCopy(pending.provider, t);
   return <div className="auth-flow">
     {pending.stage === 'choose' ? <>
       <h2 className="auth-title">{t('你有 CubeRoot 账号吗？', 'Do you have a CubeRoot account?')}</h2>
-      <p className="auth-hint">{t('保留原账号的会员和资料。', 'Keep your existing membership and profile.')}</p>
+      <p className="auth-hint">{choiceCopy.keepAccount}</p>
       <button type="button" className="auth-primary" disabled={busy} onClick={() => user?.uid ? authenticated() : updateIdentityChoice(pending.ticket, { stage: 'authenticate' })}>{t('登录已有账号', 'Sign in to an existing account')}</button>
       <RegistrationConsent key={pending.ticket} busy={busy} onCreate={accepted => void complete('create', accepted)} />
     </> : pending.stage === 'authenticate' ? <>
-      <p className="auth-hint">{t(`请用原来的登录方式验证账号，再绑定${providerName}。不会创建新账号。`, `Sign in with a method already linked to your account, then link ${providerName}. No new account will be created.`)}</p>
+      <p className="auth-hint">{choiceCopy.verify}</p>
       {pending.otherIdentityRejected && <p className="auth-error" role="alert">{t('这个登录方式尚未绑定账号，请使用原来绑定的方式。', 'This sign-in method is not linked to an account. Use one already linked to your account.')}</p>}
       <LoginFormFields existingOnly firstPartyOnly={firstPartyOnly} onDone={authenticated} />
     </> : <>
-      <h2 className="auth-title">{t(`绑定 ${providerName}`, `Link ${providerName}`)}</h2>
-      <p className="auth-hint">{matches ? `${user?.name || ''} · ID ${pending.expectedUid}` : t('当前账号已更改，请重新登录要绑定的账号。', 'Your account changed. Sign in to the account you want to link.')}</p>
+      <h2 className="auth-title">{choiceCopy.title}</h2>
+      <p className="auth-hint">{matches && user ? accountLinkTarget(user.name, user.uid) : t('当前账号已更改，请重新登录要绑定的账号。', 'Your account changed. Sign in to the account you want to link.')}</p>
       <button type="button" className="auth-primary" disabled={busy || !matches} onClick={() => void complete('link')}>{t('确认绑定', 'Confirm linking')}</button>
       <button type="button" className="auth-textbtn" disabled={busy} onClick={() => updateIdentityChoice(pending.ticket, { stage: 'authenticate', expectedUid: undefined })}>{t('使用其他账号', 'Use another account')}</button>
     </>}
