@@ -119,6 +119,314 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = ([
   {
+    "date": "2026-11-27",
+    "tag": "feature",
+    "zh": {
+      "title": "层先法支持智能魔方跟练",
+      "body": "三阶层先法新增独立跟练入口，可配合随机整解示范练习。",
+      "expand": "模拟器的指法目录可按发力手指和起始握姿查找动作，并在场景中播放。"
+    },
+    "en": {
+      "title": "Smart-cube practice for layer-by-layer solves",
+      "body": "A dedicated 3×3 practice page accompanies randomized full-solve walkthroughs.",
+      "expand": "The simulator catalog also groups playable turns by driving finger and starting grip."
+    }
+  },
+  {
+    "date": "2026-11-27",
+    "tag": "feature",
+    "zh": {
+      "title": "计时录像可以回看并导出复盘字幕",
+      "body": "网页和安装版计时器支持回看录像，小程序原生计时器也加入录像回看。",
+      "expand": "视频工具共用播放控件，可导出复盘字幕。智能魔方计时器可记住上次使用的设备并重新连接。"
+    },
+    "en": {
+      "title": "Review timed solve videos and export reconstruction captions",
+      "body": "Video review is available in web and installed timers as well as the native mini-program timer.",
+      "expand": "Video tools share playback controls and can export reconstruction captions. The smart-cube timer can reconnect to the last device."
+    }
+  },
+  {
+    "date": "2026-11-26",
+    "tag": "feature",
+    "zh": {
+      "title": "四阶降阶法加入互动教程",
+      "body": "学习者可以跟随演示，按阶段练习四阶降阶还原。",
+      "expand": "整解演示统一了播放流程，二阶层先法也增加了完整示范。"
+    },
+    "en": {
+      "title": "Interactive 4×4 reduction lessons",
+      "body": "Learners can follow demonstrations of the stages of a 4×4 reduction solve.",
+      "expand": "Full-solve walkthroughs share a playback flow, with complete examples also available for 2×2 layer-by-layer solves."
+    }
+  },
+  {
+    "date": "2026-11-26",
+    "tag": "feature",
+    "zh": {
+      "title": "Cubing Lean 研究与论文库开放浏览",
+      "body": "数学区收录短解与满循环换位子研究。",
+      "expand": "两篇论文各有阅读入口，短解演示可逐步查看转动和抵消。"
+    },
+    "en": {
+      "title": "Cubing Lean research and papers",
+      "body": "The math section collects work on short solutions and full-cycle commutators.",
+      "expand": "Both papers have dedicated reading pages, and the short-solution demo walks through moves and cancellations."
+    }
+  },
+  {
+    "date": "2026-11-25",
+    "tag": "feature",
+    "zh": {
+      "title": "比赛中心整合赛事入口",
+      "body": "独立比赛中心提供赛事列表、详情和赛事工作台。",
+      "expand": "组织者可以从赛事入口进入对应的管理工作区。"
+    },
+    "en": {
+      "title": "A dedicated competition center",
+      "body": "The center brings together competition listings, details and the organizer workspace.",
+      "expand": "Organizers can open the management workspace for their competition."
+    }
+  },
+  {
+    "date": "2026-11-25",
+    "tag": "feature",
+    "zh": {
+      "title": "项目致谢集中展示",
+      "body": "致谢页列出项目采用的作品及其来源。",
+      "expand": "页面收录 Liquid Glass Studio，关于页面也增加了创始人介绍与肖像。"
+    },
+    "en": {
+      "title": "Project acknowledgments in one place",
+      "body": "A credits page lists the works used in the project and their sources.",
+      "expand": "The page credits Liquid Glass Studio. The About page also introduces the founders with portraits."
+    }
+  },
+  {
+    "date": "2026-11-25",
+    "tag": "feature",
+    "zh": {
+      "title": "复盘诊断连接专项练习与复测",
+      "body": "学习者可从解法的阶段诊断进入针对性练习。",
+      "expand": "复测结果可与练习前的表现对照，聊天回答中也能回放对应阶段。"
+    },
+    "en": {
+      "title": "Targeted practice and retests from solve diagnoses",
+      "body": "Learners can open focused practice from a diagnosed solve stage.",
+      "expand": "Retest results can be compared with earlier performance, and chat replies can play back the relevant stage."
+    }
+  },
+  {
+    "date": "2026-11-24",
+    "tag": "feature",
+    "zh": {
+      "title": "模拟器加入握姿图鉴",
+      "body": "握姿图鉴支持并排对照，指法标记可通过键盘操作。",
+      "expand": "模拟器展示起始握姿与手指接触位置，教学公式也可开启手模播放。"
+    },
+    "en": {
+      "title": "Grip atlas in the simulator",
+      "body": "Grips can be compared side by side, with keyboard controls for finger annotations.",
+      "expand": "The simulator shows starting grips and finger contacts. Algorithm lessons can also play with hands visible."
+    }
+  },
+  {
+    "date": "2026-11-24",
+    "tag": "feature",
+    "zh": {
+      "title": "手表可在本地生成打乱",
+      "body": "手表支持项目选择和本地打乱。",
+      "expand": "智能魔方训练与计时共用记录流程，还原记录可同步训练信息。"
+    },
+    "en": {
+      "title": "Generate scrambles on the watch",
+      "body": "The watch supports event selection and local scramble generation.",
+      "expand": "Smart-cube training shares the timing flow, and solve records can sync training details."
+    }
+  },
+  {
+    "date": "2026-11-23",
+    "tag": "feature",
+    "zh": {
+      "title": "二阶 EG 课程加入识别训练",
+      "body": "学习者可以在课程中练习辨认 EG 情况。",
+      "expand": "一层法课程也扩充了识别和对齐练习，教学图可用半透明块显示参照面。"
+    },
+    "en": {
+      "title": "Recognition practice in the 2×2 EG course",
+      "body": "Learners can practice identifying EG cases in the course.",
+      "expand": "First-layer lessons also gained recognition and alignment exercises, with translucent teaching diagrams for reference."
+    }
+  },
+  {
+    "date": "2026-11-23",
+    "tag": "feature",
+    "zh": {
+      "title": "注册流程加入独立服务条款页",
+      "body": "网页注册时需要确认同意条款。",
+      "expand": "开发预览页可以查看注册确认流程，会员页面按购买渠道显示订阅管理入口。"
+    },
+    "en": {
+      "title": "Dedicated terms page for registration",
+      "body": "Web registration asks users to confirm their consent to the terms.",
+      "expand": "A development page previews the confirmation flow, and membership management links follow the purchase channel."
+    }
+  },
+  {
+    "date": "2026-11-22",
+    "tag": "feature",
+    "zh": {
+      "title": "日历可以分享待定日程",
+      "body": "日程可标记为已确认或待定，并可公开分享。",
+      "expand": "分享日程时，读者可以区分已确定的安排和仍待确认的活动。"
+    },
+    "en": {
+      "title": "Share tentative calendar events",
+      "body": "Events can be marked as confirmed or tentative and shared publicly.",
+      "expand": "Shared calendars distinguish settled plans from events awaiting confirmation."
+    }
+  },
+  {
+    "date": "2026-11-21",
+    "tag": "feature",
+    "zh": {
+      "title": "视频复盘可从末态推定打乱",
+      "body": "上传视频时可以留空打乱，由识别结果推定起手状态。",
+      "expand": "复盘表单可以回填校验过的解法，原理说明页介绍识别流程并列出上游项目。"
+    },
+    "en": {
+      "title": "Infer the scramble from a recorded solve",
+      "body": "When no scramble is supplied, reconstruction can infer the starting state from the end of the solve.",
+      "expand": "Verified moves can populate the reconstruction form. A separate guide explains recognition and credits the upstream project."
+    }
+  },
+  {
+    "date": "2026-11-21",
+    "tag": "feature",
+    "zh": {
+      "title": "二阶一层法课程加入 44 种情况",
+      "body": "课程按情况讲解二阶第一层的识别与还原。",
+      "expand": "二阶层先法也补齐末层课程，手模演示加入拇指参照。"
+    },
+    "en": {
+      "title": "A 44-case 2×2 first-layer course",
+      "body": "The course covers recognition and execution for first-layer cases.",
+      "expand": "The layer-by-layer course also gained last-layer lessons and thumb reference cues in hand demonstrations."
+    }
+  },
+  {
+    "date": "2026-11-20",
+    "tag": "feature",
+    "zh": {
+      "title": "视频复盘接入摄像头计时",
+      "body": "可以从录像识别魔方转动，也可以打开摄像头计时。",
+      "expand": "视频复盘接入 Magic Stew，识别结果可用于回看解法。"
+    },
+    "en": {
+      "title": "Video reconstruction and camera timing",
+      "body": "Moves can be recognized from a recording, and a camera can be used to time a solve.",
+      "expand": "Video reconstruction uses Magic Stew and lets the solver review the recognized moves."
+    }
+  },
+  {
+    "date": "2026-11-20",
+    "tag": "feature",
+    "zh": {
+      "title": "二阶层先法加入互动练习",
+      "body": "二阶教程把分步讲解与可操作的魔方放在一起。",
+      "expand": "练习可限制允许的转动，帮助读者按当前步骤操作。"
+    },
+    "en": {
+      "title": "Interactive 2×2 layer-by-layer lessons",
+      "body": "The course pairs step-by-step instruction with a cube the learner can turn.",
+      "expand": "Exercises can restrict moves to the current step."
+    }
+  },
+  {
+    "date": "2026-11-20",
+    "tag": "feature",
+    "zh": {
+      "title": "数学首页增加广义黎曼猜想验证入口",
+      "body": "读者可从数学首页进入广义黎曼猜想专题。",
+      "expand": "专题入口与验证工具一起展示，方便从介绍转入验证。"
+    },
+    "en": {
+      "title": "Verification entry for the generalized Riemann hypothesis",
+      "body": "The math index links to the generalized Riemann hypothesis project.",
+      "expand": "The project and its verification tools are presented together."
+    }
+  },
+  {
+    "date": "2026-11-19",
+    "tag": "feature",
+    "zh": {
+      "title": "成绩可按战队排名",
+      "body": "成绩页面可按战队查看排名，战队名单支持维护。",
+      "expand": "可以先查看战队成员，再按战队比较比赛成绩。"
+    },
+    "en": {
+      "title": "Rank results by team",
+      "body": "Results can be ranked by team, and team rosters can be edited.",
+      "expand": "Readers can look up team members and compare competition results by team."
+    }
+  },
+  {
+    "date": "2026-11-19",
+    "tag": "feature",
+    "zh": {
+      "title": "工作台支持私密合同详情",
+      "body": "员工合同、项目任务和薪资可在工作台管理。",
+      "expand": "合同有独立的详情入口，导出 Word 时保留文档格式。"
+    },
+    "en": {
+      "title": "Private contract details in the workspace",
+      "body": "The workspace supports employee contracts, project tasks and payroll.",
+      "expand": "Contracts have their own detail view, and Word exports preserve document formatting."
+    }
+  },
+  {
+    "date": "2026-11-18",
+    "tag": "feature",
+    "zh": {
+      "title": "WCA 成绩加入奖牌排名",
+      "body": "成绩页可以查看奖牌排名。",
+      "expand": "排名入口位于 WCA 成绩页，可与其他成绩统计切换查看。"
+    },
+    "en": {
+      "title": "Medal rankings in WCA results",
+      "body": "The results page includes a medal ranking.",
+      "expand": "The medal ranking is available alongside other statistics on the WCA results page."
+    }
+  },
+  {
+    "date": "2026-11-18",
+    "tag": "feature",
+    "zh": {
+      "title": "层先法增加整解流程图",
+      "body": "教程用流程图串起从起手到复原的各个步骤。",
+      "expand": "读者可在流程图中查看阶段之间的衔接，再回到对应教学步骤。"
+    },
+    "en": {
+      "title": "An interactive chart for layer-by-layer solves",
+      "body": "A flowchart connects the steps from the starting state to the solved cube.",
+      "expand": "Learners can follow transitions between stages and review the corresponding instruction."
+    }
+  },
+  {
+    "date": "2026-11-17",
+    "tag": "feature",
+    "zh": {
+      "title": "聊天回答支持流式朗读",
+      "body": "可以在语音生成时开始听回答。",
+      "expand": "朗读中可切换音色和调节语速。"
+    },
+    "en": {
+      "title": "Streaming read-aloud for chat replies",
+      "body": "Speech can start playing while the answer audio is still being generated.",
+      "expand": "Voice selection and playback speed are available in the reader."
+    }
+  },
+  {
     "date": "2026-11-16",
     "tag": "feature",
     "zh": {

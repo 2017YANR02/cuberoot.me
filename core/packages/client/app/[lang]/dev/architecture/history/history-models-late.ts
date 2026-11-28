@@ -2091,4 +2091,188 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     rod(a, r, [0, 3.4, -1.8], [0, 6.7, -1.8], .1, p.forest);
     fin(a, r, [[-.6, .6], [.6, .6], [.6, -.6], [0, -.2], [-.6, -.6]], [0, 6.1, -1.8], p.vermilion, .15);
   },
+  '2026-11-17': (a, r) => {
+    const p = a.palette;
+    // A faceted horn opens outward from the narrow throat on its pivot.
+    const axis = new T.Vector3(.85, .48, .44).normalize();
+    const horn = new T.Group();
+    horn.position.set(-1.4, 3, 0);
+    horn.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), axis);
+    r.add(horn);
+    for (let facet = 0; facet < 10; facet++) {
+      const angles = [facet, facet + 1].map(n => n * Math.PI / 5);
+      const vertices = [[0, .3], [1.9, .64], [4, 2.35]].flatMap(([height, radius]) =>
+        angles.map(angle => [radius * Math.cos(angle), height, radius * Math.sin(angle)]));
+      const profile = [[.3, 0], [.64, 1.9], [2.35, 4], [2.27, 4], [.56, 1.9], [.22, 0]];
+      // The inner and outer folds have separate normals so light reaches the bell.
+      const geometry = new T.LatheGeometry(
+        profile.map(([radius, height]) => new T.Vector2(radius, height)),
+        1, Math.PI / 2 - angles[1], Math.PI / 5,
+      );
+      a.mesh(horn, geometry, facet % 2 ? p.paper : p.gold);
+      rod(a, horn, vertices[4] as P, vertices[5] as P, .08, p.vermilion);
+    }
+    a.cylinder(r, 1.5, .45, [-1.4,.8,0], p.forest);
+    rod(a,r,[-1.4,1,0],[-1.4,3,0],.22,p.jade);
+    joint(a,r,[-1.4,3,0],.42);
+  },
+  '2026-11-18': (a, r) => {
+    const p = a.palette;
+    for (const [x, height, color] of [[-2.8,2.4,p.limestone],[0,3.5,p.gold],[2.8,1.65,p.vermilion]] as const) {
+      a.box(r,[2.7,height,2],[x,height/2+.7,0],p.jade);
+      a.box(r,[2.8,.18,2.1],[x,height+.78,0],p.paper);
+      const y = height + 2.4;
+      fin(a,r,[[-.6,1],[0,.25],[.6,1],[.4,-.1],[0,-.55],[-.4,-.1]],[x,y,-.1],color);
+      a.medal(r,x,y-.65,.1,.83);
+      for (let i=0;i<3;i++) rod(a,r,[x-.7+i*.7,.8,1.02],[x-.7+i*.7,height+.55,1.02],.04,color);
+    }
+  },
+  '2026-11-19': (a, r) => {
+    const p = a.palette;
+    // Staggered pennants carry individual team emblems above roster tablets.
+    for (const [x,z,height] of [[-3,1,4.1],[0,-1.1,6.6],[2.7,.45,5.1]]) {
+      a.cylinder(r,.65,.5,[x,.8,z],p.forest);
+      rod(a,r,[x,.9,z],[x,height,z],.095,p.gold);
+      joint(a,r,[x,height+.12,z],.18);
+      fin(a,r,[[0,0],[2.3,-.35],[1.64,-1],[2.05,-1.65],[0,-1.38]],[x,height-.24,z],p.jade);
+      a.ring(r,.31,.07,[x+.67,height-1,z+.24],p.paper);
+      card(a,r,[x+.55,1.5,z+.43],1.23,.94);
+    }
+  },
+  '2026-11-20': (a, r) => {
+    const p = a.palette;
+    const camera = new T.Group();
+    camera.position.set(-2.4, .25, -1.5);
+    camera.rotation.y = .74;
+    camera.scale.setScalar(.83);
+    r.add(camera);
+    for (const foot of [[-2.6,.65,1.6],[2.6,.65,1.6],[0,.65,-2.9]] as P[]) {
+      rod(a,camera,foot,[0,4,0],.13,p.jade);
+      joint(a,camera,foot,.2);
+    }
+    a.box(r,[3.7,2.25,1.7],[0,5,0],p.forest);
+    a.box(r,[1.12,.48,.9],[-.55,6.35,0],p.jade);
+    for (const [z,radius] of [[.9,.85],[1.23,.77],[1.57,.9]]) {
+      a.cylinder(r,radius,.35,[.5,5,z],p.limestone).rotation.x=Math.PI/2;
+      a.ring(r,radius,.07,[.5,5,z+.18],p.gold);
+    }
+    a.cylinder(r,.61,.12,[.5,5,1.8],p.ink).rotation.x=Math.PI/2;
+    a.box(r,[.65,.32,.08],[-1.15,5.65,.9],p.vermilion);
+    const cube = new T.Group();
+    cube.position.set(2.35, 2.18, 1.65);
+    cube.rotation.y = -.35;
+    r.add(cube);
+    a.cylinder(r, 1.78, .36, [2.35, .94, 1.65], p.jade);
+    a.box(cube, [1.96, 1.96, 1.96], [0, 0, 0], p.ink);
+    for (let tile = 0; tile < 9; tile++) {
+      const u = (tile % 3 - 1) * .64, v = (Math.floor(tile / 3) - 1) * .64;
+      a.box(cube, [.59, .59, .055], [u, v, 1], tile % 4 ? p.paper : p.gold);
+      a.box(cube, [.59, .055, .59], [u, 1, v], tile % 3 ? p.gold : p.jade);
+      a.box(cube, [.055, .59, .59], [1, u, v], tile % 4 ? p.jade : p.paper);
+    }
+  },
+  '2026-11-21': (a, r) => {
+    const p = a.palette;
+    // Three frames climb backwards from a solved face to a mixed starting face.
+    for (let frame=0;frame<3;frame++) {
+      const x=2.7*(frame-1), y=2.4+.83*frame;
+      const cell=new T.Group(); cell.position.set(x,y,0); cell.rotation.z=.27; r.add(cell);
+      a.box(cell,[2.8,3.1,.24],[0,0,0],p.ink);
+      for (const edge of [-1,1]) for (let i=0;i<5;i++)
+        a.box(cell,[.24,.22,.05],[-1+i*.5,edge*1.31,.15],p.paper);
+      for (let tile=0;tile<9;tile++)
+        a.box(cell,[.59,.59,.12],[(tile%3-1)*.66,(Math.floor(tile/3)-1)*.66,.22],
+          tile < (2-frame)*2 ? p.vermilion : p.jade);
+    }
+    fin(a,r,[[-2.6,0],[-1.1,1],[-1.1,.45],[2.3,.45],[2.3,-.2],[-1.1,-.2],[-1.1,-.7]],[0,6.45,0],p.gold);
+  },
+  '2026-11-22': (a, r) => {
+    const p = a.palette;
+    slab(a,r,[0,1,0],6,4);
+    for (const x of [-2,2]) {
+      fin(a,r,[[-.7,0],[.7,0],[.7,1.95],[0,1.14],[-.7,1.95]],[x,1.2,-1.45],p.forest,2.9);
+      rivets(a,r,[x-.46,1.55,1.5],[x+.46,1.55,1.5],3);
+    }
+    const corner=new T.Group(); corner.position.set(0,4.22,0); corner.rotation.set(.3,.35,.76); r.add(corner);
+    a.box(corner,[2.5,2.5,2.5],[0,0,0],p.ink);
+    a.box(corner,[2.3,2.3,.08],[0,0,1.28],p.jade);
+    a.box(corner,[2.3,.08,2.3],[0,1.28,0],p.gold);
+    a.box(corner,[.08,2.3,2.3],[1.28,0,0],p.paper);
+    arc(a,r,1.85,.06,1.9,[0,4.35,1.85],p.vermilion,.085);
+  },
+  '2026-11-23': (a, r) => {
+    const p = a.palette;
+    // Flip cards expose different two-layer patterns on the same overhead axle.
+    for (const x of [-4.35,4.35]) {
+      fin(a,r,[[-.8,0],[.8,0],[.24,4.9],[-.24,4.9]],[x,.8,-.3],p.jade,.6);
+      joint(a,r,[x,5.6,0],.25);
+    }
+    rod(a,r,[-4.45,5.55,0],[4.45,5.55,0],.12,p.gold);
+    for (let i=0;i<3;i++) {
+      const leaf=new T.Group(); leaf.position.set((i-1)*2.65,5.55,0); leaf.rotation.x=[-.16,-.83,.42][i]; r.add(leaf);
+      for (const x of [-.68,.68]) a.ring(leaf,.26,.075,[x,-.08,0],p.gold).rotation.y=Math.PI/2;
+      a.box(leaf,[2.34,3.1,.23],[0,-1.89,0],p.paper);
+      for (let k=0;k<4;k++) a.box(leaf,[.84,.84,.12],[(k%2-.5)*.93,-1.65+(Math.floor(k/2)-.5)*.93,.16],
+        [p.forest,p.vermilion,p.jade][(i+k)%3]);
+      a.box(leaf,[.65,.09,.08],[0,-2.99,.15],p.gold);
+    }
+  },
+  '2026-11-24': (a, r) => {
+    const p = a.palette;
+    const strap=a.ring(r,2.45,.38,[0,3.3,0],p.jade); strap.scale.set(1,1.18,1); strap.rotation.y=.88;
+    const watch=new T.Group(); watch.position.set(1.5,3.7,1.65); watch.rotation.set(-.17,.38,-.14); r.add(watch);
+    fin(a,watch,[[-1.65,-1.45],[-1.34,-1.82],[1.34,-1.82],[1.65,-1.45],[1.65,1.45],[1.34,1.82],[-1.34,1.82],[-1.65,1.45]],[0,0,0],p.gold,.55);
+    a.box(watch,[2.86,3.05,.16],[0,0,.61],p.ink);
+    for (let i=0;i<9;i++) a.box(watch,[.52,.52,.12],[(i%3-1)*.59,(Math.floor(i/3)-1)*.59+.22,.75],
+      [p.jade,p.paper,p.vermilion][(i*2+Math.floor(i/3))%3]);
+    a.box(watch,[1.52,.12,.09],[0,-1.11,.75],p.gold);
+    a.cylinder(watch,.29,.4,[1.77,.52,.22],p.limestone).rotation.z=Math.PI/2;
+  },
+  '2026-11-25': (a, r) => {
+    const p = a.palette;
+    for (const x of [-4,4]) {
+      a.box(r,[.55,5,.72],[x,3.2,-1.6],p.forest);
+      fin(a,r,[[0,0],[1,-.25],[0,-.66]],[x,6.4,-1.6],p.vermilion);
+      rod(a,r,[x,5.6,-1.6],[x,6.5,-1.6],.06,p.gold);
+    }
+    a.box(r,[8.6,.74,.85],[0,5.5,-1.6],p.jade);
+    for (const lane of [-2.5,0,2.5]) {
+      a.box(r,[2.23,.2,4.8],[lane,.85,.35],p.limestone);
+      a.box(r,[2.18,.08,.22],[lane,1,1.8],p.paper);
+      a.box(r,[1.52,.26,1.04],[lane,1.22,-1.4],p.jade);
+      rod(a,r,[lane-.66,1.5,-1.45],[lane+.66,1.5,-1.45],.09,p.gold);
+      a.box(r,[.86,.52,.22],[lane,4.84,-1.6],p.paper);
+    }
+  },
+  '2026-11-26': (a, r) => {
+    const p = a.palette;
+    // Two banks of four-layer pieces meet at the paired keystone.
+    for (const side of [-1,1]) {
+      a.box(r,[2.8,.48,2.8],[side*3.3,1,0],p.forest);
+      for (let tier=0;tier<4;tier++) {
+        const x=side*(3.6-tier*.75), y=1.7+tier*.86;
+        for (const z of [-.63,.63]) {
+          a.box(r,[1.7,.79,1.15],[x,y,z],z>0?p.jade:p.paper);
+          a.box(r,[.84,.34,.07],[x,y,z+.6],p.gold);
+        }
+      }
+    }
+    for (const z of [-.63,.63])
+      fin(a,r,[[-.77,.5],[.77,.5],[.49,-.55],[-.49,-.55]],[0,4.75,z-.56],p.vermilion,1.12);
+  },
+  '2026-11-27': (a, r) => {
+    const p = a.palette;
+    // An open dictionary fans outward at the spine, with a stepped thumb index.
+    for (const side of [-1,1]) {
+      const half=new T.Group(); half.position.set(0,2.65,0); half.rotation.z=side*.2; r.add(half);
+      a.box(half,[3.9,.22,4.9],[side*1.95,0,0],p.forest);
+      for (let i=0;i<6;i++)
+        a.box(half,[3.65-i*.06,.095,4.58],[side*(3.65-i*.06)/2,.2+i*.1,0],i%2?p.paper:p.limestone);
+      for (let line=0;line<7;line++)
+        a.box(half,[2.35-(line%3)*.24,.035,.065],[side*1.67,.78,-1.63+line*.49],p.jade);
+      for (let i=0;i<4;i++)
+        a.box(half,[.55,.12,.64],[side*(3.48+i*.07),.69-i*.11,-1.5+i*.93],i%2?p.vermilion:p.gold);
+    }
+    fin(a,r,[[-.26,0],[.26,0],[.26,-1.45],[0,-1.21],[-.26,-1.45]],[0,3.26,2.36],p.vermilion);
+  },
 };

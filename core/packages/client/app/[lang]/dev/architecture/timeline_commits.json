@@ -1363,5 +1363,60 @@
     "date": "2026-11-16",
     "zh": "聊天草稿登录续发与独立任务恢复 + 公式镜像指法同步和图标统一 + PLL 情况与朝向选择训练 + 教程移动播放和开发预览接入完善",
     "en": "Chat drafts resume after sign-in and tasks recover independently + synchronized mirror notation and consistent icons + PLL case and orientation training + mobile tutorial playback and development previews"
+  },
+  {
+    "date": "2026-11-17",
+    "zh": "聊天回答可边生成语音边朗读 + 日历时区对照 + 单字魔方拼字图案 + 首页分区导航",
+    "en": "Streaming read-aloud for chat replies + time zone comparisons in the calendar + cube mosaics from individual characters + section navigation on the home page"
+  },
+  {
+    "date": "2026-11-18",
+    "zh": "层先法整解流程图 + WCA 奖牌排名 + 私密合同模板与员工访问申请",
+    "en": "Interactive layer-by-layer solve chart + WCA medal rankings + private contract templates and employee access requests"
+  },
+  {
+    "date": "2026-11-19",
+    "zh": "战队成绩排名与名单管理 + 抖音原生计时器 + 合同详情与 Word 导出 + 日历日程编辑",
+    "en": "Team rankings and rosters + native Douyin timer + contract details and formatted Word exports + calendar event editing"
+  },
+  {
+    "date": "2026-11-20",
+    "zh": "视频复盘与摄像头计时 + 二阶层先法互动教程 + 模拟器握姿编辑 + 广义黎曼猜想验证入口",
+    "en": "Video reconstruction and camera timing + interactive 2×2 layer-by-layer lessons + grip editing in the simulator + verification tools for the generalized Riemann hypothesis"
+  },
+  {
+    "date": "2026-11-21",
+    "zh": "无打乱视频推定起手状态与解法 + 视频复盘原理说明 + 二阶一层法课程 + 课程发布审核",
+    "en": "Starting-state and move inference for videos without a scramble + video reconstruction guide + 2×2 first-layer course + course publication review"
+  },
+  {
+    "date": "2026-11-22",
+    "zh": "二阶角块对齐与末步练习 + 日历日程状态和公开分享 + 保险箱备份合并 + 模拟器触控板操作",
+    "en": "Revisable 2×2 alignment and finishing moves + calendar event status and public sharing + vault backup merging + trackpad controls in the simulator"
+  },
+  {
+    "date": "2026-11-23",
+    "zh": "二阶 EG 识别训练 + 对话内回放解法与诊断阶段 + 注册同意条款和确认预览 + 按购买渠道管理订阅",
+    "en": "2×2 EG recognition drills + solve playback and stage diagnosis in chat + registration consent and confirmation preview + subscription management by purchase channel"
+  },
+  {
+    "date": "2026-11-24",
+    "zh": "模拟器握姿图鉴与指法对照 + 手表本地打乱和训练同步 + 跨平台会员方案",
+    "en": "Simulator grip atlas and finger-trick comparisons + local scrambles and training sync on the watch + membership plans across platforms"
+  },
+  {
+    "date": "2026-11-25",
+    "zh": "比赛中心与赛事工作台 + 复盘诊断关联专项练习与复测 + 项目致谢页 + WCA 名次变更说明",
+    "en": "Competition center and organizer workspace + targeted drills and retests from solve diagnoses + project credits + explanations for revised WCA placements"
+  },
+  {
+    "date": "2026-11-26",
+    "zh": "四阶降阶法教程 + Cubing Lean 研究、论文与短解演示 + 智能魔方比赛场地同步 + 聊天搜索与回答导航",
+    "en": "Interactive 4×4 reduction course + Cubing Lean papers and short-solution demo + synchronized smart-cube arenas + chat search and answer navigation"
+  },
+  {
+    "date": "2026-11-27",
+    "zh": "三阶层先法智能魔方跟练 + 模拟器指法目录 + 计时录像回看与复盘字幕导出 + 词典字母导航",
+    "en": "Smart-cube practice for 3×3 layer-by-layer solves + finger-trick catalog + timer video review and reconstruction caption export + alphabet navigation in the glossary"
   }
 ]
