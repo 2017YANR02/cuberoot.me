@@ -618,7 +618,7 @@ export default function LandingSearch({
     q, localSearchError,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
-    reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    reconMatches, glossaryMatches, postMatches, aboutMatches, stackMatches, algSetMatches,
     platformMatches, platformSearchError,
     forumMatches, forumTotal, forumSearchError,
     translationMatches, translationSearchError, translationStale,
@@ -683,6 +683,7 @@ export default function LandingSearch({
     if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (yearMatch) { pushInternal(langHref('/wca/comp', `year=${yearMatch}`)); return; }
     if (pasteIntent) { goPasteIntent(pasteIntent); return; }
+    if (postMatches.length > 0) { pushInternal(langHref(`/regulation/post/${postMatches[0].id}`)); return; }
     if (translationMatches.length > 0) { pushInternal(langHref('/regulation/translation/search', `q=${encodeURIComponent(query.trim())}`)); return; }
     if (forumMatches.length > 0) { pushInternal(langHref(`/forum/t/${forumMatches[0].id}`)); return; }
     if (platformMatches.length > 0) { pushInternal(langHref(platformMatches[0].href)); return; }
@@ -851,6 +852,31 @@ export default function LandingSearch({
                     {query.trim().slice(0, 60)}{query.trim().length > 60 ? '…' : ''}
                   </span>
                 </button>
+              </div>
+            </section>
+          )}
+
+          {postMatches.length > 0 && (
+            <section className="landing-search-section">
+              <div className="landing-search-section-header">
+                <BookOpen size={14} strokeWidth={1.75} />
+                <h3>{tr({ zh: 'WCA 公告', en: 'WCA announcements' })}</h3>
+                {postMatches.length > INITIAL_RENDER_CAP && <HeaderMore
+                  overflow={postMatches.length - INITIAL_RENDER_CAP}
+                  title={tr({ zh: '查看全部匹配公告', en: 'View all matching announcements' })}
+                  href={'/regulation/post?q=' + encodeURIComponent(query.trim())}
+                  onClick={closeAfter}
+                />}
+              </div>
+              <div className="landing-search-grid">
+                {postMatches.slice(0, INITIAL_RENDER_CAP).map(post => (
+                  <Link key={post.id} href={`/regulation/post/${post.id}`} prefetch={false}
+                    className="af-glass-surface landing-search-item" onClick={closeAfter}>
+                    <span className="landing-search-item-name">{tr(post.title)}</span>
+                    {post.snippet && <span className="landing-search-item-meta">{post.snippet}</span>}
+                    <time className="landing-search-item-meta" dateTime={post.date}>{post.date}</time>
+                  </Link>
+                ))}
               </div>
             </section>
           )}

@@ -200,7 +200,8 @@ function stackRecords(entries: StackToolMeta[]): StackRecord[] { return entries.
 })); }
 
 // Keep search input and keyboard focus eager; load data only after actual input.
-interface LocalEntries { glossary: GlossaryRecord[]; stack: StackRecord[]; about: AboutRecord[] }
+type PostSearch = typeof import('@/lib/regulation-post-search').searchRegulationPosts;
+interface LocalEntries { posts: PostSearch; glossary: GlossaryRecord[]; stack: StackRecord[]; about: AboutRecord[] }
 const localEntriesCache: Partial<LocalEntries> = {};
 function cachedEntries<T>(load: () => Promise<T>): () => Promise<T> {
   let pending: Promise<T> | null = null;
@@ -362,6 +363,7 @@ export interface SiteSearchResult {
   compMatches: Comp[];
   reconMatches: ReconHit[];
   glossaryMatches: GlossaryHit[];
+  postMatches: ReturnType<PostSearch>;
   aboutMatches: AboutHit[];
   stackMatches: StackHit[];
   algSetMatches: AlgSetHit[];
@@ -472,6 +474,7 @@ export function useSiteSearch(
       if (!cancelled) setLocalEntries(previous => ({ ...previous, [key]: entries }));
     };
     void Promise.allSettled([
+      import('@/lib/regulation-post-search').then(module => receive('posts', module.searchRegulationPosts)),
       loadGlossaryEntries().then(entries => receive('glossary', entries)),
       loadStackEntries().then(entries => receive('stack', entries)),
       loadAboutEntries().then(entries => receive('about', entries)),
@@ -621,6 +624,8 @@ export function useSiteSearch(
     return out;
   }, [q, tokens, localEntries]);
 
+  const postMatches = useMemo(() => q ? localEntries.posts?.(q) ?? [] : [], [q, localEntries.posts]);
+
   const aboutMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [] as AboutHit[];
     const out: AboutHit[] = [];
@@ -661,17 +666,18 @@ export function useSiteSearch(
     compMatches.length +
     reconMatches.length +
     glossaryMatches.length +
+    postMatches.length +
     aboutMatches.length +
     stackMatches.length +
     algSetMatches.length + platformMatches.length + forumTotal + translationSearch.matches.length;
 
   return {
     q, qRaw, xSearchEnabled, xLoaded,
-    localSearchPending: personSearchPending || (q !== '' && (!localEntries.glossary || !localEntries.stack || !localEntries.about) && !localSearchError),
+    localSearchPending: personSearchPending || (q !== '' && (!localEntries.posts || !localEntries.glossary || !localEntries.stack || !localEntries.about) && !localSearchError),
     localSearchError: localSearchError || personSearchError,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
-    reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    reconMatches, glossaryMatches, postMatches, aboutMatches, stackMatches, algSetMatches,
     platformMatches, platformSearchError,
     forumMatches, forumTotal, forumSearchPending, forumSearchError,
     translationMatches: translationSearch.matches,
