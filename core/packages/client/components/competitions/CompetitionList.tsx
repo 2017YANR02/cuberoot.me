@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type HTMLAttributes, type RefObject } from 'react';
 import { Star } from '@app-foundation/icons/lucide';
-import type { CompRoundMetaMap, RoundMeta } from '@cuberoot/shared';
+import type { CompRoundMetaMap, RoundMeta } from '@cuberoot/shared/wca-competition-data';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import Link from '@/components/AppLink';
 import { Tooltip } from '@/components/Tooltip';

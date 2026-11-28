@@ -1,5 +1,5 @@
 // Ported from packages/client-vite/src/utils/comp_search.ts.
-import type { UpcomingCompRecord } from '@cuberoot/shared';
+import type { UpcomingCompRecord } from '@cuberoot/shared/wca-competition-data';
 import {
   CompetitionIndexContractError,
   mergeCompetitionIndexes,

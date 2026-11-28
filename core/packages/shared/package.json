@@ -108,6 +108,7 @@
       "./cubing-competitions": "runtime-neutral",
       "./city-localize": "runtime-neutral",
       "./competition-index": "runtime-neutral",
+      "./wca-competition-data": "mixed",
       "./alg": "mixed",
       "./alg-notation": "runtime-neutral",
       "./alg-html": "runtime-neutral",
@@ -669,6 +670,7 @@
     "./comp-localize": "./src/comp_localize.ts",
     "./city-localize": "./src/city_localize.ts",
     "./competition-index": "./src/competition_index.ts",
+    "./wca-competition-data": "./src/api/comps_json.ts",
     "./alg": {
       "types": "./src/alg.ts",
       "node": "./dist/alg.js",
